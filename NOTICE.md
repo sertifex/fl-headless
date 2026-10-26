@@ -21,7 +21,8 @@ source.
 ## The name and the logo: not covered by the GPL
 
 The name "fl-headless" and the fl-headless logo are the owner's and are **not** licensed under the GPL. The logo files
-(`data/theme/logo.png`, `data/theme/fl-headless background.jpg`, `data/theme/thmfl-headless.png`) are provided only
+(`data/theme/logo.png`, `data/theme/fl-headless background.jpg`, `data/theme/thmfl-headless.png`, and the
+README banner `docs/banner.png`) are provided only
 for use with fl-headless itself (they ship as its default FL Studio theme). You may not modify them, use them for
 another product or project, or use the name or logo in a way that suggests your project is fl-headless or made by its
 owner. No trademark license is granted. A fork must use its own name and logo.
