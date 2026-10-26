@@ -25,7 +25,7 @@
 </p>
 
 > [!NOTE]
-> **Beta.** Version 2.1.0 is the first public release, tested on one setup so far (Windows 11, FL Studio 2026).
+> **Beta.** Version 2.1 is the first public release, tested on one setup so far (Windows 11, FL Studio 2026).
 > Expect some rough edges, and please [report what breaks](https://github.com/sertifex/fl-headless/issues).
 
 fl-headless is not built to make your music for you. It's built to help you make it: it explains what's going on in

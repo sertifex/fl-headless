@@ -1543,6 +1543,9 @@ def _genres():
 ROLE_ORDER = ["vocal", "kick", "bass", "drums", "perc", "lead", "keys", "guitar", "strings", "pad", "fx"]
 
 
+RHYTHM_ROLES = ("bass", "kick", "drums", "perc", "fx")      # never 'the lead' while a melodic part exists
+
+
 def role_of(name):
     """Track role from its name (genres.json 'roles' keywords): vocal, lead, bass, kick, drums, perc, keys, guitar,
     strings, pad, fx, or support."""
@@ -2726,6 +2729,36 @@ def _bpm(bpm, project, live):
     return 120.0, "assumed (tempo unknown)"
 
 
+def pick_lead(tr):
+    """The lead among normalized tracks (each with imp, role, lufs): the most important, then loudest - melodic parts
+    first, the rhythm section only when nothing else plays."""
+    tune = [t for t in tr if t["role"] not in RHYTHM_ROLES]
+    return max(tune or tr, key=lambda t: (t["imp"], t["lufs"])) if tr else None
+
+
+def _journal_lead(project, meas):
+    """The measured track that plays the song's melody, from the journal (channels.N.role melody / lead / vocal and
+    its mixer insert), or None."""
+    try:
+        S = sys.modules.get("flh_store")
+        jr = S.journal_get(project) if S else {}
+    except Exception:
+        return None
+    tr = _tracks_from(meas) if meas else []
+    by_track = {t.get("track"): t["name"] for t in tr if t.get("track") is not None}
+    for want in (("vocal", "vox"), ("melody", "lead", "topline")):
+        for c, v in sorted(((jr or {}).get("channels") or {}).items()):
+            v = v if isinstance(v, dict) else {}
+            if str(v.get("role") or "").lower() in want:
+                ins = v.get("mixer")
+                try:
+                    if ins is not None and int(ins) in by_track:
+                        return by_track[int(ins)]
+                except (TypeError, ValueError):
+                    pass
+    return None
+
+
 def propose(meas, genre="default", goal=None, bpm=120.0, masking_findings=None, lead=None, max_items=14):
     """The engineer's ranked moves from measurements. Pure: no FL access.
     meas: {"tracks": [{name, track, lufs, bands_db, crest_db?, pan?}], "mix": {lufs, true_peak, bands_db}}.
@@ -2746,7 +2779,9 @@ def propose(meas, genre="default", goal=None, bpm=120.0, masking_findings=None, 
         t["imp"] = importance(t["role"])
         if lead and _norm_name(lead) == _norm_name(t["name"]):
             t["imp"], t["role"] = 4.0, ("vocal" if t["role"] == "vocal" else "lead")
-    L = max(tr, key=lambda t: (t["imp"], t["lufs"]))
+    # the lead: a named / vocal / lead track first; else the loudest melodic part - never the rhythm section (an 808
+    # or a kick is loud by design: PC 2026-10-26 an RnB piano was turned down 6 dB 'below the lead (808)')
+    L = pick_lead(tr)
     gaps, tol = n["gaps_db"], float(n.get("gap_tolerance_db", 1.5))
     tp = mix.get("true_peak", mix.get("true_peak_dbfs"))
     # ---- 0. master clipping / headroom first
@@ -3008,9 +3043,19 @@ def mix_engineer(goal=None, section=None, tracks=None, apply=False, genre=None, 
             _fl_gone_check("while the tracks were measured")
             raise
     mark("measure")
+    lead_src = "given" if lead else None
+    if not lead and project:
+        lead = _journal_lead(project, meas)
+        lead_src = "the song journal (its melody channel)" if lead else None
     props = propose(meas, genre=g, goal=goal, bpm=bpm_v, masking_findings=findings, lead=lead, max_items=max_items)
     mark("propose")
+    tr_ = _tracks_from(meas) if meas else []
+    for t in tr_:
+        t["imp"] = 4.0 if lead and _norm_name(lead) == _norm_name(t["name"]) else importance(t["role"])
+    L_ = pick_lead(tr_)
     res = {"genre": g, "bpm": bpm_v, "bpm_source": bpm_src, "goal": goal,
+           "lead": ({"track": L_["name"], "from": lead_src or "the loudest melodic part (lead='<track>' to choose)"}
+                    if L_ else None),
            "goal_intents": intents_from_text(goal) if goal else [],
            "goal_unclear": (parse_intents(goal)["ambiguous"] or None) if goal else None,
            "proposals": [{k: v for k, v in p.items() if k not in ("ops",) and v not in (None, [], False)}

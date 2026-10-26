@@ -2151,6 +2151,14 @@ def _build(L):
                 d, ch = _append_channel(d, blk)
                 if r["kind"] == "labs":
                     labs_jobs.append((ch, r, spec))
+                elif r.get("plugin") == "FLEX" and not r.get("flex_default"):
+                    try:                                   # FLEX 808 presets sound 2 octaves below the written note
+                        fx = _mod("flh_flex")
+                        off = fx.sounding_offset(r.get("preset") or r.get("_preset") or "", r.get("pack"))
+                    except Exception:
+                        off = 0
+                    if off:
+                        tune.append((ch, off, None, None, spec["name"]))
             line = f"{ch} {spec['name']}: {r['label']}"
             if plain_words:                                # colour is never the only cue: say its name too
                 line += f" [colour {_mod('flh_score').color_text(color)}]"
@@ -2181,10 +2189,14 @@ def _build(L):
         for ch, semis, pitch, root, cname in tune:         # pitched samplers: the offset is known before any note
             if semis:                                      # is written, so every writer (starter or later) uses it
                 C = _mod("flh_catalog")
-                nm = (C.PC_NAMES[pitch % 12] + str(pitch // 12 - 1)) if pitch is not None else f"{root} (from its name)"
                 journal_ch[str(ch)]["transpose"] = semis
                 registry.setdefault("transpose", {})[str(ch)] = semis
-                notes.append(f"the {cname} sample is pitched {nm}: notes on channel {ch} are written {semis:+d} "
+                if pitch is None and root is None:         # a FLEX 808 preset (no sample pitch to name)
+                    what = f"the {cname} FLEX 808 preset sounds {semis // 12} octaves below the written note"
+                else:
+                    nm = (C.PC_NAMES[pitch % 12] + str(pitch // 12 - 1)) if pitch is not None else f"{root} (from its name)"
+                    what = f"the {cname} sample is pitched {nm}"
+                notes.append(f"{what}: notes on channel {ch} are written {semis:+d} "
                              f"semitones from the pitch you hear, so it plays in {key} (journal channels.{ch}.transpose;"
                              " the composer and flp_score take it into account)")
             elif pitch is None and not root:

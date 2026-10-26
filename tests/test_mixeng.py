@@ -261,6 +261,19 @@ assert X._note_ms("1/8D", 120) == 375.0 and X._note_ms("1/4", 60) == 1000.0
 assert X.role_of("Lead Vox") == "vocal" and X.role_of("Kick 1") == "kick" and X.role_of("808") == "bass"
 assert X.role_of("Soft Piano") == "keys" and X.genre_key("deep house") == "edm" and X.genre_key(None) == "default"
 assert X.norms("edm")["bus"]["ratio"] == 4.0 and X.norms("edm")["hp_hz"]["keys"] == 80
+# no vocal / lead track: the melody instrument is the lead, never the 808 (PC 2026-10-26: an RnB piano was turned
+# down 6 dB 'below the lead (808)' and panned off center)
+rnb = {"tracks": [trk("808", 7, -20.0, sub=-2, bass=-4), trk("Soft Piano", 9, -14.0), trk("Rhodes", 8, -19.0),
+                  trk("Kick", 1, -18.0, sub=-6), trk("Strings", 10, -24.0)],
+       "mix": {"lufs": -12.0, "true_peak": -5.0}}
+pr = X.propose(rnb, genre="rnb", bpm=70)
+assert not any(p["kind"] == "gain" and p["name"] == "Soft Piano" and p["ops"] and p["ops"][0]["db"] < 0 for p in pr), pr
+assert not any("lead (808)" in p["why"] for p in pr), [p["why"] for p in pr]
+st = [p for p in pr if p["kind"] == "stereo" and p["ops"]]
+assert not any(o["track"] == 9 for p in st for o in p["ops"]), st                    # the lead stays centered
+assert X.pick_lead([dict(t, role=X.role_of(t["name"]), imp=X.importance(X.role_of(t["name"])))
+                    for t in rnb["tracks"]])["name"] == "Soft Piano"
+assert X.pick_lead([{"name": "808", "role": "bass", "imp": 2.0, "lufs": -20}])["name"] == "808"   # only the beat plays
 print("propose ok")
 
 # ---------------------------------------------------------------- engineer apply (fake FL) + journal + revert
@@ -282,6 +295,13 @@ assert pad_before < 0 and vol[1] > 0
 rv = X.mix_engineer(revert_last=True)
 assert rv["reverted"] >= 3 and vol[2] == 0.0 and vol[1] == 0.0, (rv, vol)
 assert abs(FX[(2, 0)][2] - 0.5) < 1e-6 or True
+# the song journal names the melody channel: its mixer track is the lead, even when quieter than a 'Lead' track
+flh_store.journal_update(proj, set={"channels": {"8": {"role": "melody", "mixer": 2}}})
+assert X._journal_lead(proj, meas2) == "Pad"
+pv = X.mix_engineer(measurements=meas2, bpm=120, project=proj)
+assert pv["lead"]["track"] == "Pad" and "journal" in pv["lead"]["from"], pv["lead"]
+flh_store.journal_update(proj, set={"channels": {"8": None}})
+assert X._journal_lead(proj, meas2) is None
 print("apply ok")
 
 # ---------------------------------------------------------------- live paths (fake FL listen / mix check)

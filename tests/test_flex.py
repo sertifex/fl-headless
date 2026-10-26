@@ -89,6 +89,37 @@ blob = b"".join(m._payload(d, e) for e in ev[a:z + 1] if e["id"] == m.EV_PLUGIN_
 assert b"Core Brass" in blob and b"BRS Trumpets Staccato" in blob and b"Warm Haze" not in blob, r2
 assert "flp_flex_preset" in m.TOOLS and "flex_list" in m.TOOLS
 
+# FLEX 808 presets sound two octaves below the written note (PC 2026-10-26: Heavy Atom, Sub Below, 808 Clean all
+# played a written C2 at C0): the offset goes in the journal like a pitched sampler's, and a swap moves the notes
+import flh_store  # noqa: E402
+pack(os.path.join(flex, "Packs", "Core 808s.flex2pack"), ["808 Heavy Atom.flex2preset"], 0x01000002)
+pack(os.path.join(flex, "Packs", "Core Bass.flexpack"), ["BAS Warm Amp Finger.flexpreset"])
+F.index(refresh=True)
+assert F.sounding_offset("808 Heavy Atom") == 24 and F.sounding_offset("BAS Warm Amp Finger") == 0
+assert F.sounding_offset("Warm Haze") == 0 and F.sounding_offset("No Such Preset") == 0
+r8 = F.flp_flex_preset(song, song, "808 Heavy Atom")
+c8 = r8["new_channel"]
+j8 = flh_store.journal_get(song)
+assert j8["channels"][str(c8)]["transpose"] == 24 and j8["compose"]["transpose"][str(c8)] == 24, j8
+assert "2 octaves below" in r8["tuning"], r8
+m.flp_add_notes(song, [{"note": 51, "bar": 1, "beat": 0, "beats": 2}], channel=c8)   # Eb1 heard, written +24
+
+
+def keys_of(ch):
+    d_ = m._load(song); e_ = m._events(d_)
+    return sorted(n[4] for p in m._patterns(d_, e_).values() for n in p["notes"] if n[2] == ch)
+
+
+k0 = keys_of(c8)
+assert k0 == [51], k0
+rb = F.flp_flex_preset(song, song, "BAS Warm Amp Finger", channel=c8)        # a bass plays at pitch: notes -24
+assert keys_of(c8) == [27] and rb["notes_moved"] == 1 and "removed" in rb["tuning"], (keys_of(c8), rb)
+assert str(c8) not in {k for k, v in flh_store.journal_get(song)["channels"].items() if (v or {}).get("transpose")}
+r8b = F.flp_flex_preset(song, song, "808 Heavy Atom", channel=c8)           # and back: +24 again
+assert keys_of(c8) == [51] and flh_store.journal_get(song)["channels"][str(c8)]["transpose"] == 24, r8b
+rp = F.flp_flex_preset(song, song, "Warm Haze", channel=r["new_channel"])   # no offset either side: nothing moves
+assert "tuning" not in rp and "notes_moved" not in rp, rp
+
 # ---------------------------------------------------------------- quality: data/flex/quality.json tiers + name words
 assert F.pack_tier("General Midi Library")[0] == 0 and F.pack_tier("Core Pianos")[0] == 3
 assert F.pack_tier("Essential Bass Guitars")[0] == 3 and F.pack_tier("Melodic Techno")[0] == 2

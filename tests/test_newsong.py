@@ -835,6 +835,20 @@ r = N.flh_new_song("lofi", name="Core Keys", open=False)
 keys = next(c for c in r["channels"] if c.split(" ", 2)[1] == "Keys:")
 assert "FLEX" in keys and "(Core Pianos)" in keys and "General Midi" not in " ".join(r["channels"]), r["channels"]
 
+# a FLEX 808 preset sounds two octaves below the written note: the new song records the offset before the starter
+# beat is written, so the 808 is heard in its register (PC 2026-10-26: trap and RnB 808s played at ~13-16 Hz)
+flh_store.profile_set("Songs", {"prefer_flex": True})
+r = N.flh_new_song("trap", name="Octave 808", open=False)
+line808 = next(c for c in r["channels"] if "808 Heavy Atom" in c or "808 Long Deep" in c)
+c8 = int(line808.split(" ", 1)[0])
+j8 = flh_store.journal_get(r["project"])
+assert j8["channels"][str(c8)]["transpose"] == 24 and j8["compose"]["transpose"][str(c8)] == 24, j8["channels"]
+assert any("octaves below the written note" in x for x in r["notes"]), r["notes"]
+d = m._load(r["project"]); ev = m._events(d)
+k8 = [n[4] for p in m._patterns(d, ev).values() for n in p["notes"] if n[2] == c8]
+assert k8 and min(k8) >= 24 + 12, sorted(set(k8))                    # written up, heard at 808 depth
+flh_store.profile_set("Songs", {"prefer_flex": False})
+
 # only the General MIDI Library left: a real stock preset still wins; GM only where nothing else fits
 for pk in GOOD:
     os.remove(os.path.join(FLEXD, "Packs", pk + ".flexpack"))

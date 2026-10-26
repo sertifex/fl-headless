@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.1.1 - 2026-10-26
+Fixes found making songs with 2.1.0.
+- **808s in the right octave.** FLEX's 808 presets play two octaves below the note you write (measured: Core 808s
+  and Mobile Tuned 808 Bass; FLEX bass and keys presets play at pitch). New songs record that offset before the
+  starter beat is written, and `flp_flex_preset` records it (and moves the channel's notes) when you put an 808
+  preset on a channel or swap it for a bass. The 808 in the trap, RnB and other starter templates now sits at
+  808 depth instead of around 13-16 Hz.
+- **The mix engineer keeps your melody on top.** With no vocal or lead track it took the loudest important part as
+  "the lead" - often the 808 - and turned the real melody down and off center. The lead is now the song's melody
+  channel (from the song journal), else the loudest melodic part; the bass, kick and drums only when nothing else
+  plays. The result says which track it treated as the lead (`lead=` to choose).
+- **Splice INSTRUMENT sounds that loaded silent.** `flp_instrument_sound` wrote states INSTRUMENT couldn't play
+  for some packs (LABS Strings, LABS Choir): the copied articulation kept a "sustain pedal down" trigger, and the
+  articulation was named after the preset file instead of the pack's patch (INSTRUMENT matches the patch name,
+  exact case). Both fixed. A sound you once picked in INSTRUMENT's window and saved (`flp_save_sound`) is now
+  loaded exactly as saved. Packs whose INSTRUMENT names can't be read from their files (Spitfire-made packs,
+  e.g. Intimate Grand Piano) are flagged `may_be_silent` with that one-step workaround.
+- **Silent sounds are remembered.** A channel that renders silent in `fl_preview` now notes its INSTRUMENT pack
+  even when it was switched with `flp_instrument_sound`, so the catalog ranks it down; a later render with sound
+  clears it.
+- **Playlist edits by clip id after FL saved.** FL renumbers clip ids when it saves; an id from an earlier
+  `flp_playlist` list could then name another clip, and a batch remove could hit the wrong one. Ids now mean the
+  clips the last list showed (followed by their content); a clip that changed in FL since is refused with "list
+  the clips again" instead of guessing.
+
 ## 2.1.0 - 2026-10-25
 - Install: Claude Desktop extension (`fl-headless.mcpb`) - download it from the Releases page, install it in
   Claude (*Settings > Extensions > Advanced settings > Install Extension...*), pick your song folders, then say

@@ -71,7 +71,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fl_music  # noqa: E402
 from fl_music import note_name, parse_note  # noqa: E402
 
-SERVER = {"name": "fl-headless", "version": "2.1.0"}
+SERVER = {"name": "fl-headless", "version": "2.1.1"}
 
 # Sent to the AI client on connect, so every session starts knowing how FL behaves and how the user wants it run.
 INSTRUCTIONS = """fl-headless drives FL Studio (Windows) and reads/writes .flp projects.
@@ -5496,6 +5496,40 @@ def _stem_report(path, fs_x=None):
             **({"silent": True} if silent else {})}
 
 
+def _instrument_pack_of(project, ch):
+    """The downloaded INSTRUMENT pack a channel's saved state plays (its META family), or None."""
+    try:
+        d = _load(project); ev = _events(d)
+        _, ks = _channel_block(d, ev, int(ch))
+        st = _payload(d, ev[ks])
+        m_ = re.search(rb'<META family="([^"]*)"', st)
+        if not m_ or not _is_splice_instrument(_wrapper_name(st)):
+            return None
+        fam = m_.group(1).decode("utf-8", "replace").strip().lower()
+        for x in flp_instrument_sounds()["packs"]:
+            if re.sub(r"^(LABS|Spitfire Audio|Splice)\s*-\s*", "", x["pack"]).strip().lower() == fam:
+                return x["pack"]
+    except Exception:
+        return None
+    return None
+
+
+def _clear_silent_pack(project, ch):
+    """A channel rendered with sound: its INSTRUMENT pack is taken off the silent list (it plays on this PC)."""
+    try:
+        sp = dict((_state() or {}).get("silent_packs") or {})
+        if not sp:
+            return None
+        pack = _instrument_pack_of(project, ch)
+        if pack and pack in sp:
+            sp.pop(pack)
+            _state({"silent_packs": sp})
+            return pack
+    except Exception:
+        return None
+    return None
+
+
 def _note_silent_pack(project, ch):
     """A channel rendered silent although it has notes: if it plays a LABS / INSTRUMENT pack, remember the pack so
     the catalog and new songs stop picking it (it probably isn't supported by the installed INSTRUMENT)."""
@@ -5504,9 +5538,9 @@ def _note_silent_pack(project, ch):
     except Exception:
         jr = {}
     snd = str(jr.get("sound") or "")
-    if "INSTRUMENT" not in str(jr.get("plugin") or "") and " / " not in snd:
-        return None
-    pack = snd.split(" / ")[0].strip()
+    pack = snd.split(" / ")[0].strip() if ("INSTRUMENT" in str(jr.get("plugin") or "") or " / " in snd) else ""
+    if not pack:                                  # switched with flp_instrument_sound: the journal doesn't know -
+        pack = _instrument_pack_of(project, ch)   # the channel's own INSTRUMENT state says which pack
     if not pack:
         return None
     st = _state() or {}
@@ -6321,6 +6355,8 @@ def fl_preview(channels=None, measure=True, keep=None, rules=None, timeout_s=900
             res["silent_hint"] = ("the whole song renders silent: no channel made a sound in FL's export (master "
                                   "muted / turned down, every channel muted, or the sounds didn't load) - check FL "
                                   "before trusting anything measured")
+    elif sel is not None and len(sel) == 1 and res.get("lufs") is not None:   # it plays: a pack noted silent before
+        _clear_silent_pack(cur, list(sel)[0])                                 # (e.g. switched badly) is cleared
     if rules is not None:
         if rng is not None:
             res["rules_note"] = "rules check the whole song: fl_preview(rules=...) without a range"
@@ -7824,6 +7860,13 @@ def flp_plugin_settings(project, output, channel, settings=None, articulation=No
             "settings": settings or {}, "params": params or {}, **report}
 
 
+# An INSTRUMENT articulation plays only while its trigger matches: a state copied from a sound whose articulation was
+# 'pedal down' (CC64 >= 64, latched: t_type 4) stays silent under plain notes (PC 2026-10-26: LABS Strings written
+# from such a donor played nothing; the same state with this always-on trigger played)
+INSTRUMENT_TRIGGER_ALWAYS = (("t_type", "0"), ("t_latch", "0"), ("t_keyswitch", "0"), ("t_cc", "32"),
+                             ("t_ccValueFrom", "0"), ("t_ccValueTo", "127"), ("t_velFrom", "1"), ("t_velTo", "127"))
+
+
 def _instrument_state_set(state, family, name, version, artic, tags=""):
     """Point a Splice INSTRUMENT plugin state at another pack/preset: rewrite the XML (META + the articulation)
     and fix the five length fields around it (FL wrapper, VST3 'VstW', fxp 'CcnK', fxp chunk, 'VC2!')."""
@@ -7847,6 +7890,8 @@ def _instrument_state_set(state, family, name, version, artic, tags=""):
     av = (vparts[0] << 24) | (vparts[1] << 16) | (vparts[2] << 8)
     a0 = re.sub(r'(id="a_name" value=")[^"]*', lambda m_: m_.group(1) + esc(artic), arts[0], count=1)
     a0 = re.sub(r'(id="a_version" value=")[^"]*', lambda m_: m_.group(1) + str(av), a0, count=1)
+    for tid, tv in INSTRUMENT_TRIGGER_ALWAYS:          # the copied articulation's trigger: always on (a donor's
+        a0 = re.sub(r'(id="' + tid + r'" value=")[^"]*', lambda m_, v=tv: m_.group(1) + v, a0, count=1)   # pedal-
     xml = xml.replace("".join(arts), a0, 1) if xml.count("<ARTIC>") == len(arts) else xml.replace(arts[0], a0, 1)
     xml = re.sub(r' route="[^"]*"', "", xml)                       # UI page of the old preset
     new = xml.encode("utf-8"); dlt = len(new) - xs
@@ -7900,6 +7945,58 @@ def _instrument_source(project, d, ev):
     return None
 
 
+def _instrument_patches(pack, version):
+    """Patch names (.zmulti stems, exact case) of a downloaded INSTRUMENT pack version."""
+    vdir = os.path.join(_splice_lib(), pack, "Patches", "v" + str(version))
+    try:
+        return sorted(os.path.splitext(f)[0] for f in os.listdir(vdir) if f.lower().endswith(".zmulti"))
+    except OSError:
+        return []
+
+
+def _name_tokens(t, drop=()):
+    return [w for w in re.split(r"[^a-z0-9]+", str(t or "").lower()) if w and w not in drop]
+
+
+def _instrument_artic(preset, patches):
+    """(articulation name, how) for a preset: INSTRUMENT finds an articulation by its patch's name, exact case
+    (PC 2026-10-26: 'LABS_CHOIR' played nothing, the patch 'LABS_Choir' played). The preset's own name when a patch
+    has it; else the patch spelled differently; else the one patch whose name holds every word of the preset's."""
+    if preset in patches:
+        return preset, "exact"
+    low = {p.lower(): p for p in patches}
+    if str(preset).lower() in low:
+        return low[str(preset).lower()], "patch name (case)"
+    want = set(_name_tokens(preset, ("labs",)))
+    hits = [p for p in patches if want and want <= set(_name_tokens(p, ("labs",)))]
+    if hits:
+        hits.sort(key=lambda p: (0 if "pedal_down" in p.lower() else 1, len(p)))
+        return hits[0], "patch name (words)"
+    if len(patches) == 1:
+        return patches[0], "the pack's only patch"
+    return preset, "preset name (no patch matched)"
+
+
+def _instrument_saved_state(family, preset):
+    """A saved sound (flp_save_sound) holding the real INSTRUMENT state of this pack + preset - picked once in
+    INSTRUMENT's window, so its articulations carry INSTRUMENT's own names - or None."""
+    fam = set(_name_tokens(family))
+    rest = set(_name_tokens(preset, ("labs",))) - fam
+    for snd in flp_sounds():
+        if not _is_splice_instrument(snd.get("plugin")):
+            continue
+        try:
+            raw = open(snd["path"], "rb").read()
+        except OSError:
+            continue
+        m_ = re.search(rb'<META family="([^"]*)" name="([^"]*)"', raw)
+        if not m_ or m_.group(1).decode("utf-8", "replace").strip().lower() != str(family).strip().lower():
+            continue
+        if set(_name_tokens(m_.group(2).decode("utf-8", "replace"))) - fam == rest:
+            return snd
+    return None
+
+
 def flp_instrument_sound(project, output, channel, pack, preset=None, name=None):
     """Switch a Splice INSTRUMENT channel to another downloaded pack/preset (e.g. pack 'LABS - Choir') by editing
     its saved state - no INSTRUMENT window needed. Best for LABS packs (one sound per preset). Check by ear after."""
@@ -7916,6 +8013,22 @@ def flp_instrument_sound(project, output, channel, pack, preset=None, name=None)
     family = re.sub(r"^(LABS|Spitfire Audio|Splice)\s*-\s*", "", hit["pack"]).strip()
     d = _load(project); ev = _events(d); ch = int(channel)
     converted = None
+    saved = _instrument_saved_state(family, pre)
+    if saved:                                # INSTRUMENT's own state for this sound: loaded as it is (exact)
+        flp_load_plugin(project, output, saved["path"], channel=ch)
+        if name:
+            d = _load(output); ev = _events(d)
+            _, ks = _channel_block(d, ev, ch)
+            a = next((j for j in range(ks, -1, -1) if ev[j]["id"] == EV_CHANNEL), None)
+            b_ = next((j for j in range(a + 1, len(ev)) if ev[j]["id"] in (EV_DISPLAY_NAME, EV_CHANNEL)), None)
+            if b_ is not None and ev[b_]["id"] == EV_DISPLAY_NAME:
+                _save(_splice(d, ev, [(b_, b_ + 1, _data_event(EV_DISPLAY_NAME, str(name).encode("utf-16-le") +
+                                                               b"\x00\x00"))]), output)
+        return {"output": output, "channel": ch, "sound": f"{hit['pack']} / {pre}", "version": hit["version"],
+                "from_saved_sound": saved["name"],
+                "how": "your saved sound of this preset (INSTRUMENT's own state, picked in its window): plays as saved"}
+    patches = _instrument_patches(hit["pack"], hit["version"])
+    artic, how = _instrument_artic(pre, patches)
     try:
         _, ks = _channel_block(d, ev, ch)
         st = _payload(d, ev[ks])
@@ -7934,7 +8047,7 @@ def flp_instrument_sound(project, output, channel, pack, preset=None, name=None)
         d = _load(project); ev = _events(d)
         _, ks = _channel_block(d, ev, ch)
     old = _payload(d, ev[ks]); m_ = re.search(rb'<META family="([^"]*)" name="([^"]*)"', old)
-    new = _instrument_state_set(old, family, family, hit["version"], pre)
+    new = _instrument_state_set(old, family, family, hit["version"], artic)
     edits = [(ks, ks + 1, _data_event(EV_PLUGIN_STATE, new))]
     if name:
         a = next((j for j in range(ks, -1, -1) if ev[j]["id"] == EV_CHANNEL), None)
@@ -7945,7 +8058,13 @@ def flp_instrument_sound(project, output, channel, pack, preset=None, name=None)
     res = {"output": output, "channel": ch, "sound": f"{hit['pack']} / {pre}", "version": hit["version"],
            "was": (m_.group(2).decode("utf-8", "replace") if m_ else None),
            **({"made_instrument_from": converted} if converted else {}),
-           "check": "listen to it (fl_mix_check / fl_listen): an unsupported pack loads silent or keeps the old sound"}
+           "articulation": artic + ("" if how == "exact" else f" ({how})"),
+           "check": "listen to it (fl_preview on this channel): an unsupported pack loads silent or keeps the old sound"}
+    if how == "preset name (no patch matched)" or (patches and artic not in patches) or \
+            hit["pack"].lower().startswith("spitfire audio"):        # (Spitfire-made packs: INSTRUMENT's names differ)
+        res["may_be_silent"] = ("INSTRUMENT names this pack's articulations its own way (not readable from the pack's "
+                                "files): if it renders silent, pick the sound once in INSTRUMENT's window and save it "
+                                "with flp_save_sound - from then on flp_instrument_sound loads that exact state")
     seen = (_state().get("silent_packs") or {}).get(hit["pack"])
     if hit.get("downloaded") is False:                            # only presets on disk: says so, still written
         res["pack_downloaded"] = False
@@ -15027,6 +15146,18 @@ def _clip_names(d, ev):
     return out
 
 
+_CLIP_SIGS = {}                    # project -> {clip id: content} as the last flp_playlist list handed the ids out
+
+
+def _clip_sig(r):
+    """A playlist clip's content without its id (FL renumbers ids when it saves)."""
+    return bytes(r[:32]) + bytes(r[36:]) if len(r) >= 88 else bytes(r)
+
+
+def _clip_sig_key(project):
+    return os.path.normcase(os.path.abspath(str(project)))
+
+
 def flp_playlist(project, action="list", output=None, clips=None, pattern=None, channel=None, bar=None, track=None,
                  length_bars=None, repeat=1, every_bars=None, trim_start_bars=None, mute=True, names=None,
                  arrangement=None):
@@ -15048,6 +15179,8 @@ def flp_playlist(project, action="list", output=None, clips=None, pattern=None, 
         k, _, recs = _playlist_at(d, ev, arrangement)             # an empty playlist lists no clips (not an error)
         items = sorted((_clip_dict(d, ev, r, P, pats, names, bar_t, i, meters) for i, r in enumerate(recs)),
                        key=lambda c: (c["bar"], c["track"]))
+        if arrangement is None or _arrangement(d, ev, arrangement)["current"]:   # the ids handed out, by content:
+            _CLIP_SIGS[_clip_sig_key(project)] = {_clip_id(r, i): _clip_sig(r) for i, r in enumerate(recs)}
         out = {"project": project, "clips": items, "count": len(items)}
         arrs = _arrangements(d, ev)
         if len(arrs) > 1:
@@ -15063,13 +15196,15 @@ def flp_playlist(project, action="list", output=None, clips=None, pattern=None, 
                          "to edit another")
     output = output or project
     want = set(int(c) for c in (clips or []))
-    # FL renumbers clip ids whenever it saves (and the open project is saved before it's edited), so remember the
-    # wanted clips by their content and find them again after that save
-    _sig = lambda r: bytes(r[:32]) + bytes(r[36:])
+    # FL renumbers clip ids whenever it saves (and the open project is saved before it's edited), so the wanted clips
+    # are remembered by their content - as the last list handed the ids out (FL may have saved since), else as the
+    # file holds them now - and found again after that save
+    _sig = _clip_sig
     try:
         sig_of = {_clip_id(r, i): _sig(r) for i, r in enumerate(_playlist_event(d, ev)[1])}
     except Exception:
         sig_of = {}
+    sig_of.update(_CLIP_SIGS.get(_clip_sig_key(project)) or {})
 
     def run():
         nonlocal want
@@ -15091,17 +15226,21 @@ def flp_playlist(project, action="list", output=None, clips=None, pattern=None, 
                            if str(c.get("name", "")).strip().lower() in wanted}
             if not want:
                 raise ValueError(f"no clips named {sorted(pick_names)}")
-        if action in ("move", "remove", "resize", "mute", "unmute") and want - set(ids):
-            by_sig = {}
+        if action in ("move", "remove", "resize", "mute", "unmute") and want:
+            by_sig, sig_now = {}, {}
             for i, r in zip(ids, recs):
-                by_sig.setdefault(_sig(r), []).append(i)
+                by_sig.setdefault(_sig(r), []).append(i); sig_now[i] = _sig(r)
             remap = set()
-            for w in want:
-                cand = by_sig.get(sig_of.get(w), []) if w not in ids else [w]
-                if cand:
-                    remap.add(cand.pop(0))
-                else:
+            for w in sorted(want):                                # an id that now names ANOTHER clip (renumbered)
+                s_ = sig_of.get(w)                                # is followed to the clip it named when listed
+                if s_ is None or sig_now.get(w) == s_:
                     remap.add(w)
+                    continue
+                cand = [c for c in by_sig.get(s_, []) if c not in remap]
+                if not cand:                                      # the listed clip changed or is gone: never act
+                    raise ValueError(f"clip {w} isn't where action=list saw it (the playlist changed since): list "
+                                     "the clips again, or pick them by name (names=[...])")   # on whatever holds its id now
+                remap.add(cand[0])
             want = remap
         if action in ("move", "remove", "resize", "mute", "unmute"):
             missing = want - set(ids)

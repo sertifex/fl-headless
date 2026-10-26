@@ -89,6 +89,20 @@ def catalog_kind(kind):
     return CATALOG_KIND.get(kind, kind)
 
 
+# FLEX's 808 presets sound two octaves below the written note (measured on FL 2026: Core 808s 'Heavy Atom' and
+# 'Sub Below', Mobile Tuned 808 Bass '808 Clean' - a written C2 sounds C0); FLEX bass and keys presets play at pitch.
+# Notes on such a channel are written this many semitones above the pitch you hear (the song journal's
+# channels.N.transpose, like a pitched sampler's offset), so the composer, flp_score and every writer agree.
+FLEX_808_OFFSET = 24
+
+
+def sounding_offset(preset, pack=None):
+    """Semitones a FLEX preset's notes are written above the pitch it sounds at (0 = plays at pitch).
+    preset: a name, or an index row ({preset, pack, kind})."""
+    hit = preset if isinstance(preset, dict) else find(preset, pack)
+    return FLEX_808_OFFSET if hit and str(hit.get("kind") or "").lower() == "808" else 0
+
+
 def _roots():
     out = []
     try:
@@ -673,12 +687,19 @@ def flp_flex_preset(project, output=None, preset=None, pack=None, channel=None, 
     why = pack_flags().get(hit["pack"])
     if why:                                               # still written (asked for by name): said up front
         res["warning"] = f"'{hit['pack']}' {why} - it will most likely load silent"
+    new_off = sounding_offset(hit)
+    try:
+        jr = sys.modules["flh_store"].journal_get(project)
+        score = sys.modules.get("flh_score")
+        old_off = score.sounding_offsets(jr).get(int(channel), 0) if (score and channel is not None) else 0
+    except Exception:
+        old_off = 0
 
     def run():
         ch = channel
+        NS = sys.modules.get("flh_newsong")
         if ch is None:
             d = H["_load"](project); ev = H["_events"](d)
-            NS = __import__("sys").modules.get("flh_newsong")
             types = NS._chan_types(d, ev) if NS else {}
             src = next((c for c, t in sorted(types.items()) if t == 2), None)
             if src is None:
@@ -687,8 +708,31 @@ def flp_flex_preset(project, output=None, preset=None, pack=None, channel=None, 
             res["new_channel"] = ch
         H["flp_load_plugin"](output if channel is None else project, output, fst, channel=int(ch))
         res["channel"] = int(ch)
+        if channel is not None and new_off != old_off and NS:   # notes written for the old offset: moved to the new
+            d = H["_load"](output)
+            d, moved = NS._transpose_channel(d, int(ch), new_off - old_off)
+            if moved:
+                H["_save"](d, output)
+                res["notes_moved"] = moved
         return {"output": output}
     H["_with_open_project"](output, output, run)
+    if new_off or old_off:
+        ch = res["channel"]
+        try:
+            sys.modules["flh_store"].journal_update(output, set={
+                "channels": {str(ch): {"transpose": new_off or None}},
+                "compose": {"transpose": {str(ch): new_off or None}}})
+        except Exception as e:
+            res["journal_warning"] = f"the song journal wasn't updated ({str(e)[:80]}): tuning offset not recorded"
+        if new_off:
+            res["tuning"] = (f"FLEX 808 presets sound {new_off // 12} octaves below the written note: notes on channel "
+                             f"{ch} are written {new_off:+d} semitones from the pitch you hear (journal channels.{ch}"
+                             ".transpose; the composer and flp_score take it into account)")
+        else:
+            res["tuning"] = f"this preset plays at pitch: channel {ch}'s {old_off:+d} offset was removed"
+        if res.get("notes_moved"):
+            res["tuning"] += (f"; its {res['notes_moved']} existing notes moved {new_off - old_off:+d} so they sound "
+                              "at the pitch they were written for")
     res["note"] = "FLEX opens on this preset when FL loads the song" + (f"; named '{name}'" if name else "")
     return res
 
