@@ -1,0 +1,165 @@
+{
+ "plugin": "Fruity Limiter",
+ "aliases": [],
+ "edition": "fruity",
+ "roles": [
+  "limiter",
+  "compressor",
+  "gate"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "limit_gain_db": {
+   "index": 0,
+   "fl_name": "Gain",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -24,
+   "max": 24,
+   "confidence": "low"
+  },
+  "limit_saturation": {
+   "index": 1,
+   "fl_name": "Soft saturation threshold",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "limit_ceiling_db": {
+   "index": 2,
+   "fl_name": "Limiter ceiling",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -24,
+   "max": 6,
+   "confidence": "low"
+  },
+  "limit_attack_ms": {
+   "index": 3,
+   "fl_name": "Limiter attack time",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "exp": 2,
+   "confidence": "low"
+  },
+  "limit_release_ms": {
+   "index": 5,
+   "fl_name": "Limiter release time",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 1,
+   "max": 2000,
+   "exp": 2,
+   "confidence": "low"
+  },
+  "comp_threshold_db": {
+   "index": 8,
+   "fl_name": "Comp threshold",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -60,
+   "max": 0,
+   "confidence": "low"
+  },
+  "comp_knee": {
+   "index": 9,
+   "fl_name": "Comp knee",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "comp_ratio": {
+   "index": 10,
+   "fl_name": "Comp ratio",
+   "unit": "ratio",
+   "curve": "ratio_inv",
+   "verified": false,
+   "min": 1,
+   "max": "inf",
+   "confidence": "low"
+  },
+  "comp_attack_ms": {
+   "index": 12,
+   "fl_name": "Comp attack time",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "exp": 2,
+   "confidence": "low"
+  },
+  "comp_release_ms": {
+   "index": 14,
+   "fl_name": "Comp release time",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 1,
+   "max": 2000,
+   "exp": 2,
+   "confidence": "low"
+  },
+  "gate_threshold_db": {
+   "index": 16,
+   "fl_name": "Noise threshold",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -60,
+   "max": 0,
+   "confidence": "medium"
+  },
+  "gate_gain_db": {
+   "index": 15,
+   "fl_name": "Noise gain",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -60,
+   "max": 0,
+   "confidence": "medium"
+  },
+  "gate_release_ms": {
+   "index": 17,
+   "fl_name": "Noise release time",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 1,
+   "max": 2000,
+   "exp": 2,
+   "confidence": "medium"
+  }
+ },
+ "mode_note": "one plugin, three sections (LIMIT / COMP / NOISE GATE); the section shown is a UI page - all sections act at once in FL and the page is not a parameter. Gain and saturation are shared by LIMIT and COMP.",
+ "names_seen_on_pc": "2026-10-21 (FL 2026, fl_plugin_maps_check)",
+ "not_exposed": {
+  "mode": "LIMIT / COMP / NOISE GATE is only the page shown; all sections act at once and FL exposes no 'Mode' parameter (PC check 2026-10-23)",
+  "comp_gain_db": "no separate COMP gain: the one 'Gain' (limit_gain_db, index 0) is shared by the LIMIT and COMP pages (PC check 2026-10-23)",
+  "gate_attack_ms": "the noise gate has no attack parameter in FL's list (PC check 2026-10-23)"
+ },
+ "live_names_unmapped": [
+  "Limiter attack curve",
+  "Limiter release curve",
+  "Limiter peak window",
+  "Comp curve",
+  "Comp RMS window"
+ ]
+}

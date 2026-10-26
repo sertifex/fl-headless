@@ -1,0 +1,100 @@
+{
+ "format": "flh-genre/1",
+ "name": "boombap",
+ "aliases": ["boom bap", "boom-bap", "90s hip hop", "east coast", "golden era", "old school hip hop"],
+ "about": "90s East Coast boom bap: 84-98 BPM, MPC-style swing (56-62%) on 16ths, a hard kick and cracking snare on 2 and 4 with ghost snares, swung 8th/16th hats, a short bass that locks to the kick, soul-sample style minor 7th / dorian chords.",
+ "tempo": {"min": 84, "max": 98, "default": 90, "feel": "straight"},
+ "guess_weight": 0.7,
+ "meter": 4,
+ "swing": 0.58,
+ "humanize": {"timing_ms": 6, "vel": 7},
+ "loop_bars": 4,
+ "keys": {"modes": {"minor": 4, "dorian": 3, "major": 1}, "roots": ["C", "D", "Eb", "E", "F", "G", "A", "Bb"], "default": "D minor"},
+ "drums": {
+  "vel": {"X": 122, "x": 104, "o": 80, "g": 40},
+  "parts": {
+   "kick": {"patterns": [
+     {"steps": "X......x..x.....X.........x..x..", "w": 3},
+     {"steps": "X.........x.....X......x..x.....", "w": 2},
+     {"steps": "X......x.x......X.x.......x.....", "w": 1}],
+    "maybe": "..............2...............2."},
+   "snare": {"patterns": [{"steps": "....X.......X.......X.......X...", "w": 1}],
+    "ghosts": {"at": [7, 10, 15, 23, 26, 31], "chance": 0.45}},
+   "hat": {"patterns": [
+     {"steps": "x.o.x.o.x.o.x.o.", "w": 3},
+     {"steps": "xoxoxoxoxoxoxoxo", "w": 1},
+     {"steps": "x.o.x.oox.o.x.o.", "w": 2}]},
+   "openhat": {"patterns": [{"steps": "..............o.", "w": 1}, {"steps": "................", "w": 2}]},
+   "perc": {"patterns": [{"steps": "................", "w": 2}, {"steps": "..........o.....", "w": 1}]}
+  },
+  "fill": {"every": 4, "parts": {"snare": "____________.gxo", "kick": "______________x."}},
+  "variation": {"alt_pattern_chance": 0.25, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "bass",
+  "register": [33, 50],
+  "rhythm": "kick",
+  "follow": "root",
+  "length": "steps:3",
+  "gap_steps": 0.5,
+  "vel": [96, 112],
+  "octave_jump": 0.1,
+  "approach": 0.25,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i7", "iv7"], "mode": "minor", "bars": 2, "w": 3},
+   {"rn": ["i7", "VImaj7"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i7", "IV7"], "mode": "minor", "bars": 2, "w": 1},
+   {"rn": ["iiø", "V7", "i7", "i7"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["ii7", "V7", "Imaj7", "vi7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["Imaj7", "IVmaj7"], "mode": "major", "bars": 2, "w": 1}
+  ],
+  "voicing": {"style": "seventh", "register": [50, 72], "extensions": {"7": 1.0, "9": 0.25}},
+  "rhythm": {"patterns": [{"steps": "x-----x---------", "w": 2}, {"steps": "x---------------", "w": 2}, {"steps": "x-------..x-----", "w": 1}]},
+  "vel": [72, 90],
+  "strum_ms": 8
+ },
+ "melody": {
+  "hook": {"plan": ["A", "S", "A", "C"], "answer": "other", "breath": 3, "shapes": {"fall": 3, "arch": 2, "hold": 1}, "leap": 0.4},
+  "scale": "pentatonic",
+  "range": [64, 84],
+  "rhythms": [
+   {"steps": "x-.x-...x-.x-...", "w": 2},
+   {"steps": "x---..x-x---....", "w": 2},
+   {"steps": "....x-x-..x-x---", "w": 1}],
+  "motif_bars": 2,
+  "form": ["A", "A'"],
+  "chord_tone_strong": 0.8,
+  "step_prob": 0.7,
+  "max_leap": 5,
+  "repeat_note": 0.15,
+  "vel": [80, 100],
+  "length": "as_written",
+  "max_len_steps": 8
+ },
+ "counter": {"mode": "guide", "register": "below", "density": 0.35},
+ "form": {"default": [["Intro", 4], ["Verse", 16], ["Hook", 8], ["Verse", 16], ["Hook", 8], ["Verse", 16], ["Hook", 8], ["Outro", 4]]},
+ "sections": {
+  "Intro": {"energy": 0.3, "layers": ["chords", "melody"], "drums": "sparse"},
+  "Verse": {"energy": 0.7, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Hook": {"energy": 0.85, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.5, "layers": ["drums", "chords"], "drums": "light"},
+  "Outro": {"energy": 0.25, "layers": ["chords"], "drums": "none"}
+ },
+ "transitions": {"into": {"Hook": ["fill"], "Verse": ["stop"], "Outro": ["fill"]}, "end": ["tape_stop:2"]},
+ "ear_candy": {"amount": "subtle", "filters": ["intro", "outro"]},
+ "roles": {
+  "kick": {"hint": "dusty punchy kick (SP/MPC style)", "family": "drums"},
+  "snare": {"hint": "cracking snare with room", "family": "drums"},
+  "hat": {"hint": "crunchy closed hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "perc": {"hint": "shaker or tambourine", "family": "drums"},
+  "bass": {"hint": "deep round bass (upright or synth sub)", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "soul sample-style rhodes or piano", "family": "keys"},
+  "melody": {"hint": "horn stab, flute or vibes", "family": "lead"},
+  "counter": {"hint": "muted guitar or strings", "family": "lead"}
+ },
+ "mix": {"loudness_lufs": -9, "notes": ["snare loud and present", "low-pass or saturate the keys for a sampled feel", "bass mono, kick and bass in tune"], "sidechain": null}
+}

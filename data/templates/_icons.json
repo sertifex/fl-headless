@@ -1,0 +1,6 @@
+{
+ "format": "flh-icons/1",
+ "verified": false,
+ "about": "FL stores a channel's icon as a number (channel event 155). No verified number->icon list is known yet, so fl-headless sets no icons. Learn the map on a PC: flh_icon_probe(output=...) writes a project with one channel per icon number; open it in FL, read which icon each channel shows, fill 'map' with {symbolic name: number} and set verified true. Seen so far: 75 = what FL gives audio clip channels.",
+ "map": {}
+}

@@ -1,0 +1,232 @@
+{
+ "_about": "FL Studio behaviours that fl-headless ran into which the manual doesn't warn about (or that differ from it). Our own notes. verified_on: FL versions where this was seen ('2026' = FL 2026 on an fl-headless developer's PC, exact build not recorded). instructions=false keeps a quirk out of the server's connect-time instructions (too low-level).",
+ "quirks": [
+  {
+   "id": "quirk-second-instance",
+   "title": "Opening an .flp from outside can start a second FL",
+   "area": "projects",
+   "summary": "Launching an .flp from Explorer or the shell while FL runs can start a second copy of FL instead of opening it in the running one.",
+   "do": "Open projects inside the running FL (FILE > Open / Ctrl+O; fl_open does this). Never start a second FL.",
+   "verified_on": [
+    "2026.1.7"
+   ],
+   "tags": [
+    "second copy",
+    "instance",
+    "open project"
+   ]
+  },
+  {
+   "id": "quirk-reopen-ignored",
+   "title": "Re-opening the open project does nothing",
+   "area": "projects",
+   "summary": "FL ignores a request to open the project it already has open, so edits made to its .flp on disk don't show.",
+   "do": "Switch FL to a blank template, then open the project again. Don't quit FL to refresh.",
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "reload",
+    "refresh"
+   ]
+  },
+  {
+   "id": "quirk-memory-overwrites-disk",
+   "title": "FL saves its in-memory copy over disk edits",
+   "area": "projects",
+   "summary": "FL keeps the open project in memory; any later save (yours, autosave, 'save changes? Yes') writes that copy over changes made to the .flp file on disk.",
+   "do": "Save from FL first, edit the file, reload straight away, and answer 'No' to 'save changes?' on that reload.",
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "save changes",
+    "reload",
+    "overwrite"
+   ]
+  },
+  {
+   "id": "quirk-cmdline-render-open",
+   "title": "Command-line render needs FL closed",
+   "area": "render",
+   "summary": "A command-line render (FL64.exe /R) is handed to the FL that's already open instead of rendering in the background.",
+   "do": "Render from inside the open FL (fl_render method='in_fl'), or close FL once for a batch of renders - not per edit.",
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "render",
+    "/R",
+    "command line"
+   ]
+  },
+  {
+   "id": "quirk-trial-warning",
+   "title": "Demo plugins warn on save",
+   "area": "plugins",
+   "summary": "Saving a project that uses a plugin your edition doesn't include shows a trial/demo warning; such projects later reopen with the plugin silenced or noisy.",
+   "do": "Remove or replace that plugin. Never answer 'Save anyway' on the user's behalf.",
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "trial",
+    "demo",
+    "edition",
+    "unlock"
+   ]
+  },
+  {
+   "id": "quirk-painted-dialogs",
+   "title": "FL's message boxes have painted buttons",
+   "area": "windows",
+   "summary": "FL's own dialogs (save changes?, warnings) draw their buttons and text themselves, so automation can't read or click them as normal Windows controls.",
+   "do": "Answer them with the key that the button stands for (fl_dialog click does this); read them from a picture (fl_snapshot hwnd=...).",
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "popup",
+    "dialog",
+    "message box"
+   ]
+  },
+  {
+   "id": "quirk-autoplay-on-load",
+   "title": "Projects can start playing right after loading",
+   "area": "transport",
+   "summary": "FL may start playback by itself after a project loads.",
+   "do": "Stop playback after opening (fl-headless's tools do).",
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "autoplay",
+    "playback"
+   ]
+  },
+  {
+   "id": "quirk-no-switch-while-playing",
+   "title": "FL won't switch projects while playing",
+   "area": "transport",
+   "summary": "Opening another project while the transport is running doesn't go through.",
+   "do": "Stop playback first, then open.",
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "switch project",
+    "playing"
+   ]
+  },
+  {
+   "id": "quirk-transport-readback",
+   "title": "Transport changes apply after the script returns",
+   "area": "scripting",
+   "summary": "Changes made from FL's MIDI scripting API (play, position, tempo) take effect after the script callback ends, so reading them back in the same callback gives the old value.",
+   "do": "Read the state back in a later call.",
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "midi script",
+    "api",
+    "stale"
+   ],
+   "instructions": true
+  },
+  {
+   "id": "quirk-cold-ping",
+   "title": "First bridge call after a restart is often slow",
+   "area": "scripting",
+   "summary": "The first round trip to FL's MIDI script after FL or the client restarts often times out.",
+   "do": "Retry once (fl_ping does).",
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "ping",
+    "bridge",
+    "timeout"
+   ]
+  },
+  {
+   "id": "quirk-floating-windows",
+   "title": "Plugin windows are separate top-level windows",
+   "area": "windows",
+   "summary": "Detached plugin, channel and mixer windows are their own top-level windows; closing FL's main window message doesn't reach them and vice versa.",
+   "do": "Target FL's main window for app-level messages; treat floating windows separately.",
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "window",
+    "wm_close",
+    "detached"
+   ]
+  },
+  {
+   "id": "quirk-untitled-name",
+   "title": "Untitled projects are called 'Project N' in FL 2026",
+   "area": "projects",
+   "summary": "FL 2026 names new unsaved projects 'Project 1', 'Project 2'... (older versions: 'Untitled'); saving one opens Save As.",
+   "do": "Don't auto-save untitled projects; ask the user for a name and folder.",
+   "verified_on": [
+    "2026"
+   ],
+   "fl_versions": {
+    "min": "2026"
+   },
+   "tags": [
+    "untitled",
+    "save as"
+   ]
+  },
+  {
+   "id": "quirk-flp-track-numbering",
+   "title": ".flp stores playlist track n as 500 - n",
+   "area": "flp",
+   "summary": "In the .flp file a playlist clip's track index is stored reversed: playlist track n is written as 500 - n.",
+   "do": "Convert both ways when reading or writing clips.",
+   "instructions": false,
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "flp",
+    "file format",
+    "playlist track"
+   ]
+  },
+  {
+   "id": "quirk-flp-clip-mute",
+   "title": ".flp clip mute flag is 0x2000",
+   "area": "flp",
+   "summary": "A muted playlist clip has bit 0x2000 set in its item flags.",
+   "do": "Test / set that bit for clip mute.",
+   "instructions": false,
+   "verified_on": [
+    "2026"
+   ],
+   "tags": [
+    "flp",
+    "mute clip"
+   ]
+  },
+  {
+   "id": "quirk-flp-audio-clip-event",
+   "title": ".flp audio clip settings live in channel event 215",
+   "area": "flp",
+   "summary": "An audio clip channel's settings (fades, reverse, stretch, start/length...) are stored in channel event 215.",
+   "do": "Edit that event for audio clip settings.",
+   "instructions": false,
+   "verified_on": [
+    "2026.1.7"
+   ],
+   "tags": [
+    "flp",
+    "audio clip"
+   ]
+  }
+ ]
+}

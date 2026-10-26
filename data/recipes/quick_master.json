@@ -1,0 +1,14 @@
+{
+ "name": "quick_master",
+ "description": "Review the song, get a mix proposal (nothing applied), then render and finish the final master.",
+ "params": {
+  "project": {"description": "the .flp", "required": true},
+  "goal": {"description": "what the mix proposal should aim for (e.g. 'vocals clearer')", "required": false}
+ },
+ "steps": [
+  {"tool": "fl_review", "args": {"project": "${project}"}, "note": "loudness / tone / stereo per section"},
+  {"tool": "fl_mix_engineer", "args": {"project": "${project}", "goal": "${goal}", "apply": false},
+   "note": "a proposal only: apply it later with fl_mix_engineer(apply=true) if you like it"},
+  {"tool": "fl_finalize", "args": {"project": "${project}"}, "note": "renders and replaces the song's final file"}
+ ]
+}

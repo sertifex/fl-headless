@@ -1,0 +1,20 @@
+{
+ "format": "flh-kit/1",
+ "name": "dusty",
+ "about": "Sampled, dusty, soft-edged drums (SP/MPC, tape, vinyl): lo-fi, boom bap, jazz hop.",
+ "roles": {
+  "kick": "dusty soft punchy",
+  "snare": "dusty crack rimshot",
+  "clap": "dusty",
+  "hat": "dusty crunchy soft",
+  "openhat": "dusty soft",
+  "perc": "shaker dusty",
+  "shaker": "dusty",
+  "rim": "dusty",
+  "ride": "dusty jazz"
+ },
+ "avoid": [
+  "clean",
+  "hard"
+ ]
+}

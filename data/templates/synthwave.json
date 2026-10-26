@@ -1,0 +1,157 @@
+{
+ "format": "flh-template/1",
+ "genre": "synthwave",
+ "name": "synthwave starter",
+ "about": "Synthwave: 80s drum machine kick, gated-reverb snare, machine hats, Simmons toms, analog octave bass, lush polysynth chords, soaring saw lead, arp.",
+ "tempo": null,
+ "key": null,
+ "kit": "clean",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "80s drum machine linn"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "gated 80s big"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "drum machine",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "tom",
+   "name": "Tom",
+   "query": "electronic simmons"
+  },
+  {
+   "role": "crash",
+   "name": "Crash",
+   "query": "80s",
+   "group": "Cymbals"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "choices": [
+    {
+     "plugin": "Sawer",
+     "presets": [
+      "*bass*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*analog*bass*",
+      "*saw*bass*",
+      "*bass*"
+     ]
+    },
+    {
+     "flex": "bass"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "analog saw retro 80s"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Polysynth",
+   "family": "synth",
+   "choices": [
+    {
+     "plugin": "Sawer",
+     "presets": [
+      "*poly*",
+      "*pad*",
+      "*chord*"
+     ]
+    },
+    {
+     "plugin": "Harmless",
+     "presets": [
+      "*poly*",
+      "*pad*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*poly*",
+      "*juno*",
+      "*analog*",
+      "*pad*"
+     ]
+    },
+    {
+     "flex": "synth"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "juno analog poly 80s"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Lead",
+   "family": "lead",
+   "choices": [
+    {
+     "plugin": "Toxic Biohazard",
+     "presets": [
+      "*lead*"
+     ]
+    },
+    {
+     "plugin": "Harmless",
+     "presets": [
+      "*lead*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*saw*lead*",
+      "*lead*"
+     ]
+    },
+    {
+     "flex": "lead"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "analog saw retro"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "analog warm 80s"
+   }
+  }
+ ]
+}

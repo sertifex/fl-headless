@@ -1,0 +1,108 @@
+{
+ "format": "flh-genre/1",
+ "name": "lofi",
+ "aliases": ["lo-fi", "lofi hip hop", "lo fi", "chillhop", "study beat", "chill beat"],
+ "about": "Lo-fi hip hop: 70-90 BPM, heavy lazy swing (60-64%), soft dusty drums with ghost snares and loose timing, jazzy extended chords (7ths and 9ths) with smooth voice leading on a felt/electric piano, a simple bass on roots and fifths, a sparse pentatonic melody.",
+ "tempo": {"min": 70, "max": 90, "default": 82, "feel": "straight"},
+ "guess_weight": 0.8,
+ "meter": 4,
+ "swing": 0.62,
+ "humanize": {"timing_ms": 10, "vel": 9},
+ "loop_bars": 4,
+ "keys": {"modes": {"major": 3, "minor": 3, "dorian": 2}, "roots": ["C", "D", "Eb", "E", "F", "G", "A", "Bb"], "default": "F major"},
+ "drums": {
+  "vel": {"X": 104, "x": 92, "o": 70, "g": 34},
+  "parts": {
+   "kick": {"patterns": [
+     {"steps": "x.....x...x.....x.........x..x..", "w": 3},
+     {"steps": "x.........x..x..x......x..x.....", "w": 2},
+     {"steps": "x.....x.........x.x.......x.....", "w": 1}],
+    "maybe": "..............2...............2."},
+   "snare": {"patterns": [{"steps": "....x.......x.......x.......x...", "w": 1}],
+    "ghosts": {"at": [7, 10, 15, 23, 26, 31], "chance": 0.5}},
+   "hat": {"patterns": [
+     {"steps": "x.o.x.o.x.o.x.o.", "w": 3},
+     {"steps": "x.o.x.oox.o.x.o.", "w": 1},
+     {"steps": "o.o.o.o.o.o.o.o.", "w": 1}]},
+   "openhat": {"patterns": [{"steps": "................", "w": 3}, {"steps": "..............o.", "w": 1}]},
+   "perc": {"patterns": [{"steps": "................", "w": 2}, {"steps": "..........o.....", "w": 1}], "maybe": "......1.......1."}
+  },
+  "fill": {"every": 4, "parts": {"snare": "____________.g.x", "kick": "______________..", "openhat": "______________o."}},
+  "variation": {"alt_pattern_chance": 0.25, "kick_maybe_scale": 0.8}
+ },
+ "bass": {
+  "type": "bass",
+  "register": [33, 52],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "x-----x---x-----x-----------x---", "w": 2},
+   {"steps": "x---------x-----x-------x-------", "w": 2},
+   {"steps": "x-------x-------x-----x---------", "w": 1}],
+  "follow": "root_fifth",
+  "length": "as_written",
+  "gap_steps": 0.5,
+  "vel": [84, 100],
+  "octave_jump": 0.05,
+  "approach": 0.35,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["ii7", "V7", "Imaj7", "vi7"], "mode": "major", "bars": 1, "w": 3},
+   {"rn": ["IVmaj7", "iii7", "vi7", "Imaj7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["Imaj7", "vi7", "ii7", "V7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["IVmaj7", "IVmaj7", "iii7", "vi7"], "mode": "major", "bars": 1, "w": 1},
+   {"rn": ["i7", "iv7"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i7", "VImaj7", "iv7", "v7"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["iiø", "V7", "i7", "i7"], "mode": "minor", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "extended", "register": [50, 74], "extensions": {"7": 1.0, "9": 0.7}},
+  "rhythm": {"patterns": [{"steps": "x---------------", "w": 3}, {"steps": "x-------.....x--", "w": 1}, {"steps": "x-----x---------", "w": 1}]},
+  "vel": [62, 80],
+  "strum_ms": 18
+ },
+ "melody": {
+  "hook": {"plan": ["A", "R", "A", "C"], "answer": "other", "breath": 4, "shapes": {"fall": 3, "arch": 2}, "leap": 0.4},
+  "scale": "pentatonic",
+  "range": [64, 84],
+  "rhythms": [
+   {"steps": "x---..x-x---....", "w": 3},
+   {"steps": "..x-x-x-----....", "w": 2},
+   {"steps": "x-x-....x-------", "w": 2}],
+  "motif_bars": 2,
+  "form": ["A", "B"],
+  "chord_tone_strong": 0.8,
+  "step_prob": 0.75,
+  "max_leap": 5,
+  "repeat_note": 0.1,
+  "vel": [70, 90],
+  "length": "as_written",
+  "max_len_steps": 8
+ },
+ "counter": {"mode": "guide", "register": "below", "density": 0.3},
+ "form": {"default": [["Intro", 4], ["A", 8], ["B", 8], ["A", 8], ["B", 8], ["Outro", 4]]},
+ "sections": {
+  "Intro": {"energy": 0.3, "layers": ["chords", "pad"], "drums": "none"},
+  "A": {"role": "verse", "energy": 0.6, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "B": {"role": "hook", "energy": 0.7, "layers": ["drums", "bass", "chords", "melody", "pad"], "drums": "full"},
+  "Verse": {"energy": 0.6, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Hook": {"energy": 0.7, "layers": ["drums", "bass", "chords", "melody", "pad"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.4, "layers": ["chords", "melody", "pad"], "drums": "light"},
+  "Outro": {"energy": 0.25, "layers": ["chords", "melody", "pad"], "drums": "none"}
+ },
+ "transitions": {"into": {"B": ["fill", "reverse_crash"], "A": ["stop"], "Hook": ["fill", "reverse_crash"], "Outro": ["fill"]}, "end": ["tape_stop:4"]},
+ "ear_candy": {"amount": "subtle", "filters": ["intro", "outro"], "beds": ["vinyl"]},
+ "roles": {
+  "kick": {"hint": "soft dusty kick", "family": "drums"},
+  "snare": {"hint": "dusty snare / rimshot, lo-fi", "family": "drums"},
+  "hat": {"hint": "soft crunchy hat", "family": "drums"},
+  "openhat": {"hint": "soft open hat", "family": "drums"},
+  "perc": {"hint": "shaker or vinyl crackle perc", "family": "drums"},
+  "bass": {"hint": "warm round electric or upright bass", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "felt piano or warm rhodes", "family": "keys"},
+  "melody": {"hint": "mellow guitar, flute or soft synth", "family": "lead"},
+  "counter": {"hint": "soft vibes or muted guitar", "family": "lead"},
+  "pad": {"hint": "tape-saturated warm pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -12, "notes": ["low-pass the master or keys (~8-12 kHz), tape saturation and wow/flutter", "drums quiet and dusty, keys forward", "vinyl crackle bed"], "sidechain": {"trigger": "kick", "target": "chords", "depth_db": 2}}
+}

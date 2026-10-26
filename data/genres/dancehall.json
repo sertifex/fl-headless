@@ -1,0 +1,95 @@
+{
+ "format": "flh-genre/1",
+ "name": "dancehall",
+ "aliases": ["dance hall", "riddim", "dancehall riddim", "bashment", "jamaican dancehall", "modern dancehall"],
+ "about": "Modern dancehall: 90-110 BPM, riddims built on the 3-3-2 (tresillo) kick figure with a clap/snare backbeat on 2 and 4, syncopated rim and percussion, a sub/808 bass locked to the kicks on the root, short minor-key chord stabs, a chant-like melodic hook.",
+ "tempo": {"min": 90, "max": 110, "default": 100, "feel": "straight"},
+ "guess_weight": 0.4,
+ "meter": 4,
+ "swing": 0.52,
+ "humanize": {"timing_ms": 3, "vel": 5},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 5, "dorian": 1, "major": 2}, "roots": ["C", "C#", "D", "E", "F", "F#", "G", "A", "Bb"], "default": "D minor"},
+ "drums": {
+  "vel": {"X": 116, "x": 102, "o": 80, "g": 44},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X..x..x.X..x..x.", "w": 2}, {"steps": "X..x..x...x.....", "w": 2}, {"steps": "X..x....X..x....", "w": 1}]},
+   "clap": {"patterns": [{"steps": "....X.......X...", "w": 2}, {"steps": "....X.......X..o", "w": 1}]},
+   "rim": {"patterns": [{"steps": "..o..o....o..o..", "w": 2}, {"steps": "...o..o....o..o.", "w": 1}, {"steps": "................", "w": 1}],
+    "bar_alts": [{"chance": 0.15, "steps": "..o..o..o.o..o.o", "not_first": true}]},
+   "hat": {"patterns": [{"steps": "x.o.x.o.x.o.x.o.", "w": 2}, {"steps": "x.oox.oox.oox.oo", "w": 1}]},
+   "openhat": {"patterns": [{"steps": "................", "w": 2}, {"steps": "......o.......o.", "w": 1}]},
+   "perc": {"patterns": [{"steps": "o..o..o.o..o..o.", "w": 1}, {"steps": "................", "w": 1}], "maybe": "..............2."}
+  },
+  "fill": {"every": 8, "parts": {"rim": "____________oooo", "clap": "____________..xx"}},
+  "variation": {"alt_pattern_chance": 0.25, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "sub",
+  "register": [28, 45],
+  "rhythm": "kick",
+  "follow": "root",
+  "length": "steps:3",
+  "gap_steps": 0.25,
+  "vel": [98, 114],
+  "octave_jump": 0.1,
+  "glide": {"chance": 0.08, "len_steps": [1], "where": "late", "targets": {"next_root": 1, "octave_up": 1}}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i", "iv", "v", "i"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i", "VI", "VII", "i"], "mode": "minor", "bars": 1, "w": 3},
+   {"rn": ["i", "VII", "VI", "VII"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i", "iv"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["I", "IV", "V", "IV"], "mode": "major", "bars": 1, "w": 1},
+   {"rn": ["vi", "IV", "I", "V"], "mode": "major", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "triad", "register": [55, 74], "extensions": {"7": 0.2, "9": 0.0}},
+  "rhythm": {"patterns": [{"steps": "..x...x...x...x.", "w": 2}, {"steps": "x..x..x...x.....", "w": 2}, {"steps": "x---------------", "w": 1}]},
+  "vel": [72, 90]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "A", "S", "C"], "answer": "same", "breath": 2, "shapes": {"wave": 2, "fall": 2, "hold": 1}, "leap": 0.4},
+  "scale": "key",
+  "range": [62, 82],
+  "rhythms": [
+   {"steps": "x..x..x.x.x.....", "w": 3},
+   {"steps": "..x..x..x.x.x...", "w": 2},
+   {"steps": "x.x.x...x-x-....", "w": 1}
+  ],
+  "motif_bars": 1,
+  "form": ["A", "A'", "A", "B"],
+  "chord_tone_strong": 0.8,
+  "step_prob": 0.7,
+  "max_leap": 5,
+  "repeat_note": 0.3,
+  "vel": [86, 104],
+  "length": "as_written",
+  "max_len_steps": 4
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.4},
+ "form": {"default": [["Intro", 4], ["Hook", 8], ["Verse", 16], ["Hook", 8], ["Verse", 16], ["Hook", 8], ["Outro", 4]]},
+ "sections": {
+  "Intro": {"energy": 0.4, "layers": ["drums", "chords"], "drums": "light"},
+  "Hook": {"energy": 0.95, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Verse": {"energy": 0.75, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.5, "layers": ["drums", "chords", "melody"], "drums": "light"},
+  "Outro": {"energy": 0.35, "layers": ["drums", "chords"], "drums": "light"}
+ },
+ "transitions": {"into": {"Hook": ["fill", "reverse_crash"], "Verse": ["dropout"], "Outro": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "outro"]},
+ "roles": {
+  "kick": {"hint": "deep punchy riddim kick", "family": "drums"},
+  "clap": {"hint": "tight clap", "family": "drums"},
+  "rim": {"hint": "rimshot / stick", "family": "drums"},
+  "hat": {"hint": "closed hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "perc": {"hint": "shaker / tambourine / bongo", "family": "drums"},
+  "bass": {"hint": "deep sub bass", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "short synth or organ stabs", "family": "keys"},
+  "melody": {"hint": "chant-like synth or vocal hook", "family": "lead"},
+  "counter": {"hint": "bell or pluck", "family": "lead"},
+  "pad": {"hint": "warm pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -8, "notes": ["sub big and clean, kick and sub not fighting (short sub notes)", "vocal on top", "percussion bright and dry"], "sidechain": {"trigger": "kick", "target": "bass", "depth_db": 3}}
+}

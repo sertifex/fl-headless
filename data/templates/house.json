@@ -1,0 +1,147 @@
+{
+ "format": "flh-template/1",
+ "genre": "house",
+ "name": "house starter",
+ "about": "House: round four-on-the-floor kick, roomy clap, shuffled hats, offbeat open hat, deep bass, minor-7th stabs/organ, pluck lead, lush pad.",
+ "tempo": null,
+ "key": null,
+ "kit": "909",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "round house"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "roomy"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": ""
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "shuffled",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "offbeat",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "conga shaker",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "choices": [
+    {
+     "plugin": "Transistor Bass",
+     "presets": [
+      "*deep*",
+      "*house*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*deep*bass*",
+      "*organ*bass*",
+      "*bass*"
+     ]
+    },
+    {
+     "flex": "bass"
+    },
+    {
+     "plugin": "BooBass"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "deep sub analog round",
+    "avoid": [
+     "slap"
+    ]
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Stabs",
+   "family": "keys",
+   "choices": [
+    {
+     "flex": "synth",
+     "query": "stab chord house"
+    },
+    {
+     "flex": "organ",
+     "query": "house organ"
+    },
+    {
+     "flex": "pluck",
+     "query": "chord stab house"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*stab*",
+      "*organ*",
+      "*chord*"
+     ]
+    },
+    {
+     "plugin": "FL Keys",
+     "presets": [
+      "*organ*",
+      "*piano*"
+     ]
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "stab chord house organ",
+    "avoid": [
+     "church"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Pluck",
+   "family": "pluck",
+   "character": {
+    "query": "pluck analog house"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "warm deep"
+   }
+  },
+  {
+   "role": "fx",
+   "name": "FX",
+   "sample": "fx",
+   "query": "riser uplifter",
+   "notes": "arrange_song writes riser notes here"
+  }
+ ]
+}

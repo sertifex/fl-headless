@@ -1,0 +1,11 @@
+{
+  "_about": "How flh_sampler turns FL's raw Sampler channel values into ms / Hz / %. Raw ranges come from the FLP format (PyFLP docs; they match FL 2026 files). The ms and Hz curves are ESTIMATES until checked on a PC (checklists/sampler.md): set a value with the tool, hover the knob in FL, read the hint, adjust max_ms / exp / min_hz / max_hz here. Ratio moves ('x2') depend only on exp.",
+  "env_time": {"min_raw": 100, "max_raw": 65536, "max_ms": 10000.0, "exp": 3.0},
+  "sustain": {"max_raw": 128},
+  "tension": {"max_raw": 128},
+  "cutoff": {"max_raw": 256, "min_hz": 20.0, "max_hz": 20000.0},
+  "resonance": {"max_raw": 256},
+  "pitch_cents_max": 1200,
+  "filter_types": ["fast_lp", "lp", "bp", "hp", "bs", "lpx2", "svf_lp", "svf_lpx2"],
+  "declick_modes": ["out_only", "transient_no_bleeding", "transient", "generic", "smooth", "crossfade"]
+}

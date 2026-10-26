@@ -1,0 +1,81 @@
+{
+ "note": "Shared room (fl_room): starting points an engineer would use to put acoustic layers in one recorded space. Heuristics from common orchestral / studio practice, not measurements; a user's collection profile ('room') overrides any of it. decay/pre-delay come from tempo (beats / note values) clamped to each style's range. Distances: front = soloists / piano, mid = strings / choir / woodwinds / pads, back = brass / timpani / bells. send_db = send level to the room's tail bus (and er_send_db to its early-reflection bus); shelf = a gentle high-shelf cut on far tracks (air absorption). Pans are classical seating, used only when the layer is orchestral and only on tracks still centered.",
+ "styles": {
+  "hall": {"about": "concert hall: long tail, clear early reflections, far players darker",
+           "decay_beats": 4.5, "decay_s": [1.8, 3.2], "predelay_note": "1/64", "predelay_ms": [14, 40],
+           "room_size": 85, "diffusion": 80, "high_damping_hz": 6500, "low_cut_hz": 180, "high_cut_hz": 9000,
+           "bass_multiplier": 1.1, "stereo_separation": 110, "send_offset_db": 0, "er": true,
+           "tail_early_pct": 20,
+           "er_bus": {"decay_s": 0.45, "room_size": 60, "predelay_ms": 0, "early_pct": 100, "wet_pct": 15, "diffusion": 50,
+                      "low_cut_hz": 250, "high_cut_hz": 7500}},
+  "chamber": {"about": "small hall / chamber: medium tail, close early reflections",
+              "decay_beats": 2.5, "decay_s": [1.0, 1.8], "predelay_note": "1/128", "predelay_ms": [8, 22],
+              "room_size": 55, "diffusion": 75, "high_damping_hz": 7500, "low_cut_hz": 200, "high_cut_hz": 10000,
+              "bass_multiplier": 1.0, "stereo_separation": 100, "send_offset_db": -2, "er": true,
+              "tail_early_pct": 25,
+              "er_bus": {"decay_s": 0.3, "room_size": 40, "predelay_ms": 0, "early_pct": 100, "wet_pct": 12, "diffusion": 50,
+                         "low_cut_hz": 250, "high_cut_hz": 8000}},
+  "studio": {"about": "live room: short, subtle; glues layers without sounding like a venue",
+             "decay_beats": 1.2, "decay_s": [0.5, 1.0], "predelay_note": "1/128", "predelay_ms": [4, 14],
+             "room_size": 30, "diffusion": 70, "high_damping_hz": 8000, "low_cut_hz": 250, "high_cut_hz": 9000,
+             "bass_multiplier": 0.9, "stereo_separation": 100, "send_offset_db": -5, "er": false, "tail_early_pct": 60}
+ },
+ "distance": {
+  "front": {"send_db": -16, "er_send_db": -20, "shelf": null},
+  "mid":   {"send_db": -9, "er_send_db": -11, "shelf": {"hz": 9000, "gain_db": -1.5}},
+  "back":  {"send_db": -6, "er_send_db": -7, "shelf": {"hz": 7000, "gain_db": -3.0}}
+ },
+ "families": {
+  "piano": "front", "keys": "front", "vocal": "front", "lead": "front", "guitar": "front", "solo": "front",
+  "strings": "mid", "choir": "mid", "woodwind": "mid", "pad": "mid", "pluck": "mid", "organ": "mid",
+  "brass": "back", "timpani": "back", "bells": "back", "perc_orch": "back"
+ },
+ "family_words": [
+  ["timpani", ["timpani", "timps", "taiko", "orchestral perc", "gran cassa", "bass drum ens"]],
+  ["choir", ["choir", "choral", "chorus", "voices", "soprano", "alto", "tenor", "aah", "ooh"]],
+  ["piano", ["piano", "grand", "upright", "keys", "rhodes", "epiano", "e-piano", "wurli", "celesta", "harpsichord"]],
+  ["organ", ["organ", "harmonium"]],
+  ["strings", ["string", "strings", "violin", "violins", "viola", "violas", "cello", "celli", "cellos", "contrabass", "double bass", "basses", "ensemble", "orchestra", "spiccato", "pizz", "tremolo", "quartet"]],
+  ["brass", ["brass", "horn", "horns", "trumpet", "trumpets", "trombone", "trombones", "tuba", "cornet", "flugel"]],
+  ["woodwind", ["woodwind", "woodwinds", "flute", "flutes", "piccolo", "clarinet", "oboe", "bassoon", "cor anglais", "english horn", "recorder"]],
+  ["bells", ["bell", "bells", "glock", "glockenspiel", "chime", "chimes", "tubular", "music box", "xylophone", "vibraphone", "marimba", "crotales"]],
+  ["pluck", ["harp", "pluck", "kalimba", "koto", "dulcimer"]],
+  ["guitar", ["guitar", "nylon", "acoustic gtr"]],
+  ["pad", ["pad", "pads", "drone", "atmos", "texture", "swell", "warm"]],
+  ["vocal", ["vocal", "vox", "voice", "singer", "lead vox"]],
+  ["lead", ["solo", "lead", "melody"]]
+ ],
+ "skip_words": ["kick", "snare", "hat", "hihat", "clap", "808", "sub", "fx", "riser", "impact", "sweep", "drum", "drums", "perc", "bass synth", "reese", "noise"],
+ "seating": [
+  [["violin 1", "violins 1", "vln 1", "1st violin", "first violin", "violin i"], -0.5],
+  [["violin 2", "violins 2", "vln 2", "2nd violin", "second violin", "violin ii"], -0.25],
+  [["high strings", "violin", "violins"], -0.4],
+  [["viola", "violas"], 0.15],
+  [["cello", "celli", "cellos"], 0.35],
+  [["contrabass", "double bass", "basses", "low strings"], 0.5],
+  [["harp"], -0.45],
+  [["flute", "piccolo"], -0.15],
+  [["oboe", "cor anglais", "english horn"], 0.05],
+  [["clarinet"], -0.1],
+  [["bassoon"], 0.15],
+  [["horn", "horns", "french horn"], -0.35],
+  [["trumpet", "trumpets"], 0.1],
+  [["trombone", "trombones"], 0.3],
+  [["tuba"], 0.4],
+  [["timpani", "timps"], -0.15],
+  [["soprano", "sopranos"], -0.35],
+  [["alto", "altos"], -0.12],
+  [["tenor", "tenors"], 0.12],
+  [["choir bass", "basses choir", "bass choir"], 0.35],
+  [["bell", "bells", "glock", "celesta"], 0.25]
+ ],
+ "orchestral_families": ["strings", "brass", "woodwind", "choir", "timpani", "bells"],
+ "genre_style": {
+  "orchestral": "hall", "cinematic": "hall", "ambient": "hall", "acoustic": "chamber", "jazz": "chamber",
+  "default": "chamber", "pop": "studio", "rock": "studio", "lofi": "studio", "metal": "studio",
+  "edm": "none", "hiphop": "none"
+ },
+ "genre_send_offset_db": {"pop": -3, "rock": -3, "lofi": -2, "metal": -4, "edm": -6, "hiphop": -6},
+ "bus_names": {"tail": "Room", "er": "Room ER"},
+ "bus_color": "#2B3A42"
+}

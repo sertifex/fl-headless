@@ -1,0 +1,433 @@
+{
+ "_about": "fl-headless's own FL vocabulary for search (query expansion). Each group: words people use for the same thing. misspellings: typed -> meant. Add freely.",
+ "groups": [
+  [
+   "channel rack",
+   "step sequencer",
+   "channelrack",
+   "sequencer",
+   "step seq"
+  ],
+  [
+   "mixer track",
+   "insert",
+   "insert track",
+   "mixer insert",
+   "mixer channel",
+   "fx track",
+   "mixer"
+  ],
+  [
+   "playlist",
+   "arrangement",
+   "timeline",
+   "arrange window",
+   "song view"
+  ],
+  [
+   "piano roll",
+   "pianoroll",
+   "midi editor",
+   "note editor"
+  ],
+  [
+   "automation clip",
+   "automation",
+   "automate",
+   "automation lane",
+   "envelope clip"
+  ],
+  [
+   "sidechain",
+   "side chain",
+   "ducking",
+   "pumping",
+   "duck"
+  ],
+  [
+   "bounce",
+   "consolidate",
+   "freeze",
+   "render to audio",
+   "bounce in place"
+  ],
+  [
+   "render",
+   "export",
+   "mixdown",
+   "bounce down",
+   "export audio",
+   "wave file",
+   "wav",
+   "mp3"
+  ],
+  [
+   "stems",
+   "stem export",
+   "split mixer tracks",
+   "multitrack export",
+   "tracks out"
+  ],
+  [
+   "bus",
+   "buss",
+   "bussing",
+   "group track",
+   "submix",
+   "route to this track only"
+  ],
+  [
+   "send",
+   "send track",
+   "aux",
+   "parallel",
+   "return track"
+  ],
+  [
+   "shortcut",
+   "shortcuts",
+   "hotkey",
+   "hotkeys",
+   "keyboard shortcut",
+   "keybind"
+  ],
+  [
+   "tempo",
+   "bpm"
+  ],
+  [
+   "time signature",
+   "meter",
+   "beats per bar"
+  ],
+  [
+   "quantize",
+   "quantise",
+   "quantizer",
+   "snap to grid"
+  ],
+  [
+   "arpeggiator",
+   "arp",
+   "arpeggio"
+  ],
+  [
+   "equalizer",
+   "eq",
+   "parametric eq",
+   "parametric equalizer"
+  ],
+  [
+   "compressor",
+   "compression",
+   "compress"
+  ],
+  [
+   "limiter",
+   "limiting",
+   "brickwall"
+  ],
+  [
+   "reverb",
+   "reverberation",
+   "room",
+   "hall"
+  ],
+  [
+   "delay",
+   "echo"
+  ],
+  [
+   "pitch correction",
+   "autotune",
+   "auto tune",
+   "auto-tune",
+   "tuning vocals",
+   "pitcher",
+   "newtone"
+  ],
+  [
+   "time stretch",
+   "timestretch",
+   "stretch",
+   "warp",
+   "fit to tempo"
+  ],
+  [
+   "slice",
+   "slicing",
+   "chop",
+   "chopping",
+   "slicer",
+   "slicex"
+  ],
+  [
+   "record audio",
+   "recording audio",
+   "record vocals",
+   "record guitar",
+   "audio recording",
+   "arm track"
+  ],
+  [
+   "record midi",
+   "recording midi",
+   "midi keyboard",
+   "midi controller",
+   "record notes"
+  ],
+  [
+   "sample",
+   "sampler",
+   "audio clip",
+   "one shot",
+   "loop"
+  ],
+  [
+   "drum pattern",
+   "drums",
+   "beat",
+   "step sequencing"
+  ],
+  [
+   "vst",
+   "plugin",
+   "plug-in",
+   "plugins",
+   "third party plugin"
+  ],
+  [
+   "plugin manager",
+   "manage plugins",
+   "plugin scan",
+   "find plugins",
+   "scan plugins"
+  ],
+  [
+   "audio settings",
+   "asio",
+   "audio interface",
+   "sound card",
+   "buffer",
+   "latency",
+   "driver"
+  ],
+  [
+   "midi settings",
+   "midi input",
+   "controller setup"
+  ],
+  [
+   "template",
+   "templates",
+   "startup template",
+   "default project"
+  ],
+  [
+   "undo",
+   "undo history"
+  ],
+  [
+   "metronome",
+   "click"
+  ],
+  [
+   "countdown",
+   "precount",
+   "count in"
+  ],
+  [
+   "mute",
+   "solo"
+  ],
+  [
+   "pattern",
+   "patterns",
+   "pattern clip"
+  ],
+  [
+   "song mode",
+   "pattern mode",
+   "song pattern switch"
+  ],
+  [
+   "browser",
+   "file browser",
+   "sample browser"
+  ],
+  [
+   "mastering",
+   "master chain",
+   "loudness",
+   "lufs"
+  ],
+  [
+   "gain staging",
+   "headroom",
+   "levels",
+   "clipping"
+  ],
+  [
+   "mono",
+   "mono compatibility",
+   "stereo width",
+   "stereo"
+  ],
+  [
+   "swing",
+   "groove",
+   "shuffle"
+  ],
+  [
+   "humanize",
+   "randomize",
+   "random velocity"
+  ],
+  [
+   "ghost notes",
+   "ghost channels"
+  ],
+  [
+   "slide notes",
+   "glide",
+   "portamento",
+   "porta"
+  ],
+  [
+   "markers",
+   "time markers",
+   "locators"
+  ],
+  [
+   "score log",
+   "dump score log",
+   "recover what i played"
+  ],
+  [
+   "stem separation",
+   "stem separator",
+   "extract stems",
+   "isolate vocals"
+  ],
+  [
+   "vocoder",
+   "vocodex",
+   "talkbox"
+  ],
+  [
+   "distortion",
+   "saturation",
+   "overdrive",
+   "drive"
+  ],
+  [
+   "filter",
+   "low pass",
+   "lowpass",
+   "high pass",
+   "highpass",
+   "cutoff"
+  ],
+  [
+   "chorus",
+   "flanger",
+   "phaser",
+   "modulation effects"
+  ],
+  [
+   "export midi",
+   "midi file",
+   "save midi"
+  ],
+  [
+   "import midi",
+   "load midi",
+   "open midi"
+  ],
+  [
+   "latency compensation",
+   "pdc",
+   "plugin delay compensation"
+  ],
+  [
+   "multi output",
+   "multi out",
+   "multiple outputs"
+  ],
+  [
+   "patcher",
+   "fx chain",
+   "effect chain",
+   "rack"
+  ],
+  [
+   "playlist track",
+   "track lane",
+   "lane"
+  ],
+  [
+   "picker panel",
+   "clip picker"
+  ]
+ ],
+ "misspellings": {
+  "sidechian": "sidechain",
+  "sidechane": "sidechain",
+  "side chian": "sidechain",
+  "sidchain": "sidechain",
+  "pianoroll": "piano roll",
+  "piano rol": "piano roll",
+  "paino roll": "piano roll",
+  "piano-roll": "piano roll",
+  "playlsit": "playlist",
+  "plalist": "playlist",
+  "playist": "playlist",
+  "mixxer": "mixer",
+  "mxier": "mixer",
+  "mixr": "mixer",
+  "automaton": "automation",
+  "autmation": "automation",
+  "automtion": "automation",
+  "automatoin": "automation",
+  "chanel rack": "channel rack",
+  "channel rak": "channel rack",
+  "chanel": "channel",
+  "quantise": "quantize",
+  "quantisation": "quantize",
+  "quantization": "quantize",
+  "quantinze": "quantize",
+  "arpegiator": "arpeggiator",
+  "arpeggiater": "arpeggiator",
+  "arpegio": "arpeggio",
+  "rever": "reverb",
+  "reverbe": "reverb",
+  "delya": "delay",
+  "compresser": "compressor",
+  "compresor": "compressor",
+  "limitter": "limiter",
+  "equaliser": "equalizer",
+  "equalise": "eq",
+  "metranome": "metronome",
+  "metronom": "metronome",
+  "vocorder": "vocoder",
+  "autotun": "autotune",
+  "auto tunes": "autotune",
+  "slizer": "slicer",
+  "edisson": "edison",
+  "fruty": "fruity",
+  "frooty": "fruity",
+  "fruit loops": "fl studio",
+  "fruityloops": "fl studio",
+  "sytris": "sytrus",
+  "harmour": "harmor",
+  "gross beats": "gross beat",
+  "grossbeat": "gross beat",
+  "normalise": "normalize",
+  "organise": "organize",
+  "colour": "color",
+  "colours": "colors",
+  "exporting": "export",
+  "rendering": "render",
+  "bouncing": "bounce"
+ }
+}

@@ -1,0 +1,539 @@
+{
+ "format": "flh-access-glossary/1",
+ "about": "Plain-language explanations of music and production jargon, used by ns['access_text'] (plain-language mode) and fl_describe. Each term: plain = a short explanation that fits in brackets after the word; level = basic (explained only in 'plain' mode) or pro (deep jargon: explained in 'plain' and 'standard' mode). aliases: other spellings matched the same way. Matching is whole-word and case-insensitive, first use only. Users can add or change terms in <state folder>/access/glossary.json (same format; their entries win).",
+ "terms": {
+  "LUFS": {
+   "plain": "loudness units: how loud it feels on average; -14 is a common streaming level, closer to 0 is louder",
+   "level": "basic"
+  },
+  "LU": {
+   "plain": "loudness units; 1 LU is a small step, 6 LU a big one",
+   "level": "basic"
+  },
+  "dB": {
+   "plain": "decibels: steps of loudness; 1 dB is barely noticeable, 6 dB is clearly louder",
+   "level": "basic",
+   "aliases": [
+    "decibel",
+    "decibels"
+   ]
+  },
+  "dBFS": {
+   "plain": "decibels below the digital maximum (0 dBFS is the ceiling)",
+   "level": "pro"
+  },
+  "dBTP": {
+   "plain": "true peak in decibels: the highest point of the waveform; above -1 risks distortion after streaming",
+   "level": "pro"
+  },
+  "true peak": {
+   "plain": "the very highest point of the waveform, between samples too",
+   "level": "pro"
+  },
+  "clipping": {
+   "plain": "the sound hitting the digital ceiling and getting cut off, which makes crackly distortion",
+   "level": "basic",
+   "aliases": [
+    "clipped",
+    "clips"
+   ]
+  },
+  "headroom": {
+   "plain": "space left below the loudness ceiling",
+   "level": "basic"
+  },
+  "EQ": {
+   "plain": "equalizer: turns some pitch ranges up or down, like bass and treble knobs",
+   "level": "basic",
+   "aliases": [
+    "equalizer",
+    "equaliser"
+   ]
+  },
+  "high-pass": {
+   "plain": "a filter that removes the lowest sounds",
+   "level": "pro",
+   "aliases": [
+    "high pass",
+    "low cut"
+   ]
+  },
+  "low-pass": {
+   "plain": "a filter that removes the highest sounds",
+   "level": "pro",
+   "aliases": [
+    "low pass",
+    "high cut"
+   ]
+  },
+  "shelf": {
+   "plain": "an EQ move that raises or lowers everything above (or below) a point",
+   "level": "pro",
+   "aliases": [
+    "high shelf",
+    "low shelf"
+   ]
+  },
+  "compressor": {
+   "plain": "an effect that evens out loud and quiet moments",
+   "level": "basic",
+   "aliases": [
+    "compression"
+   ]
+  },
+  "limiter": {
+   "plain": "an effect that stops the sound from going over a set ceiling",
+   "level": "basic"
+  },
+  "sidechain": {
+   "plain": "one sound briefly ducking out of the way when another plays (often the bass ducking for the kick)",
+   "level": "pro",
+   "aliases": [
+    "side-chain",
+    "sidechaining"
+   ]
+  },
+  "ducking": {
+   "plain": "one sound getting quieter for a moment so another can be heard",
+   "level": "basic"
+  },
+  "reverb": {
+   "plain": "echo of a room or hall that makes a sound feel further away and bigger",
+   "level": "basic"
+  },
+  "delay": {
+   "plain": "an echo effect that repeats the sound",
+   "level": "basic"
+  },
+  "saturation": {
+   "plain": "gentle distortion that adds warmth and grit",
+   "level": "pro"
+  },
+  "pan": {
+   "plain": "where a sound sits from left to right",
+   "level": "basic",
+   "aliases": [
+    "panned",
+    "panning"
+   ]
+  },
+  "stereo": {
+   "plain": "sound that differs between the left and right speaker, so it feels wide",
+   "level": "basic"
+  },
+  "mono": {
+   "plain": "the same sound in both speakers, so it feels centered and narrow",
+   "level": "basic"
+  },
+  "correlation": {
+   "plain": "how alike the left and right sides are: 1 = identical (centered), 0 = very wide, below 0 = parts cancel out on one speaker",
+   "level": "pro"
+  },
+  "phase": {
+   "plain": "timing alignment of sound waves; out-of-phase sounds can cancel each other and go thin",
+   "level": "pro",
+   "aliases": [
+    "phasey"
+   ]
+  },
+  "mid/side": {
+   "plain": "splitting sound into the center part and the wide part",
+   "level": "pro",
+   "aliases": [
+    "mid-side"
+   ]
+  },
+  "mud": {
+   "plain": "too much low-middle sound (200-500 Hz), which makes a mix cloudy",
+   "level": "basic",
+   "aliases": [
+    "muddy",
+    "muddier"
+   ]
+  },
+  "harsh": {
+   "plain": "too much upper-middle sound (about 2-6 kHz), which can feel piercing or tiring",
+   "level": "basic",
+   "aliases": [
+    "harshness",
+    "harsher"
+   ]
+  },
+  "presence": {
+   "plain": "the upper-middle range (about 2-5 kHz) where voices and attacks are clearest",
+   "level": "pro"
+  },
+  "air": {
+   "plain": "the very top of the sound (above about 8 kHz): sparkle and breath",
+   "level": "pro"
+  },
+  "sub": {
+   "plain": "the deepest bass (below about 60 Hz), felt as vibration more than heard",
+   "level": "basic",
+   "aliases": [
+    "sub-bass",
+    "sub bass"
+   ]
+  },
+  "low end": {
+   "plain": "the bass range: kick drum and bass",
+   "level": "basic"
+  },
+  "low-mid": {
+   "plain": "the range just above the bass (about 200-500 Hz)",
+   "level": "pro",
+   "aliases": [
+    "low mids",
+    "low-mids",
+    "lowmid"
+   ]
+  },
+  "transient": {
+   "plain": "the sharp start of a sound, like the hit of a drum",
+   "level": "pro",
+   "aliases": [
+    "transients"
+   ]
+  },
+  "attack": {
+   "plain": "how quickly a sound starts",
+   "level": "basic"
+  },
+  "release": {
+   "plain": "how quickly a sound or effect lets go after it stops",
+   "level": "basic"
+  },
+  "crest factor": {
+   "plain": "how much the peaks stick out above the average: high = punchy, low = squashed flat",
+   "level": "pro",
+   "aliases": [
+    "crest"
+   ]
+  },
+  "dynamic range": {
+   "plain": "the difference between the quiet and loud parts",
+   "level": "basic"
+  },
+  "dynamics": {
+   "plain": "changes between loud and soft",
+   "level": "basic"
+  },
+  "masking": {
+   "plain": "one sound hiding another because they share the same pitch range",
+   "level": "pro"
+  },
+  "resonance": {
+   "plain": "one narrow pitch that rings out louder than its neighbours",
+   "level": "pro",
+   "aliases": [
+    "resonant"
+   ]
+  },
+  "tilt": {
+   "plain": "whether the sound leans bright (more highs) or dark (more lows)",
+   "level": "pro"
+  },
+  "mastering": {
+   "plain": "the final polish that sets the overall loudness and tone of the finished song",
+   "level": "basic"
+  },
+  "mixing": {
+   "plain": "balancing all the parts' levels, tone and placement",
+   "level": "basic"
+  },
+  "mixer insert": {
+   "plain": "one channel strip on FL's mixer where a sound's effects and volume live",
+   "level": "basic",
+   "aliases": [
+    "mixer track"
+   ]
+  },
+  "bus": {
+   "plain": "a mixer track that several sounds are sent to together",
+   "level": "pro"
+  },
+  "gain staging": {
+   "plain": "keeping levels sensible at each step so nothing distorts",
+   "level": "pro"
+  },
+  "automation": {
+   "plain": "a setting that changes by itself over time, like a fader that moves",
+   "level": "basic"
+  },
+  "velocity": {
+   "plain": "how hard a note is played (1-127)",
+   "level": "basic"
+  },
+  "quantize": {
+   "plain": "snapping notes exactly onto the beat grid",
+   "level": "basic",
+   "aliases": [
+    "quantized",
+    "quantise"
+   ]
+  },
+  "swing": {
+   "plain": "a bouncy, long-short rhythm instead of perfectly even notes",
+   "level": "basic",
+   "aliases": [
+    "swung"
+   ]
+  },
+  "groove": {
+   "plain": "the rhythmic feel that makes you want to move",
+   "level": "basic"
+  },
+  "BPM": {
+   "plain": "beats per minute: the speed",
+   "level": "basic",
+   "aliases": [
+    "bpm"
+   ]
+  },
+  "bar": {
+   "plain": "one measure of music, usually 4 beats",
+   "level": "basic",
+   "aliases": [
+    "bars"
+   ]
+  },
+  "time signature": {
+   "plain": "how many beats are in each bar (4/4 = four, 3/4 = three, like a waltz)",
+   "level": "basic"
+  },
+  "key": {
+   "plain": "the home note and scale the song is built on",
+   "level": "basic"
+  },
+  "major": {
+   "plain": "a scale that usually sounds bright or happy",
+   "level": "basic"
+  },
+  "minor": {
+   "plain": "a scale that usually sounds darker or sadder",
+   "level": "basic"
+  },
+  "chord": {
+   "plain": "several notes played together",
+   "level": "basic",
+   "aliases": [
+    "chords"
+   ]
+  },
+  "progression": {
+   "plain": "the order the chords come in",
+   "level": "basic"
+  },
+  "roman numeral": {
+   "plain": "a chord named by its step in the key (I = home chord, V = the chord that pulls home)",
+   "level": "pro",
+   "aliases": [
+    "roman numerals"
+   ]
+  },
+  "tonic": {
+   "plain": "the home note or home chord of the key",
+   "level": "pro"
+  },
+  "cadence": {
+   "plain": "a chord move that ends a phrase, like a musical full stop",
+   "level": "pro"
+  },
+  "modulation": {
+   "plain": "a change of key in the middle of a song",
+   "level": "pro",
+   "aliases": [
+    "modulates"
+   ]
+  },
+  "voicing": {
+   "plain": "how a chord's notes are spread out (close together or far apart)",
+   "level": "pro"
+  },
+  "register": {
+   "plain": "how high or low a part plays",
+   "level": "basic"
+  },
+  "octave": {
+   "plain": "the same note higher or lower (double or half the pitch)",
+   "level": "basic",
+   "aliases": [
+    "octaves"
+   ]
+  },
+  "semitone": {
+   "plain": "the smallest step between two notes (one piano key)",
+   "level": "basic",
+   "aliases": [
+    "semitones",
+    "half step"
+   ]
+  },
+  "arpeggio": {
+   "plain": "the notes of a chord played one after another",
+   "level": "basic",
+   "aliases": [
+    "arp",
+    "arpeggiated"
+   ]
+  },
+  "ostinato": {
+   "plain": "a short pattern repeated over and over",
+   "level": "pro"
+  },
+  "pad": {
+   "plain": "a soft sustained sound that holds chords in the background",
+   "level": "basic",
+   "aliases": [
+    "pads"
+   ]
+  },
+  "lead": {
+   "plain": "the main tune instrument",
+   "level": "basic"
+  },
+  "bassline": {
+   "plain": "the low tune played by the bass",
+   "level": "basic"
+  },
+  "kick": {
+   "plain": "the bass drum: the deep thump",
+   "level": "basic"
+  },
+  "snare": {
+   "plain": "the sharp crack drum, often on beats 2 and 4",
+   "level": "basic"
+  },
+  "hi-hat": {
+   "plain": "the small ticking cymbal that keeps time",
+   "level": "basic",
+   "aliases": [
+    "hihat",
+    "hats"
+   ]
+  },
+  "staccato": {
+   "plain": "short, detached notes",
+   "level": "pro"
+  },
+  "legato": {
+   "plain": "smooth, connected notes",
+   "level": "pro"
+  },
+  "timbre": {
+   "plain": "the color or character of a sound (what makes a flute and a violin sound different)",
+   "level": "pro"
+  },
+  "crescendo": {
+   "plain": "getting gradually louder",
+   "level": "pro"
+  },
+  "Hz": {
+   "plain": "hertz: vibrations per second; low numbers are low pitches",
+   "level": "basic",
+   "aliases": [
+    "hertz"
+   ]
+  },
+  "kHz": {
+   "plain": "thousands of vibrations per second: high pitches (1 kHz is roughly a whistle)",
+   "level": "basic"
+  },
+  "frequency": {
+   "plain": "how high or low a pitch is, measured in Hz",
+   "level": "basic",
+   "aliases": [
+    "frequencies"
+   ]
+  },
+  "sample rate": {
+   "plain": "how many times per second the audio is measured (44100 or 48000 is normal)",
+   "level": "pro"
+  },
+  "bit depth": {
+   "plain": "how finely each audio sample is stored (24-bit is the usual for finished songs)",
+   "level": "pro"
+  },
+  "render": {
+   "plain": "turning the project into an audio file",
+   "level": "basic",
+   "aliases": [
+    "rendered",
+    "rendering"
+   ]
+  },
+  "stem": {
+   "plain": "an audio file of one part or group on its own",
+   "level": "basic",
+   "aliases": [
+    "stems"
+   ]
+  },
+  "pattern": {
+   "plain": "a block of notes in FL that you place in the playlist",
+   "level": "basic",
+   "aliases": [
+    "patterns"
+   ]
+  },
+  "playlist": {
+   "plain": "FL's timeline where patterns and audio are arranged into a song",
+   "level": "basic"
+  },
+  "channel rack": {
+   "plain": "FL's list of instruments and samples",
+   "level": "basic"
+  },
+  "piano roll": {
+   "plain": "FL's note editor: pitch up and down, time left to right",
+   "level": "basic"
+  },
+  "plugin": {
+   "plain": "an instrument or effect that runs inside FL",
+   "level": "basic",
+   "aliases": [
+    "plugins",
+    "VST"
+   ]
+  },
+  "preset": {
+   "plain": "a saved sound setting for an instrument or effect",
+   "level": "basic",
+   "aliases": [
+    "presets"
+   ]
+  },
+  "MIDI": {
+   "plain": "note data (which key, when, how hard) without the sound itself",
+   "level": "basic"
+  },
+  "latency": {
+   "plain": "the small delay between playing and hearing",
+   "level": "basic"
+  },
+  "buffer": {
+   "plain": "a chunk of audio the computer prepares in advance; smaller = less delay but more strain",
+   "level": "pro"
+  },
+  "ASIO": {
+   "plain": "a fast audio driver type on Windows that lowers delay",
+   "level": "pro"
+  },
+  "normalization": {
+   "plain": "streaming services turning loud songs down (and sometimes quiet ones up) to an even level",
+   "level": "pro",
+   "aliases": [
+    "normalize",
+    "normalized"
+   ]
+  },
+  "width": {
+   "plain": "how spread out from left to right the sound feels",
+   "level": "basic"
+  },
+  "loopback": {
+   "plain": "recording what comes out of the speakers inside the computer",
+   "level": "pro"
+  }
+ }
+}

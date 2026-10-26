@@ -1,0 +1,290 @@
+{
+ "base": {
+  "bytes": 155727,
+  "desc": "the FL 2026 fixture (4 VST channels, automation channel, audio clip, 1 pattern, mixer FX), neutral names",
+  "heavy": false,
+  "tags": []
+ },
+ "empty": {
+  "bytes": 47862,
+  "desc": "no patterns, no channels, no clips: header + arrangement + mixer only",
+  "heavy": false,
+  "tags": [
+   "empty"
+  ]
+ },
+ "one_channel": {
+  "bytes": 71556,
+  "desc": "a single plugin channel with its notes and one pattern clip",
+  "heavy": false,
+  "tags": []
+ },
+ "one_channel_no_notes": {
+  "bytes": 70243,
+  "desc": "a single plugin channel, one empty pattern, nothing in the playlist",
+  "heavy": false,
+  "tags": [
+   "empty"
+  ]
+ },
+ "patterns_1000": {
+  "bytes": 249102,
+  "desc": "1000 patterns with 2 notes each, every one placed once in the playlist",
+  "heavy": false,
+  "tags": [
+   "many"
+  ]
+ },
+ "audio_clips": {
+  "bytes": 158610,
+  "desc": "3 audio clips added by flp_add_audio_clip (overlapping, same and different tracks)",
+  "heavy": false,
+  "tags": [
+   "writers",
+   "audio"
+  ]
+ },
+ "automation_clips": {
+  "bytes": 159130,
+  "desc": "volume, pan and plugin-parameter automation clips added by flp_add_automation",
+  "heavy": false,
+  "tags": [
+   "writers",
+   "automation"
+  ]
+ },
+ "tempo_automation": {
+  "bytes": 156994,
+  "desc": "a tempo lane (flp_tempo_write) plus an automation clip linked to the global tempo",
+  "heavy": false,
+  "tags": [
+   "writers",
+   "tempo"
+  ]
+ },
+ "layers": {
+  "bytes": 156552,
+  "desc": "a layer channel (type 3) whose children are channels 0 and 1, name with Cyrillic",
+  "heavy": false,
+  "tags": []
+ },
+ "arrangements_3": {
+  "bytes": 230034,
+  "desc": "3 arrangements: the original, a shifted copy with extra clips, and an empty one",
+  "heavy": false,
+  "tags": [
+   "arrangements"
+  ]
+ },
+ "timesig_markers": {
+  "bytes": 155826,
+  "desc": "3/4 project, markers (one with CJK), time signature changes 7/8 and 4/4, 6/8 at bar 1",
+  "heavy": false,
+  "tags": [
+   "meter"
+  ]
+ },
+ "odd_meters": {
+  "bytes": 155849,
+  "desc": "time signature marker at tick 0 (6/8), a 5/4 and a 13/16, duplicate marker ticks",
+  "heavy": false,
+  "tags": [
+   "meter"
+  ]
+ },
+ "names_unicode": {
+  "bytes": 155701,
+  "desc": "non-ASCII names everywhere: channels, patterns, arrangement, markers, project info",
+  "heavy": false,
+  "tags": [
+   "names"
+  ]
+ },
+ "names_long": {
+  "bytes": 195642,
+  "desc": "5000-character names (channel, pattern, title, marker) and an empty channel name",
+  "heavy": false,
+  "tags": [
+   "names"
+  ]
+ },
+ "missing_samples": {
+  "bytes": 161834,
+  "desc": "sampler/audio channels pointing at missing, relative, %FLStudioUserData%, UNC and empty paths",
+  "heavy": false,
+  "tags": [
+   "samples"
+  ]
+ },
+ "unknown_plugins": {
+  "bytes": 163404,
+  "desc": "unknown plugin names with random state blobs (instrument and mixer effect), empty state",
+  "heavy": false,
+  "tags": [
+   "plugins"
+  ]
+ },
+ "zero_length": {
+  "bytes": 156194,
+  "desc": "empty notes events, a pattern with no data group, zero-length clips, a 0-tick note",
+  "heavy": false,
+  "tags": [
+   "edge"
+  ]
+ },
+ "notes_edges": {
+  "bytes": 155871,
+  "desc": "notes at tick 0 and on the clip's last tick, velocity 0/127/128 (FL's max)/255, keys 0/127/131 (FL's top key), 1-tick notes",
+  "heavy": false,
+  "tags": [
+   "edge"
+  ]
+ },
+ "notes_far": {
+  "bytes": 155751,
+  "desc": "a note at tick 2^31 and a clip reaching it (a song 'millions of bars' long)",
+  "heavy": false,
+  "tags": [
+   "edge"
+  ]
+ },
+ "overlapping_clips": {
+  "bytes": 156783,
+  "desc": "the same pattern 6 times overlapping on one track and stacked across tracks, offset clips",
+  "heavy": false,
+  "tags": [
+   "clips"
+  ]
+ },
+ "track_500": {
+  "bytes": 155903,
+  "desc": "a pattern clip on the last playlist track (500) and an automation clip on track 499",
+  "heavy": false,
+  "tags": [
+   "clips"
+  ]
+ },
+ "muted_all": {
+  "bytes": 155727,
+  "desc": "every clip muted and every channel switched off",
+  "heavy": false,
+  "tags": [
+   "muted"
+  ]
+ },
+ "fl20_header": {
+  "bytes": 155717,
+  "desc": "the base project saved as FL 20.8.4.2576 (version events only; FL 2024+ clip layout kept)",
+  "heavy": false,
+  "tags": [
+   "version"
+  ]
+ },
+ "fl21_header": {
+  "bytes": 155717,
+  "desc": "the base project saved as FL 21.2.3.4004 (version events only; FL 2024+ clip layout kept)",
+  "heavy": false,
+  "tags": [
+   "version"
+  ]
+ },
+ "fl24_header": {
+  "bytes": 155717,
+  "desc": "the base project saved as FL 24.1.2.4430 (version events only; FL 2024+ clip layout kept)",
+  "heavy": false,
+  "tags": [
+   "version"
+  ]
+ },
+ "fl25_header": {
+  "bytes": 155717,
+  "desc": "the base project saved as FL 25.1.6.4997 (version events only; FL 2024+ clip layout kept)",
+  "heavy": false,
+  "tags": [
+   "version"
+  ]
+ },
+ "legacy_playlist32": {
+  "bytes": 133441,
+  "desc": "FL 20-style 32-byte playlist records (PyFLP layout), 11 clips = 352 bytes = 4 x 88",
+  "heavy": false,
+  "tags": [
+   "version",
+   "legacy"
+  ]
+ },
+ "legacy_playlist60": {
+  "bytes": 134409,
+  "desc": "FL 21-style 60-byte playlist records (PyFLP layout), 22 clips = 1320 bytes = 15 x 88",
+  "heavy": false,
+  "tags": [
+   "version",
+   "legacy"
+  ]
+ },
+ "ppq_960": {
+  "bytes": 155727,
+  "desc": "PPQ 960 with every note and clip position rescaled",
+  "heavy": false,
+  "tags": [
+   "ppq"
+  ]
+ },
+ "ppq_24": {
+  "bytes": 155727,
+  "desc": "PPQ 24 (FL's coarsest) with positions rescaled (rounded)",
+  "heavy": false,
+  "tags": [
+   "ppq"
+  ]
+ },
+ "no_tempo_event": {
+  "bytes": 155710,
+  "desc": "no project tempo event (156) and no recorded tempo",
+  "heavy": false,
+  "tags": [
+   "tempo"
+  ]
+ },
+ "split_notes": {
+  "bytes": 155734,
+  "desc": "a pattern whose notes are split over two notes events (224) and a second pattern with a controller event only",
+  "heavy": false,
+  "tags": [
+   "edge"
+  ]
+ },
+ "channel_gaps": {
+  "bytes": 155727,
+  "desc": "channel indexes 0, 5, 17, 40, 41, 300 (non-contiguous) with notes and links following",
+  "heavy": false,
+  "tags": [
+   "edge"
+  ]
+ },
+ "unnamed_last_channel": {
+  "bytes": 155715,
+  "desc": "the last channel has no name event (FL leaves default names out)",
+  "heavy": false,
+  "tags": [
+   "names"
+  ]
+ },
+ "many_patterns_writers": {
+  "bytes": 156783,
+  "desc": "6 named patterns made by flp_new_pattern and placed, plus notes via flp_add_notes",
+  "heavy": false,
+  "tags": [
+   "writers"
+  ]
+ },
+ "mixed_kitchen_sink": {
+  "bytes": 232122,
+  "desc": "unicode + markers + automation + audio + 3 arrangements + muted clips together",
+  "heavy": false,
+  "tags": [
+   "writers",
+   "mixed"
+  ]
+ }
+}

@@ -1,0 +1,89 @@
+{
+ "format": "flh-genre/1",
+ "name": "ambient",
+ "aliases": ["ambient music", "drone", "chill ambient", "atmospheric", "soundscape", "meditation", "new age"],
+ "about": "Ambient: 60-90 BPM (often felt free), no beat or a barely-there pulse, slow harmonic rhythm (2-4 bars per chord) with lydian/major-7/add9 colour, wide open voicings on pads, a drone root in the bass, a very sparse melody of long notes leaving space for reverb.",
+ "tempo": {"min": 60, "max": 90, "default": 70, "feel": "free"},
+ "guess_weight": 0.4,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 12, "vel": 8},
+ "loop_bars": 8,
+ "keys": {"modes": {"major": 2, "lydian": 2, "minor": 2, "dorian": 1}, "roots": ["C", "D", "Eb", "E", "F", "G", "A", "Bb"], "default": "D major"},
+ "drums": {
+  "vel": {"X": 90, "x": 72, "o": 54, "g": 30},
+  "parts": {
+   "kick": {"patterns": [{"steps": "x...............................", "w": 1}, {"steps": "................................", "w": 1}]},
+   "perc": {"patterns": [{"steps": "........o...........o...........", "w": 1}, {"steps": "................................", "w": 1}], "maybe": "......1.......1.......1.......1."},
+   "hat": {"patterns": [{"steps": "................", "w": 2}, {"steps": "..o...o...o...o.", "w": 1}]}
+  },
+  "fill": {"every": 0, "parts": {}},
+  "variation": {"alt_pattern_chance": 0.3, "kick_maybe_scale": 0.0}
+ },
+ "bass": {
+  "lock": "free",
+  "type": "drone",
+  "register": [28, 48],
+  "rhythm": "chord",
+  "follow": "root",
+  "length": "until_next",
+  "gap_steps": 0.0,
+  "vel": [60, 76],
+  "octave_jump": 0.0,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["Imaj7", "IVmaj7"], "mode": "major", "bars": 4, "w": 3},
+   {"rn": ["I", "II"], "mode": "major", "bars": 4, "w": 2},
+   {"rn": ["vi9", "IVmaj7", "Imaj7", "V"], "mode": "major", "bars": 2, "w": 1},
+   {"rn": ["i9", "VImaj7"], "mode": "minor", "bars": 4, "w": 2},
+   {"rn": ["i9", "IV", "i9", "VII"], "mode": "minor", "bars": 2, "w": 1}
+  ],
+  "voicing": {"style": "open", "register": [43, 79], "extensions": {"7": 0.6, "9": 0.8}},
+  "rhythm": {"patterns": [{"steps": "x---------------", "w": 1}]},
+  "vel": [56, 72]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "B", "A", "C"], "answer": "other", "breath": 6, "shapes": {"fall": 2, "arch": 2}, "leap": 0.5},
+  "scale": "pentatonic",
+  "range": [64, 88],
+  "rhythms": [
+   {"steps": "x-------------------------------", "w": 2},
+   {"steps": "........x-------x---------------", "w": 2},
+   {"steps": "x-----------x-------------------", "w": 1}],
+  "motif_bars": 2,
+  "form": ["A", "B"],
+  "chord_tone_strong": 0.85,
+  "step_prob": 0.6,
+  "max_leap": 7,
+  "repeat_note": 0.0,
+  "vel": [56, 76],
+  "length": "as_written",
+  "max_len_steps": 32
+ },
+ "counter": {"mode": "guide", "register": "above", "density": 0.25},
+ "form": {"default": [["Intro", 8], ["A", 16], ["B", 16], ["A", 16], ["Outro", 8]]},
+ "sections": {
+  "Intro": {"energy": 0.2, "layers": ["chords"], "drums": "none"},
+  "A": {"energy": 0.4, "layers": ["chords", "bass", "melody"], "drums": "none"},
+  "B": {"energy": 0.55, "layers": ["chords", "bass", "melody", "counter", "drums"], "drums": "sparse"},
+  "Verse": {"energy": 0.4, "layers": ["chords", "bass"], "drums": "none"},
+  "Hook": {"energy": 0.55, "layers": ["chords", "bass", "melody"], "drums": "sparse"},
+  "Outro": {"energy": 0.15, "layers": ["chords"], "drums": "none"}
+ },
+ "transitions": {"into": {"B": ["cymbal_swell:8", "reverse_swell:8"], "Hook": ["cymbal_swell:8", "reverse_swell:8"]}},
+ "ear_candy": {"amount": "subtle", "mode": "organic", "organic_moves": ["string_swell", "choir_breath", "cymbal_roll", "piano_pickup"],
+               "filters": ["intro", "outro"], "beds": ["wind"]},
+ "roles": {
+  "kick": {"hint": "soft sub thump", "family": "drums"},
+  "perc": {"hint": "soft texture / granular perc", "family": "drums"},
+  "hat": {"hint": "soft shaker", "family": "drums"},
+  "bass": {"hint": "warm sine drone", "family": "bass", "name": "Drone"},
+  "chords": {"hint": "evolving wide pad", "family": "pad"},
+  "melody": {"hint": "soft piano or glassy bell with long reverb", "family": "lead"},
+  "counter": {"hint": "airy choir or bowed texture", "family": "pad"},
+  "pad": {"hint": "granular texture pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -16, "notes": ["long reverbs and delays, wide stereo", "keep dynamics, no heavy limiting"], "sidechain": null}
+}

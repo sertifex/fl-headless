@@ -1,0 +1,102 @@
+{
+ "format": "flh-template/1",
+ "genre": "dnb",
+ "name": "dnb starter",
+ "about": "Drum & bass: tight punchy kick, cracking snare, crisp break hats, deep sub/reese, liquid rhodes or pads, airy lead.",
+ "tempo": null,
+ "key": null,
+ "kit": "clean",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "tight punchy"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "crack body"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "crisp",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open ride",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "shaker",
+   "sample": "shaker",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Sub",
+   "family": "bass",
+   "choices": [
+    {
+     "plugin": "Harmor",
+     "presets": [
+      "*reese*",
+      "*bass*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*sub*",
+      "*reese*",
+      "*bass*"
+     ]
+    },
+    {
+     "flex": "bass"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "sub deep reese"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Keys",
+   "family": "keys",
+   "character": {
+    "query": "rhodes soft"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Lead",
+   "family": "lead",
+   "character": {
+    "query": "soft"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "lush airy"
+   }
+  },
+  {
+   "role": "fx",
+   "name": "FX",
+   "sample": "fx",
+   "query": "riser uplifter",
+   "notes": "arrange_song writes riser notes here"
+  }
+ ]
+}

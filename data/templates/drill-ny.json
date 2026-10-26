@@ -1,0 +1,96 @@
+{
+ "format": "flh-template/1",
+ "genre": "drill-ny",
+ "name": "drill-ny starter",
+ "about": "NY drill: hard short kick, loud dry snare, bright hats, a big sliding 808, choir/vocal-chop pads, dark piano.",
+ "tempo": null,
+ "key": null,
+ "kit": "808",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "hard short"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "loud dry"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "bright",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "rim bongo",
+   "sample": "rim",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "808",
+   "family": "808",
+   "sample": "808",
+   "query": "distorted long slide"
+  },
+  {
+   "role": "chords",
+   "name": "Choir",
+   "family": "choir",
+   "character": {
+    "query": "dark choir epic",
+    "avoid": [
+     "synth voice"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Piano",
+   "family": "keys",
+   "choices": [
+    {
+     "labs": "piano",
+     "query": "soft felt"
+    },
+    {
+     "flex": "keys"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*piano*",
+      "*dark*pad*"
+     ]
+    },
+    {
+     "plugin": "FL Keys",
+     "presets": [
+      "*grand*",
+      "*piano*"
+     ]
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "dark piano grand",
+    "avoid": [
+     "honky",
+     "bright"
+    ]
+   }
+  }
+ ]
+}

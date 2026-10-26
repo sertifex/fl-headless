@@ -1,0 +1,200 @@
+{
+ "_about": "flh_realism rules per instrument family: how a player of that family shapes dynamics, timing and note lengths. Times in ms or seconds, lengths in beats, controller values 0..1 (FL automation range). amount (0..1) scales every deviation. Users override any key with <fl-headless state folder>/realism/families.json (merged over this file).",
+ "version": 1,
+ "amount_by_genre": {
+  "_about": "default amount when the call gives none: first regex that matches the song's genre/style text (journal genre + style + project genre), else default",
+  "rules": [
+   ["orchestral|cinematic|film|score|classical|trailer|epic", 0.9],
+   ["ballad|piano|neo.?classical|ambient|post.?rock|folk|acoustic|gospel|soul", 0.8],
+   ["jazz|rnb|r&b|lofi|lo-fi|indie|singer", 0.7],
+   ["pop|kpop|rock|country|afrobeats|reggaeton|dancehall", 0.55],
+   ["edm|house|techno|trance|dnb|drum.?and.?bass|dubstep|trap|drill|phonk|hyperpop|synthwave|amapiano|jersey|club|hip.?hop|boombap", 0.4]
+  ],
+  "default": 0.65,
+  "min": 0.0,
+  "max": 1.0
+ },
+ "aliases": {
+  "string": "strings", "violin": "strings", "viola": "strings", "cello": "strings", "contrabass": "strings",
+  "voice": "choir", "voices": "choir", "vocals_ensemble": "choir",
+  "woodwind": "winds", "woodwinds": "winds", "wind": "winds", "flute": "winds", "reed": "winds",
+  "horn": "brass", "trumpet": "brass", "trombone": "brass",
+  "percussion": "timpani", "perc": "timpani", "drum": "timpani",
+  "bells": "mallets", "bell": "mallets", "glock": "mallets", "celesta": "mallets",
+  "guitar": "pluck", "harp": "pluck", "plucked": "pluck", "arp": "pluck",
+  "synth": "synth", "lead": "lead", "pad": "pad", "bass": "bass"
+ },
+ "skip": {
+  "_about": "families left exactly as played by flp_realism's channel auto-pick (a piano is performed by its player; drums have their own groove tools)",
+  "families": ["keys", "drums", "vocal"],
+  "auto_skip": ["bass", "lead"]
+ },
+ "detect": {
+  "_about": "text rules (channel name, preset name/family/tags, journal role) -> family; first match wins; tried before the score's instrument guess",
+  "rules": [
+   ["\\b(timpani|timps?)\\b", "timpani"],
+   ["\\b(choir|choral|chorus voices?|voices|vocal ensemble|ahh?s?|oohs?|soprano|alto|tenor|bass voice|mezzo|singers)\\b", "choir"],
+   ["\\b(strings?|violins?|violas?|cellos?|celli|contrabass|double bass|fiddle|string ensemble|spiccato|pizz|tremolo strings)\\b", "strings"],
+   ["\\b(brass|horns?|french horn|trumpets?|trombones?|tuba|euphonium|flugel\\w*|cornet)\\b", "brass"],
+   ["\\b(woodwinds?|winds|flutes?|piccolo|oboes?|clarinets?|bassoons?|cor anglais|english horn|recorder|whistle|ocarina|sax\\w*|pan ?flute|shakuhachi)\\b", "winds"],
+   ["\\b(glock\\w*|celest[ae]|crotales|vibraphone|vibes|marimba|xylophone|tubular bells|bells?|music box|kalimba)\\b", "mallets"],
+   ["\\b(harp|guitar|nylon|pluck\\w*|mandolin|ukulele|banjo|koto|sitar|arp\\w*)\\b", "pluck"],
+   ["\\b(pads?|drone|atmos\\w*|texture|wash|ambien\\w*|evolving)\\b", "pad"],
+   ["\\b(piano|grand|upright|keys|rhodes|wurli\\w*|electric piano|epiano|organ|harpsichord|clav\\w*)\\b", "keys"],
+   ["\\b(drums?|kick|snare|hats?|hi-?hat|clap|cymbal|808 kit|fpc|toms?)\\b", "drums"],
+   ["\\b(sub ?bass|808|bassline|synth bass|bass)\\b", "bass"],
+   ["\\b(lead|vocal|vox|topline)\\b", "lead"],
+   ["\\b(synth|saw|square|supersaw|serum|vital|sytrus|harmor|flex)\\b", "synth"]
+  ],
+  "instrument_family": {
+   "_about": "score instrument entry (data/instrument_ranges.json) family/id -> realism family",
+   "strings": "strings", "voice": "choir", "brass": "brass", "woodwind": "winds", "wind": "winds",
+   "percussion": "timpani", "mallets": "mallets", "keys": "keys", "plucked": "pluck", "synth": "synth", "bass": "bass"
+  },
+  "instrument_id": {"timpani": "timpani", "vocal": "vocal", "pad": "pad", "pluck": "pluck", "arp": "pluck", "bell": "mallets",
+                    "lead": "lead", "chords": "synth", "sub bass": "bass", "808": "bass", "synth bass": "bass", "drums": "drums"},
+  "role": {"pad": "pad", "drums": "drums"}
+ },
+ "phrase": {
+  "_about": "a phrase ends where the part rests at least gap_beats (or gap_ms, the larger) or at a section boundary; very long phrases are split at their largest inner gap",
+  "gap_beats": 0.75, "gap_ms": 220, "max_beats": 32
+ },
+ "families": {
+  "strings": {
+   "describe": "a bowed section: dynamics swell into long notes, bow arcs, slightly late speaking attacks spread across the section, connected lines",
+   "expression": {"use": true, "floor": 0.18, "ceiling": 0.95, "level": [0.38, 0.82], "swell_min_beats": 1.0, "swell_beats": [0.35, 1.5], "swell_depth": 0.22,
+                  "bow_arc": 0.06, "arc": 0.18, "end_decay": 0.22, "contour": 0.06, "micro": 0.025, "pre_beats": 0.25,
+                  "expression_level": [0.8, 0.97], "expression_end_fade": 0.12},
+   "timing": {"late_ms": [6, 22], "register_ms_per_octave": 3.0, "spread_ms": 5, "max_shift_ms": 35, "roll": false},
+   "lengths": {"breath": false, "breath_ms": 0, "max_breath_s": null, "max_sustain_s": null, "rearticulate_ms": 0,
+               "release_restart_ms": 25, "legato": true, "legato_overlap_ms": 45, "legato_max_gap_beats": 0.25,
+               "touch_gap_beats": 0.125, "phrase_end_shorten": 0.0},
+   "velocity": {"arc": 10, "accent_first": 5, "spread": 4, "contour": 4},
+   "natural": {"note_len_s": [0.12, 12.0], "timing_spread_ms": [3, 30], "expression_move": [0.04, 0.45]}
+  },
+  "choir": {
+   "describe": "singers: soft swelling attacks, breaths between phrases (the note before a breath gets shorter), long notes need a catch breath",
+   "expression": {"use": true, "floor": 0.15, "ceiling": 0.92, "level": [0.35, 0.8], "swell_min_beats": 0.75, "swell_beats": [0.5, 1.75], "swell_depth": 0.26,
+                  "bow_arc": 0.05, "arc": 0.2, "end_decay": 0.28, "contour": 0.07, "micro": 0.02, "pre_beats": 0.25,
+                  "expression_level": [0.8, 0.96], "expression_end_fade": 0.15},
+   "timing": {"late_ms": [10, 28], "register_ms_per_octave": 1.5, "spread_ms": 7, "max_shift_ms": 40, "roll": false},
+   "lengths": {"breath": true, "breath_ms": 260, "max_breath_s": 9.0, "max_sustain_s": 10.0, "rearticulate_ms": 220,
+               "release_restart_ms": 40, "legato": true, "legato_overlap_ms": 40, "legato_max_gap_beats": 0.25,
+               "touch_gap_beats": 0.125, "phrase_end_shorten": 0.0},
+   "velocity": {"arc": 8, "accent_first": 0, "spread": 4, "contour": 5},
+   "natural": {"note_len_s": [0.15, 10.0], "timing_spread_ms": [4, 35], "expression_move": [0.04, 0.45]}
+  },
+  "brass": {
+   "describe": "tongued attacks (on time, a firmer start), crescendos into peaks, shorter phrase ends, breaths",
+   "expression": {"use": true, "floor": 0.2, "ceiling": 0.97, "level": [0.4, 0.86], "swell_min_beats": 1.5, "swell_beats": [0.25, 1.0], "swell_depth": 0.14,
+                  "bow_arc": 0.05, "arc": 0.2, "end_decay": 0.16, "contour": 0.08, "micro": 0.02, "pre_beats": 0.125,
+                  "expression_level": [0.82, 0.98], "expression_end_fade": 0.1},
+   "timing": {"late_ms": [0, 8], "register_ms_per_octave": 2.0, "spread_ms": 4, "max_shift_ms": 20, "roll": false},
+   "lengths": {"breath": true, "breath_ms": 200, "max_breath_s": 7.0, "max_sustain_s": 8.0, "rearticulate_ms": 160,
+               "release_restart_ms": 35, "legato": true, "legato_overlap_ms": 30, "legato_max_gap_beats": 0.2,
+               "touch_gap_beats": 0.1, "phrase_end_shorten": 0.15},
+   "velocity": {"arc": 10, "accent_first": 9, "spread": 5, "contour": 5},
+   "natural": {"note_len_s": [0.08, 8.0], "timing_spread_ms": [2, 20], "expression_move": [0.03, 0.4]}
+  },
+  "winds": {
+   "describe": "woodwinds: legato lines on one breath, breaths at phrase ends and inside long phrases, gentle swells",
+   "expression": {"use": true, "floor": 0.18, "ceiling": 0.95, "level": [0.38, 0.82], "swell_min_beats": 1.0, "swell_beats": [0.3, 1.25], "swell_depth": 0.18,
+                  "bow_arc": 0.05, "arc": 0.18, "end_decay": 0.2, "contour": 0.08, "micro": 0.02, "pre_beats": 0.125,
+                  "expression_level": [0.8, 0.97], "expression_end_fade": 0.12},
+   "timing": {"late_ms": [2, 12], "register_ms_per_octave": 1.5, "spread_ms": 4, "max_shift_ms": 25, "roll": false},
+   "lengths": {"breath": true, "breath_ms": 220, "max_breath_s": 8.0, "max_sustain_s": 9.0, "rearticulate_ms": 180,
+               "release_restart_ms": 30, "legato": true, "legato_overlap_ms": 35, "legato_max_gap_beats": 0.25,
+               "touch_gap_beats": 0.125, "phrase_end_shorten": 0.06},
+   "velocity": {"arc": 8, "accent_first": 5, "spread": 4, "contour": 5},
+   "natural": {"note_len_s": [0.08, 9.0], "timing_spread_ms": [2, 25], "expression_move": [0.03, 0.4]}
+  },
+  "timpani": {
+   "describe": "timpani / orchestral percussion: no drift, hits stay on the beat; fast repeated notes become a roll (hand-to-hand velocity, tiny spread, swelling)",
+   "expression": {"use": false},
+   "timing": {"late_ms": [0, 0], "register_ms_per_octave": 0, "spread_ms": 0, "max_shift_ms": 4, "roll": true, "roll_ioi_ms": 170,
+              "roll_spread_ms": 2.5, "roll_hand_vel": 5, "roll_swell_vel": 14},
+   "lengths": {"breath": false, "legato": false, "release_restart_ms": 0, "touch_gap_beats": 0, "phrase_end_shorten": 0.0},
+   "velocity": {"arc": 6, "accent_first": 6, "spread": 3, "contour": 0},
+   "natural": {"note_len_s": [0.03, 6.0], "timing_spread_ms": [0, 6], "expression_move": [0, 1]}
+  },
+  "mallets": {
+   "describe": "bells / mallets / celesta: struck, so timing stays tight; gentle velocity phrasing only",
+   "expression": {"use": false},
+   "timing": {"late_ms": [0, 0], "register_ms_per_octave": 0, "spread_ms": 2, "max_shift_ms": 6, "roll": true, "roll_ioi_ms": 120,
+              "roll_spread_ms": 2, "roll_hand_vel": 4, "roll_swell_vel": 8},
+   "lengths": {"breath": false, "legato": false, "release_restart_ms": 10, "touch_gap_beats": 0, "phrase_end_shorten": 0.0},
+   "velocity": {"arc": 8, "accent_first": 5, "spread": 4, "contour": 4},
+   "natural": {"note_len_s": [0.03, 8.0], "timing_spread_ms": [1, 10], "expression_move": [0, 1]}
+  },
+  "pluck": {
+   "describe": "harp / guitar / plucked synths: small hand spread, velocity phrasing, no swells",
+   "expression": {"use": false},
+   "timing": {"late_ms": [0, 3], "register_ms_per_octave": 0, "spread_ms": 4, "max_shift_ms": 12, "roll": false},
+   "lengths": {"breath": false, "legato": false, "release_restart_ms": 15, "touch_gap_beats": 0, "phrase_end_shorten": 0.0},
+   "velocity": {"arc": 8, "accent_first": 6, "spread": 5, "contour": 4},
+   "natural": {"note_len_s": [0.03, 8.0], "timing_spread_ms": [1, 15], "expression_move": [0, 1]}
+  },
+  "pad": {
+   "describe": "pads: subtle - a slow swell into each chord, gentle release, almost no timing change",
+   "expression": {"use": true, "floor": 0.4, "ceiling": 0.92, "level": [0.55, 0.85], "swell_min_beats": 2.0, "swell_beats": [0.5, 2.0], "swell_depth": 0.1,
+                  "bow_arc": 0.03, "arc": 0.08, "end_decay": 0.12, "contour": 0.0, "micro": 0.01, "pre_beats": 0.25,
+                  "expression_level": [0.85, 0.97], "expression_end_fade": 0.08},
+   "timing": {"late_ms": [0, 4], "register_ms_per_octave": 0, "spread_ms": 2, "max_shift_ms": 8, "roll": false},
+   "lengths": {"breath": false, "legato": false, "release_restart_ms": 20, "touch_gap_beats": 0.0625, "phrase_end_shorten": 0.0},
+   "velocity": {"arc": 4, "accent_first": 0, "spread": 2, "contour": 0},
+   "natural": {"note_len_s": [0.2, 30.0], "timing_spread_ms": [0, 10], "expression_move": [0.0, 0.3]},
+   "amount_scale": 0.6
+  },
+  "synth": {
+   "describe": "synth chords / stabs: velocity phrasing and a hair of spread; no controller moves (a synth's mod wheel is usually vibrato or a filter)",
+   "expression": {"use": false},
+   "timing": {"late_ms": [0, 2], "register_ms_per_octave": 0, "spread_ms": 2, "max_shift_ms": 6, "roll": false},
+   "lengths": {"breath": false, "legato": false, "release_restart_ms": 10, "touch_gap_beats": 0, "phrase_end_shorten": 0.0},
+   "velocity": {"arc": 6, "accent_first": 4, "spread": 3, "contour": 2},
+   "natural": {"note_len_s": [0.03, 16.0], "timing_spread_ms": [0, 8], "expression_move": [0, 1]},
+   "amount_scale": 0.6
+  },
+  "lead": {
+   "describe": "synth / sampled lead line: velocity phrasing, light spread, legato connections",
+   "expression": {"use": false},
+   "timing": {"late_ms": [0, 4], "register_ms_per_octave": 0, "spread_ms": 3, "max_shift_ms": 10, "roll": false},
+   "lengths": {"breath": false, "legato": false, "release_restart_ms": 15, "touch_gap_beats": 0.0625, "phrase_end_shorten": 0.0},
+   "velocity": {"arc": 8, "accent_first": 6, "spread": 4, "contour": 5},
+   "natural": {"note_len_s": [0.05, 8.0], "timing_spread_ms": [1, 12], "expression_move": [0, 1]},
+   "amount_scale": 0.6
+  },
+  "bass": {
+   "describe": "bass: tight to the grid (it locks with the drums); velocity phrasing only",
+   "expression": {"use": false},
+   "timing": {"late_ms": [0, 0], "register_ms_per_octave": 0, "spread_ms": 1.5, "max_shift_ms": 4, "roll": false},
+   "lengths": {"breath": false, "legato": false, "release_restart_ms": 10, "touch_gap_beats": 0, "phrase_end_shorten": 0.0},
+   "velocity": {"arc": 5, "accent_first": 5, "spread": 3, "contour": 0},
+   "natural": {"note_len_s": [0.05, 8.0], "timing_spread_ms": [0, 6], "expression_move": [0, 1]},
+   "amount_scale": 0.5
+  },
+  "generic": {
+   "describe": "an instrument family this module has no rules for: velocity phrasing and a little spread only",
+   "expression": {"use": false},
+   "timing": {"late_ms": [0, 2], "register_ms_per_octave": 0, "spread_ms": 3, "max_shift_ms": 8, "roll": false},
+   "lengths": {"breath": false, "legato": false, "release_restart_ms": 15, "touch_gap_beats": 0, "phrase_end_shorten": 0.0},
+   "velocity": {"arc": 6, "accent_first": 4, "spread": 3, "contour": 3},
+   "natural": {"note_len_s": [0.03, 16.0], "timing_spread_ms": [0, 12], "expression_move": [0, 1]},
+   "amount_scale": 0.6
+  }
+ },
+ "fallback": {
+  "_about": "when a channel has no controller the engine can automate: velocities carry the phrase shape (scaled) and, if volume is on, the channel's volume knob follows the expression curve below the level the user set (never louder)",
+  "velocity_scale": 2.0, "volume": true, "volume_depth": 0.35
+ },
+ "articulations": {
+  "_about": "per-section articulation choice: first rule whose conditions hold (families: which families it applies to). median_len_s / density (notes per second) / repeat_fast (share of notes repeating the same pitch within repeat_ms) / vel (median velocity 0-127) / energy (0..1 section energy)",
+  "repeat_ms": 140,
+  "rules": [
+   {"name": "tremolo", "families": ["strings"], "when": {"repeat_fast_min": 0.5}},
+   {"name": "pizz", "families": ["strings"], "when": {"median_len_s_max": 0.3, "vel_max": 72, "density_max": 6}},
+   {"name": "short", "families": ["strings", "brass", "winds", "choir"], "when": {"median_len_s_max": 0.3}},
+   {"name": "swell", "families": ["strings", "brass", "winds", "choir"], "when": {"median_len_s_min": 3.0, "density_max": 0.8, "energy_max": 0.35}},
+   {"name": "long", "families": ["strings", "brass", "winds", "choir", "pad"], "when": {}}
+  ]
+ }
+}

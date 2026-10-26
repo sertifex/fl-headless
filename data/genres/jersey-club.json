@@ -1,0 +1,91 @@
+{
+ "format": "flh-genre/1",
+ "name": "jersey-club",
+ "aliases": ["jersey club", "jersey", "jersey club beat", "club beat", "bed squeak", "jersey bounce"],
+ "about": "Jersey club: 130-145 BPM, the bouncing kick (five kicks a bar: beats 1, 2, 3 and a quarter-note triplet over beats 3-4, or its 16th-grid version 1, 2, 3, 3a, 4e), claps on 2 and 4, 'bed squeak' / vocal-chop percussion on the offbeats, 808/sub on the kicks, R&B-sample style minor-7th chords chopped in short stabs, a chopped vocal-hook melody.",
+ "tempo": {"min": 130, "max": 145, "default": 140, "feel": "straight"},
+ "guess_weight": 0.4,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 2, "vel": 4},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 4, "major": 2, "dorian": 1}, "roots": ["C", "C#", "D", "Eb", "E", "F", "G", "A", "Bb"], "default": "F minor"},
+ "drums": {
+  "vel": {"X": 120, "x": 106, "o": 82, "g": 48},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X..x..x.x.x.", "w": 3, "grid": 12}, {"steps": "X...x...x..x.x..", "w": 2}, {"steps": "X..x..x.x.x.X..x..x.xxx.", "w": 1, "grid": 12}]},
+   "clap": {"patterns": [{"steps": "....X.......X...", "w": 3}, {"steps": "....X.......X..o", "w": 1}]},
+   "hat": {"patterns": [{"steps": "x.o.x.o.x.o.x.o.", "w": 2}, {"steps": "xoxoxoxoxoxoxoxo", "w": 1}, {"steps": "..x...x...x...x.", "w": 1}]},
+   "openhat": {"patterns": [{"steps": "................", "w": 2}, {"steps": "..............o.", "w": 1}]},
+   "perc": {"patterns": [{"steps": "..o...o...o...o.", "w": 2}, {"steps": "......o.......o.", "w": 1}, {"steps": "..o..o....o..o..", "w": 1}], "maybe": "...2.......2...."}
+  },
+  "fill": {"every": 4, "parts": {"kick": "________x.x.xxxx", "clap": "____________x.xx"}},
+  "variation": {"alt_pattern_chance": 0.3, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "808",
+  "register": [28, 45],
+  "rhythm": "kick",
+  "follow": "root",
+  "length": "until_next",
+  "gap_steps": 0.25,
+  "vel": [100, 116],
+  "octave_jump": 0.15,
+  "glide": {"chance": 0.12, "len_steps": [1], "where": "late", "targets": {"octave_up": 2, "next_root": 1}}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i7", "iv7"], "mode": "minor", "bars": 2, "w": 3},
+   {"rn": ["i7", "VImaj7", "III", "VII"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i7", "VII", "VI", "VII"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["vi7", "IVmaj7", "I", "V"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["IVmaj7", "V7", "iii7", "vi7"], "mode": "major", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "seventh", "register": [55, 76], "extensions": {"7": 0.8, "9": 0.3}},
+  "rhythm": {"patterns": [{"steps": "x--x--x-..x-x---", "w": 2}, {"steps": "x-..x-..x-x-....", "w": 2}, {"steps": "x---------------", "w": 1}]},
+  "vel": [74, 92]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "A", "S", "C"], "answer": "same", "breath": 0, "land": [], "shapes": {"hold": 2, "wave": 2, "fall": 1}, "leap": 0.4},
+  "scale": "pentatonic",
+  "range": [64, 84],
+  "rhythms": [
+   {"steps": "x.x...x.x.x.....", "w": 3},
+   {"steps": "..x.x.x...x.x...", "w": 2},
+   {"steps": "x..x..x.x.......", "w": 2}
+  ],
+  "motif_bars": 1,
+  "form": ["A", "A", "A'", "B"],
+  "chord_tone_strong": 0.8,
+  "step_prob": 0.6,
+  "max_leap": 7,
+  "repeat_note": 0.35,
+  "vel": [86, 104],
+  "length": "short",
+  "max_len_steps": 2
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.45},
+ "form": {"default": [["Intro", 8], ["Hook", 16], ["Verse", 16], ["Hook", 16], ["Break", 8], ["Hook", 16], ["Outro", 8]]},
+ "sections": {
+  "Intro": {"energy": 0.4, "layers": ["chords", "melody"], "drums": "sparse"},
+  "Hook": {"energy": 1.0, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Verse": {"energy": 0.7, "layers": ["drums", "bass", "chords"], "drums": "light"},
+  "Break": {"energy": 0.5, "layers": ["chords", "melody"], "drums": "build"},
+  "Outro": {"energy": 0.35, "layers": ["drums", "chords"], "drums": "light"}
+ },
+ "transitions": {"into": {"Hook": ["fill", "noise_sweep:4"], "Verse": ["dropout"], "Break": ["stop"], "Outro": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "outro"]},
+ "roles": {
+  "kick": {"hint": "hard punchy club kick", "family": "drums"},
+  "clap": {"hint": "snappy clap", "family": "drums"},
+  "hat": {"hint": "short closed hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "perc": {"hint": "bed squeak / vocal chop one-shot", "family": "drums"},
+  "bass": {"hint": "short punchy 808 or sub", "family": "bass", "name": "808"},
+  "chords": {"hint": "chopped R&B keys or vocal pad sample", "family": "keys"},
+  "melody": {"hint": "chopped vocal hook (pitched vocal chop)", "family": "lead"},
+  "counter": {"hint": "bright pluck", "family": "lead"},
+  "pad": {"hint": "airy vocal pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -8, "notes": ["kick loud and short so the triplet bounce reads", "vocal chops bright and upfront", "808 short (until the next kick)"], "sidechain": {"trigger": "kick", "target": "chords", "depth_db": 4}}
+}

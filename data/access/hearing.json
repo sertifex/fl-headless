@@ -1,0 +1,25 @@
+{
+ "format": "flh-access-hearing/1",
+ "about": "Hearing-aware judgment. Only used when the user has said what their hearing is like (fl_access set hearing=...). For each setting: the frequency ranges where fl-headless's measurements should be trusted over listening, the issue kinds those ranges cover, and kind wording. No medical claims: these describe where measuring helps, not anyone's ears. Users can override in <state folder>/access/hearing.json.",
+ "settings": {
+  "typical": {"label": "no hearing notes", "trust_bands": [], "kinds": []},
+  "reduced_highs": {"label": "hears high sounds less", "trust_bands": [[2000, 20000]], "kinds": ["harsh", "dull", "consistency", "resonance_high", "bright", "sibilance", "clipping", "true_peak"], "say": "this is in the high range, where the measurement is a more reliable guide for you than listening"},
+  "reduced_lows": {"label": "hears low sounds less", "trust_bands": [[20, 250]], "kinds": ["mud", "low_heavy", "low_light", "kick_bass", "sub"], "say": "this is in the low range, where the measurement is a more reliable guide for you than listening"},
+  "reduced": {"label": "hears less overall", "trust_bands": [[20, 20000]], "kinds": ["*"], "say": "the measurement is a steady guide here, whatever the listening level"},
+  "hearing_aids": {"label": "listens with hearing aids", "trust_bands": [[20, 20000]], "kinds": ["harsh", "dull", "mud", "bright", "resonance_high", "consistency", "sibilance", "low_heavy", "low_light"], "say": "hearing aids shape the sound before you hear it, so for tone the measurement is the steadier guide"},
+  "cochlear_implant": {"label": "listens with a cochlear implant", "trust_bands": [[20, 20000]], "kinds": ["*"], "say": "an implant processes sound before you hear it, so for tone and pitch the measurement is the steadier guide"},
+  "deaf": {"label": "doesn't use hearing for music", "trust_bands": [[20, 20000]], "kinds": ["*"], "say": "measured - no listening needed for this"}
+ },
+ "aliases": {"normal": "typical", "fine": "typical", "full": "typical", "hearing": "typical", "no hearing": "deaf", "d/deaf": "deaf", "hard of hearing": "reduced", "hoh": "reduced", "reduced_high": "reduced_highs", "high_frequency_loss": "reduced_highs", "high frequency loss": "reduced_highs", "highs": "reduced_highs", "reduced_low": "reduced_lows", "lows": "reduced_lows", "ci": "cochlear_implant", "implant": "cochlear_implant", "hearing_aid": "hearing_aids", "hearing aids": "hearing_aids", "aids": "hearing_aids"},
+ "positive_words": ["sounds fine", "sounds good", "sounds great", "sounds ok", "sounds okay", "sounds perfect", "sounds right", "is fine", "is good", "fine", "good", "great", "perfect", "ok", "okay", "love it", "happy with it", "no problem", "nothing wrong", "can't hear a problem", "cant hear a problem"],
+ "negative_words": ["harsh", "muddy", "too loud", "too quiet", "dull", "boomy", "thin", "piercing", "distorted", "bad", "wrong", "off", "too bright", "too dark", "not right", "problem"],
+ "tone": {"about": "absolute tone checks (rule of thumb vs typical finished mixes, not standards); band levels are dB re the whole sound", "harsh_presence_minus_mid": -1.5, "bright_tilt": -1.0, "dull_tilt": -6.5, "low_heavy_db": -2.0, "low_light_db": -11.0, "resonance_db": 6.0, "resonance_range": [2000, 9000], "sibilance_band": [5000, 9000], "sibilance_minus_mid": -4.0},
+ "safe_listening": {
+  "can_measure": "fl-headless measures how loud the MUSIC is (LUFS, peaks) exactly, so nobody needs to turn it up to judge it. It cannot measure how loud your speakers or headphones play in your room or ears - that depends on the volume knob, the speakers and the distance.",
+  "guideline": "A widely used safe-listening guideline (WHO / ITU H.870) is about 80 dB(A) for up to 40 hours a week for adults; each 3 dB louder halves the safe time. A phone or computer may have a built-in sound-level or headphone-exposure meter that can show this.",
+  "level_tips": ["Set the volume once at a comfortable, conversation-like level and leave it there while you work.", "Judge loudness with the numbers (fl_review, fl_describe, fl_listen) instead of turning it up.", "Check mixes quietly too: a good mix still makes sense at low volume.", "If a part is hard to make out, ask for fl_describe or fl_visualize rather than raising the level."],
+  "break_tips": ["Take a short break about every 45-60 minutes; ears tire and judgments drift.", "After a break, the first listen is the most honest one - a good moment for a check.", "Ringing or muffled sound after a session is a signal to rest your ears; if it lasts, a hearing professional can check."],
+  "aids_tips": ["Hearing aid and implant users: many devices can stream audio directly, which keeps the level steady; your audiologist can set a music program if you'd like one."],
+  "break_after_min": 50
+ }
+}

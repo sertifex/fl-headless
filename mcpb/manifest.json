@@ -1,0 +1,64 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/mcpb/main/schemas/mcpb-manifest-v0.4.schema.json",
+  "manifest_version": "0.4",
+  "name": "fl-headless",
+  "display_name": "fl-headless",
+  "version": "2.1.0",
+  "description": "A patient studio partner for FL Studio: make music more easily by talking to Claude, and understand what's happening as you go. Your ideas and your taste stay in charge.",
+  "long_description": "fl-headless is not built to make your music for you. It's built to help you make it: to explain what's going on in your project, take care of the fiddly steps, show you what it changed and why, and open FL Studio up to people who find everyday studio tasks hard - beginners, and people who can't hear the speakers well, can't see the screen or can't use a mouse.\n\nIt reads and writes FL Studio project files (.flp), drives the open FL through a small script that runs inside FL, listens to what FL plays and renders with FL's own export. Every edit is backed up first, deletes go to the Recycle Bin, and it only writes inside the song folders you pick here.\n\n**Windows only for FL Studio itself** (FL on macOS isn't supported); the file and audio tools would also work elsewhere. Needs FL Studio 20.8 or later (tested so far on FL Studio 2026). Python and numpy are set up for you.\n\nAfter installing, say to Claude: **\"I'm new to fl-headless - set me up.\"**",
+  "author": {
+    "name": "sertifex",
+    "url": "https://github.com/sertifex"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sertifex/fl-headless"
+  },
+  "homepage": "https://github.com/sertifex/fl-headless",
+  "documentation": "https://github.com/sertifex/fl-headless#readme",
+  "support": "https://github.com/sertifex/fl-headless/issues",
+  "icon": "data/theme/logo.png",
+  "server": {
+    "type": "uv",
+    "entry_point": "mcpb/launch.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${__dirname}",
+        "mcpb/launch.py",
+        "${user_config.song_folders}"
+      ],
+      "env": {
+        "FLH_INSTALLED_BY": "mcpb",
+        "FLH_FL_EXE": "${user_config.fl_exe}"
+      }
+    }
+  },
+  "tools_generated": true,
+  "keywords": ["fl studio", "music", "daw", "beginners", "accessibility", "mixing", "midi", "learning"],
+  "license": "GPL-3.0-or-later",
+  "compatibility": {
+    "platforms": ["win32"],
+    "runtimes": {
+      "python": ">=3.10"
+    }
+  },
+  "user_config": {
+    "song_folders": {
+      "type": "directory",
+      "title": "Song folders",
+      "description": "The folders fl-headless may save into: where your songs and FL projects are (new songs go in the first one). It reads anywhere, but only ever writes, backs up and renders inside these. Add or remove folders any time.",
+      "multiple": true,
+      "required": true,
+      "default": ["${HOME}/Music", "${DOCUMENTS}/Image-Line"]
+    },
+    "fl_exe": {
+      "type": "file",
+      "title": "FL Studio program (optional)",
+      "description": "Only if fl-headless says it can't find FL Studio: pick FL64.exe (usually in C:\\Program Files\\Image-Line\\FL Studio <version>). Leave empty otherwise.",
+      "required": false
+    }
+  }
+}

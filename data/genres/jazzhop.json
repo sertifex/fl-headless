@@ -1,0 +1,97 @@
+{
+ "format": "flh-genre/1",
+ "name": "jazzhop",
+ "aliases": ["jazz hop", "jazz-hop", "jazzy hip hop", "jazz rap", "nujabes", "jazzy beat"],
+ "about": "Jazz hop: 80-95 BPM, heavy swing (62-66%), boom-bap drums with ride/hat and lots of ghost snares, rootless jazz voicings (3-7-9-13) on ii-V-I and turnarounds with secondary dominants, a walking or root-fifth upright bass with chromatic approach notes, a swung bebop-ish melody on sax/trumpet/keys.",
+ "tempo": {"min": 80, "max": 95, "default": 88, "feel": "straight"},
+ "guess_weight": 0.5,
+ "meter": 4,
+ "swing": 0.64,
+ "humanize": {"timing_ms": 9, "vel": 9},
+ "loop_bars": 4,
+ "keys": {"modes": {"major": 3, "minor": 2, "dorian": 2}, "roots": ["C", "Db", "D", "Eb", "F", "G", "Ab", "Bb"], "default": "Bb major"},
+ "drums": {
+  "vel": {"X": 112, "x": 96, "o": 70, "g": 34},
+  "parts": {
+   "kick": {"patterns": [
+     {"steps": "x......x..x.....x.........x.....", "w": 2},
+     {"steps": "x.........x.....x......x..x..x..", "w": 2}],
+    "maybe": "..............2...............2."},
+   "snare": {"patterns": [{"steps": "....x.......x.......x.......x...", "w": 1}],
+    "ghosts": {"at": [3, 7, 10, 15, 19, 23, 26, 31], "chance": 0.45}},
+   "hat": {"patterns": [{"steps": "x.o.x.o.x.o.x.o.", "w": 2}, {"steps": "x..ox..ox..ox..o", "w": 2}]},
+   "ride": {"patterns": [{"steps": "x...x..ox...x..o", "w": 2}, {"steps": "x...x...x...x...", "w": 1}]},
+   "openhat": {"patterns": [{"steps": "................", "w": 2}, {"steps": "..............o.", "w": 1}]}
+  },
+  "fill": {"every": 4, "parts": {"snare": "____________ggxo"}},
+  "variation": {"alt_pattern_chance": 0.3, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "upright",
+  "register": [28, 50],
+  "rhythm": "walk",
+  "follow": "walk",
+  "length": "as_written",
+  "gap_steps": 0.4,
+  "vel": [84, 100],
+  "octave_jump": 0.0,
+  "approach": 0.6,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["ii7", "V7", "Imaj7", "vi7"], "mode": "major", "bars": 1, "w": 3},
+   {"rn": ["Imaj7", "vi7", "ii7", "V7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["iii7", "VI7", "ii7", "V7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["IVmaj7", "iv7", "iii7", "VI7"], "mode": "major", "bars": 1, "w": 1},
+   {"rn": ["iiø", "V7", "i7", "i7"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i7", "iv7", "VII7", "IIImaj7"], "mode": "minor", "bars": 1, "w": 2}
+  ],
+  "voicing": {"style": "rootless", "register": [50, 74], "extensions": {"7": 1.0, "9": 0.8}},
+  "rhythm": {"patterns": [{"steps": "x-----x---------", "w": 2}, {"steps": "x--------x------", "w": 2}, {"steps": "..x-------x-----", "w": 1}]},
+  "vel": [62, 80],
+  "strum_ms": 10
+ },
+ "melody": {
+  "hook": {"plan": ["A", "B", "A", "C"], "answer": "other", "breath": 3, "shapes": {"arch": 3, "fall": 2, "wave": 2}, "leap": 0.5},
+  "scale": "key",
+  "range": [62, 84],
+  "rhythms": [
+   {"steps": "x.x.x-x...x.x---", "w": 2},
+   {"steps": "..x.x.x-x.x-....", "w": 2},
+   {"steps": "x---x.x.x---....", "w": 1}],
+  "motif_bars": 2,
+  "form": ["A", "B"],
+  "chord_tone_strong": 0.75,
+  "step_prob": 0.8,
+  "max_leap": 6,
+  "repeat_note": 0.05,
+  "vel": [74, 96],
+  "length": "as_written",
+  "max_len_steps": 8
+ },
+ "counter": {"mode": "guide", "register": "below", "density": 0.4},
+ "form": {"default": [["Intro", 4], ["A", 8], ["B", 8], ["A", 8], ["B", 8], ["Outro", 4]]},
+ "sections": {
+  "Intro": {"energy": 0.3, "layers": ["chords", "bass"], "drums": "none"},
+  "A": {"role": "verse", "energy": 0.6, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "B": {"role": "hook", "energy": 0.75, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Verse": {"energy": 0.6, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Hook": {"energy": 0.75, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Outro": {"energy": 0.3, "layers": ["chords", "melody"], "drums": "none"}
+ },
+ "transitions": {"into": {"B": ["fill", "reverse_crash"], "A": ["fill"], "Hook": ["fill", "reverse_crash"], "Outro": ["stop"]}, "end": ["tape_stop:4"]},
+ "ear_candy": {"amount": "subtle", "filters": ["intro", "outro"], "beds": ["vinyl"]},
+ "roles": {
+  "kick": {"hint": "soft dusty kick", "family": "drums"},
+  "snare": {"hint": "brushy snare / rimshot", "family": "drums"},
+  "hat": {"hint": "jazz hat", "family": "drums"},
+  "ride": {"hint": "jazz ride cymbal", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "bass": {"hint": "upright acoustic bass", "family": "bass", "name": "Upright"},
+  "chords": {"hint": "rhodes or jazz piano", "family": "keys"},
+  "melody": {"hint": "muted trumpet, sax or vibes", "family": "lead"},
+  "counter": {"hint": "flute or guitar", "family": "lead"}
+ },
+ "mix": {"loudness_lufs": -11, "notes": ["warm, saturated, slightly lo-fi", "bass upfront and woody"], "sidechain": null}
+}

@@ -1,0 +1,80 @@
+{
+ "plugin": "Fruity Stereo Shaper",
+ "aliases": [],
+ "edition": "fruity",
+ "roles": [
+  "stereo"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "delay_ms": {
+   "index": null,
+   "fl_name": "Left / right delay",
+   "unit": "ms",
+   "curve": "linear",
+   "verified": false,
+   "min": -20,
+   "max": 20,
+   "confidence": "low"
+  },
+  "phase_offset": {
+   "index": null,
+   "fl_name": "Left / right dephasing",
+   "unit": "display",
+   "curve": "linear",
+   "verified": false,
+   "confidence": "medium"
+  },
+  "left_pct": {
+   "index": null,
+   "fl_name": "Left channel volume",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": -100,
+   "max": 100,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name read live 2026-10-23; range (-100..100 % with phase invert, or 0..100 %) and curve unverified"
+  },
+  "right_pct": {
+   "index": null,
+   "fl_name": "Right channel volume",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": -100,
+   "max": 100,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name read live 2026-10-23; range (-100..100 % with phase invert, or 0..100 %) and curve unverified"
+  },
+  "left_into_right_pct": {
+   "index": null,
+   "fl_name": "Left into right channel volume",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": -100,
+   "max": 100,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name read live 2026-10-23; range (-100..100 % with phase invert, or 0..100 %) and curve unverified"
+  },
+  "right_into_left_pct": {
+   "index": null,
+   "fl_name": "Right into left channel volume",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": -100,
+   "max": 100,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name read live 2026-10-23; range (-100..100 % with phase invert, or 0..100 %) and curve unverified"
+  }
+ },
+ "names_seen_on_pc": "2026-10-21 (FL 2026, fl_plugin_maps_check)",
+ "not_exposed": {
+  "mix_pct": "Stereo Shaper has no dry/wet knob in FL's list: blend with the channel volumes instead (PC check 2026-10-23)"
+ }
+}

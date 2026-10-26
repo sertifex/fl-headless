@@ -1,0 +1,117 @@
+{
+ "format": "flh-template/1",
+ "genre": "cinematic",
+ "name": "cinematic starter",
+ "about": "Cinematic: taikos and big hits, ensemble toms, low strings, string ostinato, horn melody, dark choir, impacts.",
+ "tempo": null,
+ "key": null,
+ "kit": "dark",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "taiko big low hit"
+  },
+  {
+   "role": "tom",
+   "name": "Tom",
+   "query": "ensemble taiko"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "orchestral"
+  },
+  {
+   "role": "crash",
+   "name": "Crash",
+   "query": "cymbal swell",
+   "group": "Cymbals"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "frame drum anvil",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Low Strings",
+   "family": "strings",
+   "character": {
+    "query": "low cello ensemble basses",
+    "avoid": [
+     "synth strings"
+    ]
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Strings",
+   "family": "strings",
+   "character": {
+    "query": "lush ensemble legato cinematic",
+    "avoid": [
+     "synth strings",
+     "hit"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Horns",
+   "family": "brass",
+   "choices": [
+    {
+     "labs": "brass"
+    },
+    {
+     "flex": "brass"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*horn*",
+      "*brass*"
+     ]
+    },
+    {
+     "labs": "strings"
+    },
+    {
+     "fl_instrument": "brass"
+    },
+    {
+     "fl_instrument": "strings"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "epic horns ensemble",
+    "avoid": [
+     "synth brass"
+    ]
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Choir",
+   "family": "choir",
+   "character": {
+    "query": "epic choir lush",
+    "avoid": [
+     "synth voice"
+    ]
+   }
+  },
+  {
+   "role": "fx",
+   "name": "FX",
+   "sample": "fx",
+   "query": "impact boom riser",
+   "notes": "arrange_song writes riser notes here"
+  }
+ ]
+}

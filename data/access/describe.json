@@ -1,0 +1,379 @@
+{
+ "format": "flh-access-describe/1",
+ "about": "Word tables for fl_describe / fl_visualize alt text: numbers -> plain words. Each list is [upper limit, words], checked in order (the first whose limit is above the value wins; null = no limit). Thresholds marked 'rule of thumb' are typical values for finished mixes, not standards. Users override any key in <state folder>/access/describe.json.",
+ "tempo": [
+  [
+   66,
+   "slow, unhurried (ballad pace)"
+  ],
+  [
+   84,
+   "relaxed, a slow walk"
+  ],
+  [
+   104,
+   "moderate, a walking pace"
+  ],
+  [
+   122,
+   "upbeat, a brisk walk"
+  ],
+  [
+   140,
+   "lively and driving"
+  ],
+  [
+   165,
+   "fast and energetic"
+  ],
+  [
+   null,
+   "very fast (it may feel like half that speed)"
+  ]
+ ],
+ "tempo_body": [
+  [
+   70,
+   "like a calm resting heartbeat"
+  ],
+  [
+   110,
+   "like an easy stroll"
+  ],
+  [
+   135,
+   "like a quick march"
+  ],
+  [
+   null,
+   "like a jog or faster"
+  ]
+ ],
+ "energy_lu": {
+  "about": "a section's loudness below the song's loudest section (LU); measured",
+  "words": [
+   [
+    1.0,
+    "the loudest, biggest point"
+   ],
+   [
+    3.5,
+    "full and strong"
+   ],
+   [
+    7.0,
+    "medium"
+   ],
+   [
+    12.0,
+    "soft"
+   ],
+   [
+    null,
+    "whisper-soft"
+   ]
+  ]
+ },
+ "energy_score": {
+  "about": "E0-9 from the notes (how many parts, how busy, how hard they're played); not measured sound",
+  "words": [
+   [
+    0.5,
+    "silent"
+   ],
+   [
+    2.5,
+    "very sparse and soft"
+   ],
+   [
+    4.5,
+    "gentle"
+   ],
+   [
+    6.5,
+    "moderate"
+   ],
+   [
+    8.5,
+    "big and full"
+   ],
+   [
+    null,
+    "the biggest moment"
+   ]
+  ]
+ },
+ "change_lu": [
+  [
+   -6.0,
+   "drops away sharply"
+  ],
+  [
+   -3.0,
+   "falls back clearly"
+  ],
+  [
+   -1.2,
+   "eases off a little"
+  ],
+  [
+   1.2,
+   "stays at about the same level"
+  ],
+  [
+   3.0,
+   "lifts a little"
+  ],
+  [
+   6.0,
+   "builds clearly"
+  ],
+  [
+   null,
+   "explodes - a big jump up"
+  ]
+ ],
+ "change_db_words": [
+  [
+   0.5,
+   "no noticeable change"
+  ],
+  [
+   1.5,
+   "a slight change"
+  ],
+  [
+   3.0,
+   "a small but clear change"
+  ],
+  [
+   6.0,
+   "a clear change"
+  ],
+  [
+   null,
+   "a big change"
+  ]
+ ],
+ "trend_lu": {
+  "about": "loudness slope inside one section, LU from its start to its end (measured)",
+  "rise": 3.0,
+  "fall": -3.0
+ },
+ "brightness_tilt": {
+  "about": "octave-band slope 63 Hz-8 kHz in dB/octave; pink noise = 0, most finished mixes about -3 to -5 (rule of thumb)",
+  "words": [
+   [
+    -6.0,
+    "dark and warm (little top end)"
+   ],
+   [
+    -4.5,
+    "warm, slightly dark"
+   ],
+   [
+    -2.5,
+    "balanced"
+   ],
+   [
+    -1.0,
+    "bright and crisp"
+   ],
+   [
+    null,
+    "very bright, possibly sharp"
+   ]
+  ]
+ },
+ "low_end": {
+  "about": "share of 20-200 Hz in the whole sound (dB re total, measured); vibration note = interpretation: on speakers or a subwoofer this range is felt in the body, on small speakers and most headphones much less",
+  "words": [
+   [
+    -9.0,
+    "light - little bass weight"
+   ],
+   [
+    -5.0,
+    "moderate bass"
+   ],
+   [
+    -2.5,
+    "strong bass"
+   ],
+   [
+    null,
+    "very heavy bass"
+   ]
+  ],
+  "felt_from_db": -5.0,
+  "sub_felt_from_db": -12.0
+ },
+ "width_corr": {
+  "about": "L/R correlation (measured): 1 = same in both speakers",
+  "words": [
+   [
+    0.0,
+    "phasey - parts cancel out on one speaker"
+   ],
+   [
+    0.3,
+    "very wide, spread far left and right"
+   ],
+   [
+    0.65,
+    "wide"
+   ],
+   [
+    0.9,
+    "moderately wide"
+   ],
+   [
+    0.97,
+    "mostly centered"
+   ],
+   [
+    null,
+    "centered (nearly mono)"
+   ]
+  ]
+ },
+ "lean_db": 1.5,
+ "crest": {
+  "about": "peak-to-average (dB, measured)",
+  "words": [
+   [
+    8.0,
+    "dense and squashed - little punch"
+   ],
+   [
+    12.0,
+    "solid and even"
+   ],
+   [
+    16.0,
+    "punchy, with clear hits"
+   ],
+   [
+    null,
+    "very dynamic - big peaks, lots of contrast"
+   ]
+  ]
+ },
+ "density_npb": {
+  "about": "pitched notes per bar across all parts (from the notes)",
+  "words": [
+   [
+    3.0,
+    "sparse - lots of space"
+   ],
+   [
+    9.0,
+    "moderately busy"
+   ],
+   [
+    20.0,
+    "busy"
+   ],
+   [
+    null,
+    "very busy"
+   ]
+  ]
+ },
+ "onsets_per_s": {
+  "about": "attacks per second (measured)",
+  "words": [
+   [
+    1.5,
+    "sparse - lots of space"
+   ],
+   [
+    3.5,
+    "moderately busy"
+   ],
+   [
+    6.0,
+    "busy"
+   ],
+   [
+    null,
+    "very busy, constant motion"
+   ]
+  ]
+ },
+ "register": [
+  [
+   36,
+   "very low"
+  ],
+  [
+   48,
+   "low"
+  ],
+  [
+   60,
+   "low-middle"
+  ],
+  [
+   72,
+   "middle"
+  ],
+  [
+   84,
+   "high"
+  ],
+  [
+   null,
+   "very high, sparkly"
+  ]
+ ],
+ "roles": {
+  "drums": "keeps the beat",
+  "bass": "carries the low end",
+  "melody": "plays the tune on top",
+  "counter": "answers the tune with a second line",
+  "pad": "holds long soft chords underneath",
+  "arp": "ripples through the chords note by note",
+  "chords": "plays the chords",
+  "other": "adds color"
+ },
+ "mood": {
+  "about": "interpretation only: a common reading of key mode + tempo + tone, never a fact",
+  "minor_slow": "dark or melancholic",
+  "minor_fast": "tense or driving",
+  "major_slow": "warm or gentle",
+  "major_fast": "bright or upbeat",
+  "slow_below_bpm": 95,
+  "bright_tilt": -2.5,
+  "bright_word": "and bright",
+  "dark_tilt": -5.0,
+  "dark_word": "and dark"
+ },
+ "swing": [
+  [
+   0.54,
+   "straight (even notes)"
+  ],
+  [
+   0.6,
+   "slightly swung (a gentle bounce)"
+  ],
+  [
+   null,
+   "swung (long-short, bouncy)"
+  ]
+ ],
+ "same_chords_ratio": 0.75,
+ "auto_window_s": [
+  6,
+  20
+ ],
+ "max_sections": 24,
+ "confidence": {
+  "tempo_min": 0.5,
+  "onsets_per_s_min": 0.5,
+  "key_margin_min": 0.05,
+  "key_r_min": 0.5,
+  "note": "below these, fl_describe says 'no steady beat' / 'no clear key' instead of a guessed number"
+ }
+}

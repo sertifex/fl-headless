@@ -1,0 +1,104 @@
+{
+ "format": "flh-genre/1",
+ "name": "drill-ny",
+ "aliases": ["ny drill", "brooklyn drill", "bronx drill", "new york drill"],
+ "about": "New York / Brooklyn drill: 140-150 BPM half-time with UK-drill drum grammar, heavier and longer 808 slides (often an octave), busier triplet hats, rim/perc bounces, and sampled vocal/choir or piano loops in harmonic minor.",
+ "tempo": {"min": 140, "max": 150, "default": 144, "feel": "half-time"},
+ "guess_weight": 0.4,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 2, "vel": 5},
+ "loop_bars": 8,
+ "keys": {"modes": {"harmonic minor": 4, "minor": 4, "phrygian": 1}, "roots": ["C", "C#", "D", "E", "F", "G", "A"], "default": "E minor"},
+ "drums": {
+  "vel": {"X": 122, "x": 102, "o": 78, "g": 46},
+  "parts": {
+   "kick": {"patterns": [
+     {"steps": "X.........x.............x.......", "w": 2},
+     {"steps": "X.....................x...x.....", "w": 2},
+     {"steps": "X.........x.x...................", "w": 1}],
+    "maybe": "..............3.........2......."},
+   "snare": {"patterns": [
+     {"steps": "........X..............X....X...", "w": 3},
+     {"steps": "........X...................X...", "w": 2}],
+    "ghosts": {"at": [11, 19, 30], "chance": 0.35}},
+   "hat": {"patterns": [
+     {"steps": "x..x..x.x..x..x.", "w": 2},
+     {"steps": "x.xx.xx.x.xx.xx.", "w": 2},
+     {"steps": "x..x..x.x.xx..x.", "w": 1}],
+    "rolls": {"chance": 0.8, "max_per_bar": 2, "at": [3, 6, 7, 11, 14], "len": [2, 2, 4], "rates": {"1/16t": 4, "1/32": 2, "1/32t": 1}, "ramp": [-12, 6], "pitch_up_chance": 0.15}},
+   "openhat": {"patterns": [{"steps": "................", "w": 2}, {"steps": "......o.........", "w": 1}]},
+   "perc": {"patterns": [{"steps": "...o..o....o..o.", "w": 2}, {"steps": "..o...o...o.....", "w": 1}], "maybe": "..............2."}
+  },
+  "fill": {"every": 8, "parts": {"snare": "____________.o.X"}, "roll": {"part": "hat", "at": 8, "len": 8, "rate": "1/16t", "ramp": [-24, 0]}},
+  "variation": {"alt_pattern_chance": 0.35, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "808",
+  "register": [26, 45],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "x---------x-------------x-------", "w": 2},
+   {"steps": "x---------------------x---x-----", "w": 2},
+   {"steps": "x---------x-x-------------------", "w": 1}],
+  "follow": "root",
+  "length": "until_next",
+  "gap_steps": 0.25,
+  "vel": [104, 122],
+  "octave_jump": 0.2,
+  "glide": {"chance": 0.7, "len_steps": [2, 4], "where": "any", "targets": {"octave_up": 3, "next_root": 3, "octave_down": 2, "fifth": 1}}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i", "VI", "V", "V"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i", "iv", "VI", "V"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i", "bII", "i", "V"], "mode": "minor", "bars": 2, "w": 1},
+   {"rn": ["i", "VII", "VI", "V"], "mode": "minor", "bars": 2, "w": 2}
+  ],
+  "voicing": {"style": "triad", "register": [55, 74], "extensions": {"7": 0.0, "9": 0.0}},
+  "rhythm": {"patterns": [{"steps": "x---------------", "w": 2}, {"steps": "x-------x-------", "w": 1}]},
+  "vel": [70, 86]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "A", "S", "C"], "answer": "same", "breath": 2, "shapes": {"fall": 3, "arch": 2, "hold": 1}, "leap": 0.4},
+  "scale": "harmonic minor",
+  "range": [64, 86],
+  "rhythms": [
+    {"steps": "x.xx.xx.x...", "grid": 12, "w": 1},
+   {"steps": "x..x..x.x..x..x.", "w": 3},
+   {"steps": "x--x--x-x--x--x-", "w": 2},
+   {"steps": "x.......x..x..x.", "w": 1}],
+  "motif_bars": 1,
+  "form": ["A", "A'", "A", "B"],
+  "chord_tone_strong": 0.7,
+  "step_prob": 0.75,
+  "max_leap": 8,
+  "repeat_note": 0.25,
+  "vel": [82, 102],
+  "length": "until_next",
+  "max_len_steps": 6
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.4},
+ "form": {"default": [["Intro", 8], ["Hook", 16], ["Verse", 16], ["Hook", 16], ["Verse", 16], ["Hook", 16], ["Outro", 8]]},
+ "sections": {
+  "Intro": {"energy": 0.3, "layers": ["chords", "melody"], "drums": "sparse"},
+  "Verse": {"energy": 0.7, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Hook": {"energy": 0.95, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.45, "layers": ["chords", "melody", "bass"], "drums": "light"},
+  "Outro": {"energy": 0.2, "layers": ["chords", "melody"], "drums": "none"}
+ },
+ "transitions": {"into": {"Hook": ["dropout", "riser:4", "impact", "sub_drop"], "Verse": ["fill"], "Outro": ["stop"]}, "after": {"Hook": ["reverse_crash"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "build", "outro"], "build_beats": 8},
+ "roles": {
+  "kick": {"hint": "hard short kick", "family": "drums"},
+  "snare": {"hint": "loud dry snare / clap layer", "family": "drums"},
+  "hat": {"hint": "bright closed hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "perc": {"hint": "rim / bongo perc", "family": "drums"},
+  "bass": {"hint": "big distorted sliding 808, mono, glide", "family": "bass", "name": "808"},
+  "chords": {"hint": "choir or vocal chop pad", "family": "pad"},
+  "melody": {"hint": "dark piano, strings or vocal chop", "family": "lead"},
+  "counter": {"hint": "high strings or bells", "family": "lead"}
+ },
+ "mix": {"loudness_lufs": -7.5, "notes": ["808 is loud and distorted, everything else carved around it", "percs panned wide"], "sidechain": {"trigger": "kick", "target": "bass", "depth_db": 3}}
+}

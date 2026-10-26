@@ -1,0 +1,116 @@
+{
+ "format": "flh-template/1",
+ "genre": "afrobeats",
+ "name": "afrobeats starter",
+ "about": "Afrobeats: warm round drums with congas/shakers, a round bass, highlife guitar or keys, marimba/pluck lead.",
+ "tempo": null,
+ "key": null,
+ "kit": null,
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "warm round"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "rimshot snappy"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "soft"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "soft shaker",
+   "sample": "shaker",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "conga",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "character": {
+    "query": "warm round"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Guitar",
+   "family": "guitar",
+   "choices": [
+    {
+     "labs": "guitar"
+    },
+    {
+     "flex": "guitar"
+    },
+    {
+     "plugin": "Sakura",
+     "presets": [
+      "*guitar*",
+      "*nylon*",
+      "*pluck*"
+     ]
+    },
+    {
+     "fl_instrument": "guitar"
+    },
+    {
+     "plugin": "Plucked!"
+    },
+    {
+     "plugin": "FL Keys"
+    }
+   ],
+   "character": {
+    "query": "clean highlife bright"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Marimba",
+   "family": "pluck",
+   "choices": [
+    {
+     "labs": "bells"
+    },
+    {
+     "labs": "pluck"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*marimba*",
+      "*mallet*",
+      "*pluck*"
+     ]
+    },
+    {
+     "flex": "pluck"
+    },
+    {
+     "plugin": "Plucked!"
+    }
+   ],
+   "character": {
+    "query": "marimba mallet kalimba"
+   }
+  }
+ ]
+}

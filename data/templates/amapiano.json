@@ -1,0 +1,114 @@
+{
+ "format": "flh-template/1",
+ "genre": "amapiano",
+ "name": "amapiano starter",
+ "about": "Amapiano: soft round kick, dry clap, rim/wood clicks, 16th shakers, congas, the pitched log drum bass, jazzy deep-house piano.",
+ "tempo": null,
+ "key": null,
+ "kit": null,
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "soft round"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "dry"
+  },
+  {
+   "role": "rim",
+   "name": "Rim",
+   "query": "wood click",
+   "group": "Perc"
+  },
+  {
+   "role": "shaker",
+   "name": "Shaker",
+   "query": "",
+   "group": "Perc"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "soft",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "conga bongo",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Log Drum",
+   "family": "bass",
+   "choices": [
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*log*",
+      "*perc*bass*",
+      "*bass*"
+     ]
+    },
+    {
+     "flex": "bass"
+    },
+    {
+     "plugin": "3x Osc",
+     "hint": "short sine/square with a fast pitch drop"
+    }
+   ],
+   "notes": "the log drum is a pitched percussive bass: short notes",
+   "character": {
+    "query": "log drum"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Piano",
+   "family": "keys",
+   "character": {
+    "query": "grand soft jazz"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Flute",
+   "family": "lead",
+   "choices": [
+    {
+     "labs": "pluck"
+    },
+    {
+     "flex": "woodwind"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*flute*",
+      "*sax*",
+      "*piano*"
+     ]
+    },
+    {
+     "plugin": "FL Keys"
+    }
+   ],
+   "character": {
+    "query": "flute soft"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "warm"
+   }
+  }
+ ]
+}

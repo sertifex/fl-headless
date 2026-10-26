@@ -1,0 +1,105 @@
+{
+ "format": "flh-genre/1",
+ "name": "kpop",
+ "aliases": ["k-pop", "k pop", "j-pop", "jpop", "j pop", "idol pop", "anime pop", "anime opening", "anisong", "c-pop"],
+ "about": "K-pop / J-pop-style pop: 100-140 BPM, punchy dance-pop drums (four-on-the-floor or syncopated kicks, claps on 2 and 4, busy 16th hats, fills every 4 bars), a busy octave or syncopated bass, colourful 7th-chord progressions (the J-pop 'royal road' IVmaj7-V7-iii7-vi, vi-IV-I-V, ii-V-I turns), a wide-range melody with call-and-response phrases and a big hook.",
+ "tempo": {"min": 100, "max": 140, "default": 124, "feel": "straight"},
+ "guess_weight": 0.6,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 1, "vel": 4},
+ "loop_bars": 8,
+ "keys": {"modes": {"major": 5, "minor": 3}, "roots": ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"], "default": "D major"},
+ "drums": {
+  "vel": {"X": 118, "x": 102, "o": 80, "g": 44},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X...X...X...X...", "w": 2}, {"steps": "X.....x.x.......X.....x...x.....", "w": 2}, {"steps": "X..x..x...x.....", "w": 1}]},
+   "snare": {"patterns": [{"steps": "....X.......X...", "w": 2}, {"steps": "....X.......X..o", "w": 1}]},
+   "clap": {"patterns": [{"steps": "....X.......X...", "w": 1}]},
+   "hat": {"patterns": [{"steps": "xoxoxoxoxoxoxoxo", "w": 2}, {"steps": "x.o.x.o.x.o.x.o.", "w": 1}, {"steps": "..x...x...x...x.", "w": 1}]},
+   "openhat": {"patterns": [{"steps": "..o...o...o...o.", "w": 1}, {"steps": "..............o.", "w": 2}]},
+   "perc": {"patterns": [{"steps": "................", "w": 2}, {"steps": "..o...o...o...o.", "w": 1}], "maybe": "..............2."}
+  },
+  "fill": {"every": 4, "parts": {"snare": "____________oxxX", "kick": "____________x..."}},
+  "variation": {"alt_pattern_chance": 0.3, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "bass",
+  "register": [33, 50],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "x-x-x-x-x-x-x-x-", "w": 3},
+   {"steps": "x--x--x-x--x--x-", "w": 2},
+   {"steps": "x-.xx-.xx-.xx-.x", "w": 1}
+  ],
+  "follow": "octave",
+  "length": "as_written",
+  "gap_steps": 0.25,
+  "vel": [92, 108],
+  "octave_jump": 0.0,
+  "approach": 0.1,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["IVmaj7", "V7", "iii7", "vi"], "mode": "major", "bars": 1, "w": 4},
+   {"rn": ["vi", "IV", "I", "V"], "mode": "major", "bars": 1, "w": 3},
+   {"rn": ["IVmaj7", "V", "iii7", "vi7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["I", "V", "vi", "iii"], "mode": "major", "bars": 1, "w": 1},
+   {"rn": ["ii7", "V7", "Imaj7", "vi7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["i", "VI", "III", "VII"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["VImaj7", "VII7", "i", "i"], "mode": "minor", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "seventh", "register": [55, 76], "extensions": {"7": 0.6, "9": 0.3}},
+  "rhythm": {"patterns": [{"steps": "x--x--x-x--x--x-", "w": 2}, {"steps": "x---------------", "w": 2}, {"steps": "..x-..x-..x-..x-", "w": 1}]},
+  "vel": [74, 92]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "S", "A", "C"], "answer": "same", "breath": 2, "shapes": {"arch": 3, "rise": 2, "wave": 1}, "leap": 0.6},
+  "scale": "key",
+  "range": [62, 86],
+  "rhythms": [
+   {"steps": "x.x.x.x.x-x-x---", "w": 2},
+   {"steps": "..x.x.x.x.x.x---", "w": 2},
+   {"steps": "x--x--x-x-x-x---", "w": 2},
+   {"steps": "x-x-x-x-x-------", "w": 1}
+  ],
+  "motif_bars": 1,
+  "form": ["A", "A'", "B", "B'"],
+  "chord_tone_strong": 0.8,
+  "step_prob": 0.65,
+  "max_leap": 8,
+  "repeat_note": 0.2,
+  "vel": [88, 108],
+  "length": "as_written",
+  "max_len_steps": 6,
+  "pickup": 0.45
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.45},
+ "form": {"default": [["Intro", 4], ["Verse", 8], ["Pre", 8], ["Hook", 8], ["Verse", 8], ["Pre", 8], ["Hook", 8], ["Bridge", 8], ["Hook", 16], ["Outro", 4]]},
+ "sections": {
+  "Intro": {"energy": 0.5, "layers": ["drums", "chords", "melody"], "drums": "light"},
+  "Verse": {"energy": 0.6, "layers": ["drums", "bass", "chords"], "drums": "light"},
+  "Pre": {"energy": 0.75, "layers": ["drums", "bass", "chords", "counter"], "drums": "build"},
+  "Hook": {"energy": 1.0, "layers": ["drums", "bass", "chords", "melody", "counter"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.45, "layers": ["chords", "melody"], "drums": "sparse"},
+  "Outro": {"energy": 0.4, "layers": ["drums", "chords"], "drums": "light"}
+ },
+ "transitions": {"into": {"Hook": ["stop", "riser:8", "impact"], "Pre": ["fill"], "Bridge": ["dropout"], "Outro": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "build", "outro"], "build_beats": 8},
+ "roles": {
+  "kick": {"hint": "punchy dance-pop kick", "family": "drums"},
+  "snare": {"hint": "bright layered snare", "family": "drums"},
+  "clap": {"hint": "big clap", "family": "drums"},
+  "hat": {"hint": "crisp closed hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "perc": {"hint": "tambourine / shaker", "family": "drums"},
+  "bass": {"hint": "punchy synth bass or slap bass", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "bright electric piano or synth stabs", "family": "keys"},
+  "melody": {"hint": "bright synth lead or vocal hook", "family": "lead"},
+  "counter": {"hint": "bell, brass stab or string line", "family": "lead"},
+  "pad": {"hint": "wide supersaw pad", "family": "pad"},
+  "strings": {"hint": "pop string section", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -8, "notes": ["vocal hook on top and bright", "the hook wider and louder than the verse", "tight low end, sidechained bass"], "sidechain": {"trigger": "kick", "target": "bass", "depth_db": 3}}
+}

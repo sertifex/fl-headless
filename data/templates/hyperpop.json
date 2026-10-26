@@ -1,0 +1,141 @@
+{
+ "format": "flh-template/1",
+ "genre": "hyperpop",
+ "name": "hyperpop starter",
+ "about": "Hyperpop: clipped punchy kick, bright snappy snare, crispy hats, glitch perc, distorted sliding 808, detuned supersaw chords, pitched-up leads.",
+ "tempo": null,
+ "key": null,
+ "kit": "clean",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "clipped punchy"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "bright snappy"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "layered"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "crispy",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "glitch",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "808",
+   "family": "808",
+   "sample": "808",
+   "query": "distorted slide"
+  },
+  {
+   "role": "chords",
+   "name": "Supersaw",
+   "family": "synth",
+   "choices": [
+    {
+     "plugin": "Toxic Biohazard",
+     "presets": [
+      "*supersaw*",
+      "*saw*",
+      "*chord*"
+     ]
+    },
+    {
+     "plugin": "Harmless",
+     "presets": [
+      "*saw*",
+      "*chord*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*supersaw*",
+      "*saw*",
+      "*chord*"
+     ]
+    },
+    {
+     "flex": "synth"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "supersaw saw bright"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Lead",
+   "family": "lead",
+   "choices": [
+    {
+     "plugin": "PoiZone",
+     "presets": [
+      "*square*",
+      "*lead*"
+     ]
+    },
+    {
+     "plugin": "Harmless",
+     "presets": [
+      "*lead*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*square*",
+      "*lead*"
+     ]
+    },
+    {
+     "flex": "lead"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "bright square"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "bright wide"
+   }
+  },
+  {
+   "role": "fx",
+   "name": "FX",
+   "sample": "fx",
+   "query": "riser uplifter",
+   "notes": "arrange_song writes riser notes here"
+  }
+ ]
+}

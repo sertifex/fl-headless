@@ -1,0 +1,6 @@
+{
+  "_about": "Where flh_handbook_build fetches Image-Line's FL Studio manual on the user's PC. Nothing from these pages ships with fl-headless. 'latest' is the current online manual. by_major: archived manuals for older FL versions (e.g. \"21\": \"https://.../\") - add only URLs you have opened and confirmed (the build checks robots.txt and fetches Index_Frame_Left.html under that base). delay_s: pause between page requests (robots.txt crawl-delay wins if larger).",
+  "latest": "https://www.image-line.com/fl-studio-learning/fl-studio-online-manual/",
+  "by_major": {},
+  "delay_s": 1.0
+}

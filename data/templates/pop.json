@@ -1,0 +1,125 @@
+{
+ "format": "flh-template/1",
+ "genre": "pop",
+ "name": "pop starter",
+ "about": "Pop: tight punchy kick, bright snare, big clap, clean hats, tight bass, bright piano/synth chords, catchy lead, airy pad.",
+ "tempo": null,
+ "key": null,
+ "kit": "clean",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "tight punchy"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "bright"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "big layered"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "clean",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "shaker tambourine",
+   "sample": "shaker",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "choices": [
+    {
+     "flex": "bass"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*bass*"
+     ]
+    },
+    {
+     "plugin": "BooBass"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "punchy electric"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Piano",
+   "family": "keys",
+   "choices": [
+    {
+     "labs": "piano"
+    },
+    {
+     "flex": "piano"
+    },
+    {
+     "plugin": "FL Keys"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*piano*",
+      "*keys*"
+     ]
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "grand pop",
+    "avoid": [
+     "honky"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Lead",
+   "family": "lead",
+   "character": {
+    "query": "bright pop"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "wide lush"
+   }
+  },
+  {
+   "role": "fx",
+   "name": "FX",
+   "sample": "fx",
+   "query": "riser uplifter",
+   "notes": "arrange_song writes riser notes here"
+  }
+ ]
+}

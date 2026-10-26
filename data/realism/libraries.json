@@ -1,0 +1,35 @@
+{
+ "_about": "How flh_realism drives a channel's instrument. A library entry matches the channel's plugin / VST / preset text (regex, first hit wins). controllers: which MIDI CCs the library reads as dynamics (crossfade between soft and loud samples) and expression (volume); host_params: the plugin's own automatable parameters by name (index when known: verified=true only after someone checked it in FL with fl_plugin_params). legato: the library plays connected notes as legato transitions when notes overlap (articulation names containing legato_word). articulations: our names -> words to look for in the library's articulation names. keyswitches: {our articulation: MIDI note} for libraries that switch articulation by note (none shipped: they differ per patch; add yours). Users override with <fl-headless state folder>/realism/libraries.json.",
+ "version": 1,
+ "wrapper": {
+  "_about": "FL's VST wrapper exposes 4096 parameter slots, then MIDI CC 0..127 as parameters 4096..4223 (then aftertouch per MIDI channel). An automation clip on parameter 4096 + n sends CC n to the plugin. PC-VERIFY (checklists/realism.md)",
+  "cc_param_base": 4096,
+  "verified": false
+ },
+ "libraries": [
+  {"id": "spitfire_bbc", "name": "Spitfire BBC Symphony Orchestra", "match": ["BBC Symphony", "BBCSO", "BBC SO"],
+   "controllers": {"dynamics": 1, "expression": 11}, "host_params": {"dynamics": {"name": "Dynamics", "index": null}, "expression": {"name": "Expression", "index": null}},
+   "state_params": {"dynamics": "i_dynamics", "expression": "i_expression"},
+   "legato": true, "legato_word": "legato",
+   "articulations": {"long": ["Legato", "Long"], "short": ["Short Spiccato", "Spiccato", "Short", "Staccato", "Staccatissimo"], "pizz": ["Pizzicato", "Pizz"], "tremolo": ["Tremolo"], "swell": ["Swell", "Long Flautando", "Long CS", "Long"]},
+   "keyswitches": null},
+  {"id": "spitfire_labs", "name": "Spitfire LABS / Splice INSTRUMENT", "match": ["LABS", "Splice INSTRUMENT", "Spitfire"],
+   "controllers": {"dynamics": 1, "expression": 11}, "host_params": {"dynamics": {"name": "Dynamics", "index": null}, "expression": {"name": "Expression", "index": null}},
+   "state_params": {},
+   "legato": false, "legato_word": "legato",
+   "articulations": {"long": ["Long", "Sustain", "Legato"], "short": ["Short", "Staccato", "Spiccato"], "pizz": ["Pizz"], "tremolo": ["Tremolo", "Trem"], "swell": ["Swell", "Long"]},
+   "keyswitches": null},
+  {"id": "kontakt", "name": "Kontakt (most orchestral libraries: CC1 dynamics, CC11 expression)", "match": ["Kontakt"],
+   "controllers": {"dynamics": 1, "expression": 11}, "host_params": {},
+   "legato": false, "articulations": {}, "keyswitches": null},
+  {"id": "orchestral_vst", "name": "Other sampled orchestral VSTs (CC1 dynamics / CC11 expression convention)", "match": ["orchestr", "symphon", "strings", "choir", "brass", "woodwind", "Opus", "Spitfire", "Cinematic", "Albion", "Abbey Road", "Sacconi", "Musio", "Orchestral Tools", "SINE", "Hollywood", "Berlin", "EastWest", "VSL", "Synchron", "Audio Imperia", "Cinesamples", "Performance Samples", "Embertone", "Soundiron", "8Dio", "Heavyocity", "Native Instruments"],
+   "families": ["strings", "choir", "brass", "winds", "pad"],
+   "controllers": {"dynamics": 1, "expression": 11}, "host_params": {},
+   "legato": false, "articulations": {}, "keyswitches": null}
+ ],
+ "generic_vst": {
+  "_about": "any other VST/VST3 in an orchestral family (strings, choir, brass, winds): the CC1/CC11 convention is assumed (honestly reported as an assumption); pads/synths get the velocity + volume fallback because a synth's mod wheel is usually vibrato or a filter",
+  "families": ["strings", "choir", "brass", "winds"],
+  "controllers": {"dynamics": 1, "expression": 11}
+ }
+}

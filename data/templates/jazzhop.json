@@ -1,0 +1,113 @@
+{
+ "format": "flh-template/1",
+ "genre": "jazzhop",
+ "name": "jazzhop starter",
+ "about": "Jazz hop: soft dusty kick, brushy snare, jazz hat and ride, upright bass, rhodes/jazz piano, muted trumpet/sax/vibes.",
+ "tempo": null,
+ "key": null,
+ "kit": "dusty",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "soft dusty"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "brush rimshot"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "jazz",
+   "group": "Hats"
+  },
+  {
+   "role": "ride",
+   "name": "Ride",
+   "query": "jazz ride",
+   "group": "Cymbals"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "bass",
+   "name": "Upright Bass",
+   "family": "bass",
+   "character": {
+    "query": "upright acoustic jazz warm",
+    "avoid": [
+     "synth",
+     "808",
+     "slap"
+    ]
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Rhodes",
+   "family": "keys",
+   "character": {
+    "query": "rhodes electric suitcase warm soft",
+    "avoid": [
+     "grand",
+     "bright",
+     "honky"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Horn",
+   "family": "brass",
+   "choices": [
+    {
+     "labs": "brass"
+    },
+    {
+     "flex": "brass"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*trumpet*",
+      "*sax*",
+      "*vibe*",
+      "*brass*"
+     ]
+    },
+    {
+     "labs": "bells"
+    },
+    {
+     "fl_instrument": "brass"
+    },
+    {
+     "plugin": "Fruity DX10"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "soft warm jazz",
+    "avoid": [
+     "synth brass",
+     "stab"
+    ]
+   }
+  },
+  {
+   "role": "texture",
+   "name": "Vinyl",
+   "sample": "texture",
+   "query": "vinyl crackle",
+   "notes": "a noise bed: place it under the song (no notes are written for it)"
+  }
+ ]
+}

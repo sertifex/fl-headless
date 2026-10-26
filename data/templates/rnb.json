@@ -1,0 +1,80 @@
+{
+ "format": "flh-template/1",
+ "genre": "rnb",
+ "name": "rnb starter",
+ "about": "R&B: soft deep kick, snappy rim/snare, soft clap, smooth hats, finger snaps, smooth 808, chorused rhodes, soft lead, warm pad.",
+ "tempo": null,
+ "key": null,
+ "kit": "808",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "soft deep"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "snappy rim"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "soft layered"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "smooth",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "finger snap",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "808",
+   "family": "808",
+   "sample": "808",
+   "query": "smooth soft sub"
+  },
+  {
+   "role": "chords",
+   "name": "Rhodes",
+   "family": "keys",
+   "character": {
+    "query": "rhodes neo soul warm electric",
+    "avoid": [
+     "grand",
+     "honky",
+     "bright"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Lead",
+   "family": "lead",
+   "character": {
+    "query": "soft smooth warm"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "warm lush soft"
+   }
+  }
+ ]
+}

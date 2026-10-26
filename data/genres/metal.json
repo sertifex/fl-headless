@@ -1,0 +1,103 @@
+{
+ "format": "flh-genre/1",
+ "name": "metal",
+ "aliases": ["heavy metal", "metalcore", "thrash", "thrash metal", "djent", "nu metal", "death metal", "doom metal", "prog metal", "hard metal"],
+ "about": "Metal: 90-200 BPM, double-kick 8ths/16ths under a snare backbeat (or half-time breakdowns), ride/crash 8ths, palm-muted power-chord chugs and gallops on a low (drop) tuning in minor / phrygian (i-bII, i-VI-VII, i-bVII-bVI), the bass doubling the guitar roots, a harmonic-minor lead with fast runs and held bends.",
+ "tempo": {"min": 90, "max": 200, "default": 150, "feel": "straight"},
+ "guess_weight": 0.4,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 2, "vel": 4},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 3, "phrygian": 3, "harmonic minor": 1}, "roots": ["D", "E", "C", "B", "C#", "F#", "A"], "default": "E minor"},
+ "drums": {
+  "vel": {"X": 124, "x": 110, "o": 90, "g": 50},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X.x.X.x.X.x.X.x.", "w": 2}, {"steps": "XxxxXxxxXxxxXxxx", "w": 1}, {"steps": "X..X..X.X..X..X.", "w": 1}, {"steps": "X.......X.x.....", "w": 1}]},
+   "snare": {"patterns": [{"steps": "....X.......X...", "w": 3}, {"steps": "........X.......", "w": 1}]},
+   "ride": {"patterns": [{"steps": "x.x.x.x.x.x.x.x.", "w": 2}, {"steps": "x...x...x...x...", "w": 1}]},
+   "hat": {"patterns": [{"steps": "................", "w": 3}, {"steps": "x.x.x.x.x.x.x.x.", "w": 1}]},
+   "crash": {"patterns": [{"steps": "X...............................", "w": 1}]},
+   "tom": {"patterns": [{"steps": "................", "w": 1}]}
+  },
+  "fill": {"every": 8, "parts": {"tom": "________xxxxoooo", "snare": "________....xxxX", "ride": "________........", "kick": "________x.x.x.x."}},
+  "variation": {"alt_pattern_chance": 0.25, "kick_maybe_scale": 0.0}
+ },
+ "bass": {
+  "type": "bass",
+  "register": [26, 45],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "x-x-x-x-x-x-x-x-", "w": 3},
+   {"steps": "x.xxx.xxx.xxx.xx", "w": 1},
+   {"steps": "x-------x-------", "w": 1}
+  ],
+  "follow": "root",
+  "length": "as_written",
+  "gap_steps": 0.15,
+  "vel": [100, 116],
+  "octave_jump": 0.0,
+  "approach": 0.0,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i", "bII"], "mode": "minor", "bars": 1, "w": 3},
+   {"rn": ["i", "VI", "VII", "i"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i", "VII", "VI", "VII"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i", "iv", "VI", "V"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["i", "i", "bII", "VII"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i", "v", "VI", "iv"], "mode": "minor", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "power", "register": [38, 60], "extensions": {"7": 0.0, "9": 0.0}},
+  "rhythm": {"patterns": [{"steps": "x.xxx.xxx.xxx.xx", "w": 2}, {"steps": "x-x-x-x-x-x-x-x-", "w": 2}, {"steps": "x-------x-------", "w": 1}, {"steps": "xx.xxx.xx.xxx.x.", "w": 1}]},
+  "vel": [96, 114]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "S", "A", "C"], "answer": "same", "breath": 2, "shapes": {"fall": 2, "arch": 2, "wave": 1}, "leap": 0.5},
+  "scale": "harmonic minor",
+  "range": [64, 88],
+  "rhythms": [
+   {"steps": "x-x-x-x-x-x-x-x-", "w": 2},
+   {"steps": "x-------x-x-x---", "w": 2},
+   {"steps": "xxxxxxxxx-------", "w": 1},
+   {"steps": "x---x---x-------", "w": 1}
+  ],
+  "motif_bars": 1,
+  "form": ["A", "A'", "B", "A"],
+  "chord_tone_strong": 0.8,
+  "step_prob": 0.75,
+  "max_leap": 7,
+  "repeat_note": 0.1,
+  "vel": [96, 116],
+  "length": "as_written",
+  "max_len_steps": 8
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.35},
+ "form": {"default": [["Intro", 8], ["Verse", 16], ["Hook", 16], ["Verse", 16], ["Hook", 16], ["Breakdown", 8], ["Solo", 16], ["Hook", 16], ["Outro", 8]]},
+ "sections": {
+  "Intro": {"energy": 0.6, "layers": ["chords", "drums"], "drums": "light"},
+  "Verse": {"energy": 0.8, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Hook": {"energy": 1.0, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Breakdown": {"energy": 0.9, "layers": ["drums", "bass", "chords"], "drums": "half"},
+  "Solo": {"energy": 0.95, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.6, "layers": ["chords", "melody"], "drums": "light"},
+  "Outro": {"energy": 0.5, "layers": ["chords", "drums"], "drums": "half"}
+ },
+ "transitions": {"into": {"Hook": ["fill"], "Verse": ["fill"], "Breakdown": ["stop", "sub_drop"], "Solo": ["fill"], "Outro": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": []},
+ "roles": {
+  "kick": {"hint": "tight clicky metal kick (double kick)", "family": "drums"},
+  "snare": {"hint": "cracking metal snare", "family": "drums"},
+  "ride": {"hint": "bell ride", "family": "drums"},
+  "hat": {"hint": "closed hat", "family": "drums"},
+  "crash": {"hint": "china / crash", "family": "drums"},
+  "tom": {"hint": "big toms", "family": "drums"},
+  "bass": {"hint": "picked distorted bass (drop tuning)", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "high-gain rhythm guitar, palm-muted (drop tuning)", "family": "keys", "name": "Rhythm Guitar"},
+  "melody": {"hint": "lead guitar with delay", "family": "lead", "name": "Lead Guitar"},
+  "counter": {"hint": "harmony lead guitar", "family": "lead"},
+  "pad": {"hint": "dark choir or string pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -8, "notes": ["guitars double-tracked hard left/right", "kick clicky to cut through the guitars", "bass distorted, high-passed guitars"], "sidechain": {"trigger": "kick", "target": "bass", "depth_db": 2}}
+}

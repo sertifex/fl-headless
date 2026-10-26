@@ -1,0 +1,769 @@
+{
+ "about": "Ear candy rules for flp_arrange_song (data, not code taste). Every effect points at a moment (a section change, a downbeat, a phrase end), sits under the music and stays sparse. kinds.<kind>: role (riser = rises INTO a downbeat, hit = a big hit ON it, fall = falls away after it, drums = a drum build, cut = a silence, throw = a delay throw on a phrase end, bed = a quiet loop under a quiet section), purpose = the places where it has a job (a kind is only placed where one of its purposes is), genres = where it fits (amount 'lots' also places it there at every purposeful change), why = the plain-words reason shown in the result. Places: climax (into the song's main climax: its highest-energy section, the last one when tied), hook / drop / build / breakdown / bridge / outro / intro (into a section of that kind), big (into a section clearly louder than the one before: energy step >= big_energy_step), section (any section change), after_hook (out of a hook-like section), end (the song's last downbeat). Beds play under whole intro / outro / breakdown / bridge sections only. rules: max_per_boundary by role (one riser, one big hit per boundary), bed_sections (the only sections a bed may play under). amounts.<amount>: per_boundary = how many of the genre's listed effects one boundary gets (climax_per_boundary into the climax), spread = also the genre's other fitting kinds, throws_per_song = delay throws, beds = which sections get the texture bed, filters = which filter moves stay ('*' = the genre's), level_offset_db = added to the computed under-the-beat level (FX insert: the loudest drum level of the template - below_beat_db; Texture insert: the loudest music level - bed_below_music_db; a delay throw's wet: throw_wet_pct, scaled by the same offset). profiles.<name>: replaces the genre's effects when its 'when' matches (genres, or words in the song journal's role / the collection's style / the song's role in the collection) - only in mode 'synthetic' asked for explicitly (ear_candy='synthetic'). Genre files: transitions (where, in order of priority), ear_candy.amount (the genre's default), ear_candy.beds (its texture), ear_candy.level_db (an FX level of its own).",
+ "default_amount": "normal",
+ "below_beat_db": 11.0,
+ "bed_below_music_db": 18.0,
+ "big_energy_step": 0.15,
+ "throw_wet_pct": 35.0,
+ "amounts": {
+  "subtle": {
+   "per_boundary": 1,
+   "climax_per_boundary": 2,
+   "spread": false,
+   "throws_per_song": 1,
+   "beds": [
+    "intro",
+    "outro"
+   ],
+   "filters": [
+    "intro",
+    "outro"
+   ],
+   "level_offset_db": -6.0
+  },
+  "normal": {
+   "per_boundary": 3,
+   "climax_per_boundary": 3,
+   "spread": false,
+   "throws_per_song": 2,
+   "beds": [
+    "intro",
+    "outro",
+    "breakdown",
+    "bridge"
+   ],
+   "filters": "*",
+   "level_offset_db": 0.0
+  },
+  "lots": {
+   "per_boundary": 4,
+   "climax_per_boundary": 5,
+   "spread": true,
+   "throws_per_song": 4,
+   "beds": [
+    "intro",
+    "outro",
+    "breakdown",
+    "bridge"
+   ],
+   "filters": "*",
+   "level_offset_db": 2.0
+  }
+ },
+ "rules": {
+  "max_per_boundary": {
+   "riser": 1,
+   "hit": 1,
+   "fall": 1,
+   "drums": 1,
+   "cut": 1
+  },
+  "bed_sections": [
+   "intro",
+   "outro",
+   "breakdown",
+   "bridge"
+  ]
+ },
+ "profiles": {
+  "synthetic_cinematic": {
+   "about": "ONLY with ear_candy='synthetic' (asked for explicitly): the old synthetic cinematic set - soft swells into builds, a deep boom on the climax downbeat, the chord swelling in backwards, wind under the intro / outro. Piano-led and cinematic songs get the organic mode by default instead.",
+   "when": {
+    "genres": [
+     "cinematic",
+     "ambient"
+    ],
+    "words": [
+     "piano-led",
+     "piano led",
+     "piano-driven",
+     "solo piano",
+     "piano ballad",
+     "piano piece",
+     "cinematic"
+    ]
+   },
+   "amount": "subtle",
+   "places": [
+    [
+     "climax",
+     [
+      "reverse_swell:8",
+      "boom"
+     ]
+    ],
+    [
+     "build",
+     [
+      "cymbal_swell:8"
+     ]
+    ],
+    [
+     "big",
+     [
+      "reverse_swell:8"
+     ]
+    ]
+   ],
+   "bed": "wind",
+   "bed_sections": [
+    "intro",
+    "outro"
+   ]
+  }
+ },
+ "kinds": {
+  "riser": {
+   "role": "riser",
+   "label": "riser",
+   "why": "builds anticipation",
+   "purpose": [
+    "climax",
+    "hook",
+    "drop",
+    "build"
+   ],
+   "genres": [
+    "cinematic",
+    "dnb",
+    "drill-ny",
+    "drill-uk",
+    "house",
+    "hyperpop",
+    "kpop",
+    "lofi-house",
+    "phonk",
+    "pop",
+    "reggaeton",
+    "techno",
+    "trap"
+   ]
+  },
+  "reverse_crash": {
+   "role": "riser",
+   "label": "reverse crash",
+   "why": "a cymbal swell that pulls the ear into the new section",
+   "purpose": [
+    "climax",
+    "hook",
+    "section",
+    "after_hook"
+   ],
+   "genres": [
+    "afrobeats",
+    "amapiano",
+    "cinematic",
+    "dancehall",
+    "drill-ny",
+    "drill-uk",
+    "gospel",
+    "house",
+    "jazzhop",
+    "kpop",
+    "lofi",
+    "pop",
+    "rnb",
+    "rock",
+    "synthwave",
+    "trap"
+   ]
+  },
+  "impact": {
+   "role": "hit",
+   "label": "impact",
+   "why": "marks the arrival with weight",
+   "purpose": [
+    "climax",
+    "hook",
+    "drop"
+   ],
+   "genres": [
+    "dnb",
+    "drill-ny",
+    "drill-uk",
+    "house",
+    "hyperpop",
+    "kpop",
+    "phonk",
+    "pop",
+    "reggaeton",
+    "techno",
+    "trap"
+   ]
+  },
+  "sub_drop": {
+   "role": "hit",
+   "label": "sub drop",
+   "why": "a low-end drop that makes the downbeat hit harder",
+   "purpose": [
+    "climax",
+    "hook",
+    "drop",
+    "breakdown"
+   ],
+   "genres": [
+    "cinematic",
+    "drill-ny",
+    "drill-uk",
+    "hyperpop",
+    "metal",
+    "phonk",
+    "trap"
+   ]
+  },
+  "downlifter": {
+   "role": "fall",
+   "label": "downlifter",
+   "why": "lets the energy fall away after the peak",
+   "purpose": [
+    "after_hook",
+    "breakdown"
+   ],
+   "genres": [
+    "amapiano",
+    "dnb",
+    "house",
+    "hyperpop",
+    "phonk",
+    "techno",
+    "trap"
+   ]
+  },
+  "noise_sweep": {
+   "role": "riser",
+   "label": "noise sweep",
+   "why": "a whoosh that carries the ear across the change",
+   "purpose": [
+    "climax",
+    "hook",
+    "drop"
+   ],
+   "genres": [
+    "dnb",
+    "house",
+    "jersey-club",
+    "lofi-house",
+    "pop",
+    "techno",
+    "trap"
+   ]
+  },
+  "tape_stop": {
+   "role": "fall",
+   "label": "tape stop",
+   "why": "winds the music down so the ending feels intentional",
+   "purpose": [
+    "end",
+    "breakdown"
+   ],
+   "genres": [
+    "boombap",
+    "jazzhop",
+    "lofi",
+    "rnb"
+   ]
+  },
+  "cymbal_swell": {
+   "role": "riser",
+   "label": "cymbal swell",
+   "why": "builds anticipation, gently",
+   "purpose": [
+    "climax",
+    "hook",
+    "drop",
+    "build",
+    "big"
+   ],
+   "genres": [
+    "ambient",
+    "cinematic",
+    "gospel",
+    "jazzhop",
+    "lofi",
+    "rnb",
+    "synthwave"
+   ]
+  },
+  "boom": {
+   "role": "hit",
+   "label": "boom",
+   "why": "gives the arrival a deep, soft weight",
+   "purpose": [
+    "climax",
+    "drop",
+    "hook"
+   ],
+   "genres": [
+    "cinematic"
+   ]
+  },
+  "reverse_swell": {
+   "role": "riser",
+   "label": "reverse swell",
+   "why": "the chord swells in backwards, so the harmony arrives before the section",
+   "purpose": [
+    "climax",
+    "hook",
+    "big"
+   ],
+   "genres": [
+    "ambient",
+    "cinematic",
+    "gospel",
+    "jazzhop",
+    "lofi",
+    "lofi-house",
+    "rnb",
+    "synthwave"
+   ]
+  },
+  "snare_build": {
+   "role": "drums",
+   "label": "snare build",
+   "why": "an accelerating, rising snare roll that tells the listener the hook is coming",
+   "purpose": [
+    "climax",
+    "hook",
+    "drop"
+   ],
+   "genres": [
+    "dnb",
+    "drill-ny",
+    "drill-uk",
+    "house",
+    "hyperpop",
+    "kpop",
+    "lofi-house",
+    "phonk",
+    "pop",
+    "reggaeton",
+    "techno",
+    "trap"
+   ]
+  },
+  "gap": {
+   "role": "cut",
+   "label": "gap",
+   "why": "a half-beat breath of silence so the next downbeat lands harder",
+   "purpose": [
+    "climax",
+    "drop",
+    "hook"
+   ],
+   "genres": [
+    "dnb",
+    "house",
+    "lofi-house",
+    "pop",
+    "techno",
+    "trap"
+   ]
+  },
+  "delay_throw": {
+   "role": "throw",
+   "label": "delay throw",
+   "why": "the phrase's last note echoes across the change instead of stopping dead",
+   "purpose": [
+    "section"
+   ],
+   "genres": [
+    "afrobeats",
+    "ambient",
+    "boombap",
+    "cinematic",
+    "dancehall",
+    "gospel",
+    "house",
+    "jazzhop",
+    "kpop",
+    "lofi",
+    "lofi-house",
+    "pop",
+    "reggaeton",
+    "rnb",
+    "synthwave",
+    "trap"
+   ],
+   "note": "written as automation of a Fruity Delay 3's wet on the lead's own mixer insert (loaded there when the slot is free and FL's plugin database has it); a lead that plays straight into the Master or only has a Delay send gets the throw planned in the notes (send knobs can't be automated reliably in the .flp file)"
+  },
+  "wind": {
+   "role": "bed",
+   "label": "wind bed",
+   "why": "air and space under a quiet part, without adding notes",
+   "purpose": [
+    "intro",
+    "outro",
+    "breakdown",
+    "bridge"
+   ],
+   "genres": [
+    "ambient",
+    "cinematic"
+   ]
+  },
+  "rain": {
+   "role": "bed",
+   "label": "rain bed",
+   "why": "a soft wash that fills the quiet part",
+   "purpose": [
+    "intro",
+    "outro",
+    "breakdown",
+    "bridge"
+   ],
+   "genres": [
+    "ambient",
+    "lofi"
+   ]
+  },
+  "vinyl": {
+   "role": "bed",
+   "label": "vinyl bed",
+   "why": "warmth and age under the quiet part",
+   "purpose": [
+    "intro",
+    "outro",
+    "breakdown",
+    "bridge"
+   ],
+   "genres": [
+    "boombap",
+    "jazzhop",
+    "lofi",
+    "lofi-house"
+   ]
+  }
+ },
+ "modes_about": "Two modes. 'synthetic' (the default for beats): the audio FX, beds, snare builds, delay throws and filter moves below. 'organic' (the default for cinematic / ambient genres, songs whose journal role / style says piano-led and songs whose collection profile says the support must sound real / stay faint - organic.when): real-instrument transitions written as NOTES on channels the song already has (organic.moves), no generated audio, no plugins. ear_candy= off | organic | subtle | normal | lots | synthetic ('organic:normal', 'synthetic:lots' set both); a collection profile's 'ear_candy' key takes the same values.",
+ "organic": {
+  "about": "Organic ear candy: transitions played by the song's own instruments (strings, timpani, a suspended cymbal, choir, the piano itself), written as notes on channels it already has - found by the compose registry / the song journal's channel roles, else channel / plugin / sample names (words; roles = journal roles). A move whose instrument isn't there is skipped and the result says which owned instrument would play it (fl_sound_catalog: catalog = [query, kind]). Every move ends on a section's downbeat (a timpani roll lands ON it), never inside a section, on a channel that isn't already playing there (piano_pickup: the piano barely moving there); velocities stay under the piano's (levels). places: the first place a change has (see the about above) gives the moves in priority order; amounts.<amount>.per_boundary moves per change; rules.max_per_boundary by role (one swell, one roll, one pickup); moves.<move>.purpose limits where a move has a job, max_per_song caps it. string_swell / choir_breath: voices enter one after another on the chord the music holds there (common tones), velocities rising (from start_vel to peak_vel), plus a channel-volume ramp (volume_ramp.depth: the share the knob dips at the swell's start, back to the channel's own level on the downbeat) when the channel plays nothing else then and has no volume automation of its own. Genre files: ear_candy.mode (organic | synthetic), ear_candy.organic_moves (the moves that fit the genre).",
+  "default_amount": "subtle",
+  "when": {
+   "genres": [
+    "cinematic",
+    "ambient"
+   ],
+   "words": [
+    "piano-led",
+    "piano led",
+    "piano-driven",
+    "piano driven",
+    "piano is the star",
+    "solo piano",
+    "piano ballad",
+    "piano piece",
+    "piano rework",
+    "piano reworks",
+    "cinematic",
+    "orchestral",
+    "sound real",
+    "sounds real",
+    "real instruments",
+    "organic",
+    "support layers faint",
+    "layers faint",
+    "faint support",
+    "no synth fx",
+    "no synthetic fx"
+   ]
+  },
+  "amounts": {
+   "subtle": {
+    "per_boundary": 1,
+    "vel_scale": 0.85
+   },
+   "normal": {
+    "per_boundary": 2,
+    "vel_scale": 1.0
+   },
+   "lots": {
+    "per_boundary": 2,
+    "vel_scale": 1.0
+   }
+  },
+  "rules": {
+   "max_per_boundary": {
+    "swell": 1,
+    "roll": 1,
+    "pickup": 1
+   }
+  },
+  "levels": {
+   "below_piano_vel": 10,
+   "start_vel": 30,
+   "default_piano_vel": 80
+  },
+  "places": [
+   [
+    "climax",
+    [
+     "string_swell",
+     "timpani_roll",
+     "choir_breath",
+     "cymbal_roll",
+     "piano_pickup"
+    ]
+   ],
+   [
+    "build",
+    [
+     "cymbal_roll",
+     "string_swell",
+     "timpani_roll",
+     "piano_pickup"
+    ]
+   ],
+   [
+    "big",
+    [
+     "string_swell",
+     "piano_pickup",
+     "cymbal_roll",
+     "timpani_roll"
+    ]
+   ],
+   [
+    "hook",
+    [
+     "string_swell",
+     "piano_pickup"
+    ]
+   ],
+   [
+    "section",
+    [
+     "piano_pickup"
+    ]
+   ]
+  ],
+  "moves": {
+   "string_swell": {
+    "role": "swell",
+    "label": "String Swell",
+    "needs": "strings",
+    "why": "the strings swell into the new section, so it arrives instead of just starting",
+    "purpose": [
+     "climax",
+     "big",
+     "build",
+     "hook"
+    ],
+    "channels": [
+     "low_strings",
+     "strings"
+    ],
+    "beats": 8,
+    "min_beats": 2,
+    "voices": 3,
+    "peak_vel": 76,
+    "register": {
+     "low_strings": [
+      36,
+      55
+     ],
+     "strings": [
+      48,
+      67
+     ]
+    },
+    "volume_ramp": {
+     "depth": 0.4
+    },
+    "catalog": [
+     "string ensemble",
+     "strings"
+    ],
+    "max_per_song": 2
+   },
+   "timpani_roll": {
+    "role": "roll",
+    "label": "Timpani Roll",
+    "needs": "timpani",
+    "why": "a soft timpani roll that grows into the downbeat and lands on it",
+    "purpose": [
+     "climax",
+     "big",
+     "build"
+    ],
+    "channels": [
+     "timpani"
+    ],
+    "beats": 4,
+    "peak_vel": 72,
+    "from_vel": 26,
+    "strokes_per_s": 10,
+    "land": true,
+    "strike_beats": 1,
+    "register": [
+     40,
+     55
+    ],
+    "catalog": [
+     "timpani",
+     "perc"
+    ],
+    "max_per_song": 2
+   },
+   "cymbal_roll": {
+    "role": "roll",
+    "label": "Cymbal Roll",
+    "needs": "suspended cymbal",
+    "why": "a soft suspended-cymbal roll that swells into the downbeat",
+    "purpose": [
+     "climax",
+     "big",
+     "build"
+    ],
+    "channels": [
+     "cymbal"
+    ],
+    "beats": 4,
+    "peak_vel": 62,
+    "from_vel": 18,
+    "strokes_per_s": 12,
+    "land": false,
+    "catalog": [
+     "suspended cymbal",
+     "perc"
+    ],
+    "max_per_song": 2
+   },
+   "choir_breath": {
+    "role": "swell",
+    "label": "Choir Breath",
+    "needs": "choir",
+    "why": "the choir breathes in and swells into the climax",
+    "purpose": [
+     "climax"
+    ],
+    "channels": [
+     "choir"
+    ],
+    "beats": 4,
+    "min_beats": 2,
+    "voices": 2,
+    "peak_vel": 66,
+    "register": {
+     "choir": [
+      55,
+      72
+     ]
+    },
+    "volume_ramp": {
+     "depth": 0.4
+    },
+    "max_per_song": 1,
+    "catalog": [
+     "choir",
+     "choir"
+    ]
+   },
+   "piano_pickup": {
+    "role": "pickup",
+    "label": "Piano Pickup",
+    "needs": "piano / keys",
+    "why": "a gentle arpeggio in the piano's own register that leads into the new section",
+    "purpose": [
+     "section"
+    ],
+    "channels": [
+     "piano"
+    ],
+    "beats": 1,
+    "notes": 4,
+    "min_note_s": 0.09,
+    "max_onsets": 1,
+    "below_piano_vel": 8,
+    "spread_vel": 10,
+    "max_per_song": 3,
+    "catalog": [
+     "piano",
+     "piano"
+    ]
+   }
+  },
+  "words": {
+   "strings": [
+    "string",
+    "strings",
+    "violin",
+    "violins",
+    "viola",
+    "violas",
+    "ensemble strings",
+    "string ensemble",
+    "orchestra strings"
+   ],
+   "low_strings": [
+    "low string",
+    "low strings",
+    "cello",
+    "celli",
+    "contrabass",
+    "double bass",
+    "basses",
+    "bass string",
+    "string bass"
+   ],
+   "timpani": [
+    "timpani",
+    "timp",
+    "kettle",
+    "kettledrum"
+   ],
+   "cymbal": [
+    "suspended cymbal",
+    "sus cymbal",
+    "sus cym",
+    "cymbal",
+    "cymbals",
+    "crash",
+    "orchestral percussion",
+    "orch perc"
+   ],
+   "choir": [
+    "choir",
+    "choral",
+    "voices",
+    "vox",
+    "chorus voices",
+    "aahs",
+    "oohs"
+   ],
+   "piano": [
+    "piano",
+    "grand",
+    "upright",
+    "keys",
+    "rhodes",
+    "epiano",
+    "e-piano",
+    "wurli"
+   ]
+  },
+  "roles": {
+   "strings": [
+    "strings"
+   ],
+   "low_strings": [
+    "low strings",
+    "celli",
+    "cello"
+   ],
+   "timpani": [
+    "timpani"
+   ],
+   "cymbal": [
+    "crash",
+    "cymbal"
+   ],
+   "choir": [
+    "choir"
+   ],
+   "piano": [
+    "piano",
+    "keys"
+   ]
+  }
+ }
+}

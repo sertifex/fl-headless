@@ -1,0 +1,17 @@
+{
+ "format": "flh-kit/1",
+ "name": "acoustic",
+ "about": "Live acoustic kit: rock, pop ballads, jazz.",
+ "roles": {
+  "kick": "acoustic live",
+  "snare": "acoustic live",
+  "hat": "acoustic live",
+  "openhat": "acoustic",
+  "crash": "acoustic crash",
+  "ride": "acoustic ride",
+  "tom": "acoustic"
+ },
+ "avoid": [
+  "electronic"
+ ]
+}

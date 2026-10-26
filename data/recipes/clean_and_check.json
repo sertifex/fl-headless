@@ -1,0 +1,11 @@
+{
+ "name": "clean_and_check",
+ "description": "Static health check, list (not remove) unused channels, then a section-by-section review.",
+ "params": {"project": {"description": "the .flp", "required": true}},
+ "steps": [
+  {"tool": "fl_doctor", "args": {"project": "${project}"}},
+  {"tool": "flp_remove_channels", "args": {"project": "${project}", "unused": true, "dry_run": true},
+   "note": "dry run: shows what could go; run flp_remove_channels(unused=true) yourself to remove them"},
+  {"tool": "fl_review", "args": {"project": "${project}"}}
+ ]
+}

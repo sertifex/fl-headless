@@ -1,0 +1,103 @@
+{
+ "format": "flh-template/1",
+ "genre": "kpop",
+ "name": "kpop starter",
+ "about": "K-pop: punchy dance-pop kick, bright layered snare, big clap, crisp hats, synth/slap bass, bright EP or synth stabs, bright lead, wide pad.",
+ "tempo": null,
+ "key": null,
+ "kit": "clean",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "punchy"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "bright layered"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "big"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "crisp",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "tambourine shaker",
+   "sample": "shaker",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "choices": [
+    {
+     "flex": "bass"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*slap*",
+      "*synth*bass*",
+      "*bass*"
+     ]
+    },
+    {
+     "plugin": "BooBass"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "punchy slap electric"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Keys",
+   "family": "keys",
+   "character": {
+    "query": "bright pop grand"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Lead",
+   "family": "lead",
+   "character": {
+    "query": "bright pop"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "wide lush"
+   }
+  },
+  {
+   "role": "fx",
+   "name": "FX",
+   "sample": "fx",
+   "query": "riser uplifter",
+   "notes": "arrange_song writes riser notes here"
+  }
+ ]
+}

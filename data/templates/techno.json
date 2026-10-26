@@ -1,0 +1,125 @@
+{
+ "format": "flh-template/1",
+ "genre": "techno",
+ "name": "techno starter",
+ "about": "Techno: hard punchy kick with rumble, industrial clap, metallic hats and perc, rolling bass or acid line, dub stab, dark drone.",
+ "tempo": null,
+ "key": null,
+ "kit": "909",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "hard punchy rumble"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "industrial"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": ""
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "metallic",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open ride",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "metallic rim tom",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "choices": [
+    {
+     "plugin": "Transistor Bass"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*acid*",
+      "*rumble*",
+      "*bass*"
+     ]
+    },
+    {
+     "flex": "bass"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "dark analog rumble"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Stab",
+   "family": "synth",
+   "choices": [
+    {
+     "plugin": "PoiZone",
+     "presets": [
+      "*stab*",
+      "*chord*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*stab*",
+      "*dub*",
+      "*chord*"
+     ]
+    },
+    {
+     "flex": "synth"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "stab dark chord dub"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Sequence",
+   "family": "synth",
+   "character": {
+    "query": "arp sequence analog"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Drone",
+   "family": "pad",
+   "character": {
+    "query": "dark drone atmos"
+   }
+  },
+  {
+   "role": "fx",
+   "name": "FX",
+   "sample": "fx",
+   "query": "riser uplifter",
+   "notes": "arrange_song writes riser notes here"
+  }
+ ]
+}

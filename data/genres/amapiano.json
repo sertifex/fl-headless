@@ -1,0 +1,104 @@
+{
+ "format": "flh-genre/1",
+ "name": "amapiano",
+ "aliases": ["yanos", "amapiano beat", "private school amapiano", "log drum", "ama piano"],
+ "about": "Amapiano: 108-118 BPM, laid-back swung groove: light kick (four-on-the-floor or on 1 and 3), busy 16th shakers, syncopated claps/rims and congas, the signature log drum bass (pitched, percussive, syncopated, sliding between notes), jazzy deep-house piano chords (minor 7ths / 9ths) and sparse piano or flute melodies.",
+ "tempo": {"min": 108, "max": 118, "default": 112, "feel": "straight"},
+ "guess_weight": 0.4,
+ "meter": 4,
+ "swing": 0.56,
+ "humanize": {"timing_ms": 5, "vel": 6},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 4, "dorian": 2, "major": 2}, "roots": ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "A", "Bb"], "default": "F minor"},
+ "drums": {
+  "vel": {"X": 110, "x": 98, "o": 76, "g": 42},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X...x...X...x...", "w": 2}, {"steps": "X.......X.......", "w": 2}, {"steps": "X......x..x.....", "w": 1}]},
+   "clap": {"patterns": [{"steps": "....x.......x...", "w": 2}, {"steps": "........x.......", "w": 1}]},
+   "rim": {"patterns": [{"steps": "...o..o....o..o.", "w": 2}, {"steps": "..o...o...o..o..", "w": 1}]},
+   "shaker": {"patterns": [{"steps": "xoxoxoxoxoxoxoxo", "w": 2}, {"steps": "xooxxooxxooxxoox", "w": 1}]},
+   "hat": {"patterns": [{"steps": "..x...x...x...x.", "w": 1}, {"steps": "................", "w": 1}]},
+   "perc": {"patterns": [{"steps": "..o..o..o..o.o..", "w": 2}, {"steps": "o..o..o...o..o..", "w": 1}], "maybe": "..............2."}
+  },
+  "fill": {"every": 8, "parts": {"perc": "____________oooo", "clap": "____________.x.x"}},
+  "variation": {"alt_pattern_chance": 0.3, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "lock": "free",
+  "type": "log",
+  "register": [33, 52],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "x--x--x---x-x---", "w": 3},
+   {"steps": "x-..x-..x-x-.x..", "w": 2},
+   {"steps": "..x-..x-x-..x-..", "w": 1},
+   {"steps": "x--x--x-x--x--x-", "w": 1}
+  ],
+  "follow": "root_fifth",
+  "length": "as_written",
+  "gap_steps": 0.25,
+  "vel": [96, 116],
+  "octave_jump": 0.2,
+  "approach": 0.15,
+  "glide": {"chance": 0.3, "len_steps": [1, 2], "where": "late", "targets": {"octave_up": 2, "next_root": 2, "fifth": 1}}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i7", "iv7"], "mode": "minor", "bars": 2, "w": 3},
+   {"rn": ["i9", "VImaj7", "VII", "III"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i7", "VImaj7", "iv7", "v7"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["ii7", "V7", "Imaj7", "vi7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["IVmaj7", "iii7", "vi7", "ii7"], "mode": "major", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "extended", "register": [52, 76], "extensions": {"7": 1.0, "9": 0.6}},
+  "rhythm": {"patterns": [{"steps": "x---------------", "w": 2}, {"steps": "..x...x...x...x.", "w": 2}, {"steps": "x-----x-----x---", "w": 1}]},
+  "vel": [68, 86],
+  "strum_ms": 8
+ },
+ "melody": {
+  "hook": {"plan": ["A", "S", "A", "C"], "answer": "other", "breath": 3, "shapes": {"fall": 2, "arch": 2}, "leap": 0.4},
+  "scale": "pentatonic",
+  "range": [64, 86],
+  "rhythms": [
+   {"steps": "x..x..x.x.......", "w": 2},
+   {"steps": "..x..x..x.x.....", "w": 2},
+   {"steps": "x---x-x---------", "w": 1}
+  ],
+  "motif_bars": 2,
+  "form": ["A", "B", "A", "B'"],
+  "chord_tone_strong": 0.8,
+  "step_prob": 0.7,
+  "max_leap": 5,
+  "repeat_note": 0.15,
+  "vel": [74, 94],
+  "length": "as_written",
+  "max_len_steps": 6
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.4},
+ "form": {"default": [["Intro", 16], ["Groove", 16], ["Log Drum", 16], ["Breakdown", 8], ["Log Drum", 16], ["Outro", 16]]},
+ "sections": {
+  "Intro": {"energy": 0.4, "layers": ["drums", "chords"], "drums": "light"},
+  "Groove": {"energy": 0.7, "layers": ["drums", "chords", "melody"], "drums": "full"},
+  "Log Drum": {"energy": 0.95, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Hook": {"energy": 0.95, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Verse": {"energy": 0.7, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Breakdown": {"energy": 0.35, "layers": ["chords", "melody"], "drums": "sparse"},
+  "Outro": {"energy": 0.4, "layers": ["drums", "chords"], "drums": "light"}
+ },
+ "transitions": {"into": {"Log Drum": ["dropout", "reverse_crash"], "Breakdown": ["stop", "downlifter:8"], "Outro": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "build", "outro"], "build_beats": 16},
+ "roles": {
+  "kick": {"hint": "soft round house kick", "family": "drums"},
+  "clap": {"hint": "dry clap", "family": "drums"},
+  "rim": {"hint": "rimshot / wood click", "family": "drums"},
+  "shaker": {"hint": "16th shaker loop", "family": "drums"},
+  "hat": {"hint": "soft open-ish hat", "family": "drums"},
+  "perc": {"hint": "congas / bongos", "family": "drums"},
+  "bass": {"hint": "amapiano log drum (pitched percussive bass)", "family": "bass", "name": "Log Drum"},
+  "chords": {"hint": "jazzy deep house piano or rhodes", "family": "keys"},
+  "melody": {"hint": "piano riff, flute or saxophone", "family": "lead"},
+  "counter": {"hint": "whistle or vocal chop", "family": "lead"},
+  "pad": {"hint": "warm deep pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -9, "notes": ["log drum loud, saturated, mono", "shakers wide, kick soft", "piano warm with room reverb"], "sidechain": {"trigger": "kick", "target": "chords", "depth_db": 2}}
+}

@@ -1,0 +1,77 @@
+{
+ "format": "flh-meters/1",
+ "note": "How the composer feels a meter that isn't 4/4 (flh_compose). Positions are 16th steps from the bar start; a bar has num*16/den steps (3/4 = 12, 6/8 = 12, 2/4 = 8, 5/4 = 20, 7/8 = 14). beats: the pulse a listener taps; strong: the accented beats (chord tones land there); chord_segments: where a chord may change when chords are read from the song's notes; feel: words for the result. drums: the generic groove used when a genre file has no drums.meters[\"<meter>\"] of its own (same grammar as a genre's drums: parts {part: {patterns [{steps, w}], maybe}}, fill {every, parts {part: mask, '_' = keep}}; one char per 16th, a bar's worth (or several) per string). A user file <fl-headless state folder>/meters.json wins over this one.",
+ "meters": {
+  "3/4": {"feel": "waltz: strong 1, light 2 and 3", "beats": [0, 4, 8], "strong": [0], "chord_segments": [0],
+          "drums": {"parts": {
+             "kick": {"patterns": [{"steps": "X...........", "w": 3}, {"steps": "X.......o...", "w": 1}], "maybe": "000000000020"},
+             "snare": {"patterns": [{"steps": "....o...o...", "w": 3}, {"steps": "........o...", "w": 1}]},
+             "hat": {"patterns": [{"steps": "x.o.x.o.x.o.", "w": 2}, {"steps": "x...o...o...", "w": 2}]},
+             "crash": {"patterns": [{"steps": "X...........", "w": 1}]}},
+           "fill": {"every": 4, "parts": {"snare": "________oxxX", "kick": "X___________"}}}},
+  "6/8": {"feel": "compound duple: two dotted-quarter beats, rolling 8ths", "beats": [0, 6], "strong": [0, 6],
+          "chord_segments": [0, 6],
+          "drums": {"parts": {
+             "kick": {"patterns": [{"steps": "X.....o.....", "w": 3}, {"steps": "X.......o...", "w": 1}]},
+             "snare": {"patterns": [{"steps": "......X.....", "w": 3}, {"steps": "......X...o.", "w": 1}]},
+             "hat": {"patterns": [{"steps": "x.o.o.x.o.o.", "w": 3}, {"steps": "x.x.x.x.x.x.", "w": 1}]},
+             "crash": {"patterns": [{"steps": "X...........", "w": 1}]}},
+           "fill": {"every": 4, "parts": {"snare": "______o.x.xX"}}}},
+  "2/4": {"feel": "duple march / polka: strong 1", "beats": [0, 4], "strong": [0], "chord_segments": [0],
+          "drums": {"parts": {
+             "kick": {"patterns": [{"steps": "X.......", "w": 2}, {"steps": "X...o...", "w": 1}]},
+             "snare": {"patterns": [{"steps": "....X...", "w": 1}]},
+             "hat": {"patterns": [{"steps": "x.o.x.o.", "w": 1}]},
+             "crash": {"patterns": [{"steps": "X.......", "w": 1}]}},
+           "fill": {"every": 4, "parts": {"snare": "____oxxX"}}}},
+  "5/4": {"feel": "quintuple, felt 3+2", "beats": [0, 4, 8, 12, 16], "strong": [0, 12], "chord_segments": [0, 12],
+          "drums": {"parts": {
+             "kick": {"patterns": [{"steps": "X...........x.......", "w": 1}]},
+             "snare": {"patterns": [{"steps": "........x.......x...", "w": 1}]},
+             "hat": {"patterns": [{"steps": "x.o.x.o.x.o.x.o.x.o.", "w": 1}]},
+             "crash": {"patterns": [{"steps": "X...................", "w": 1}]}},
+           "fill": {"every": 4, "parts": {"snare": "____________o.x.xxxX"}}}},
+  "7/8": {"feel": "septuple, felt 2+2+3", "beats": [0, 4, 8], "strong": [0, 8], "chord_segments": [0],
+          "drums": {"parts": {
+             "kick": {"patterns": [{"steps": "X.......x.....", "w": 1}]},
+             "snare": {"patterns": [{"steps": "....x.......x.", "w": 1}]},
+             "hat": {"patterns": [{"steps": "x.x.x.x.x.x.x.", "w": 1}]},
+             "crash": {"patterns": [{"steps": "X.............", "w": 1}]}},
+           "fill": {"every": 4, "parts": {"snare": "________o.x.xX"}}}},
+  "9/8": {"feel": "compound triple: three dotted-quarter beats", "beats": [0, 6, 12], "strong": [0], "chord_segments": [0],
+          "drums": {"parts": {
+             "kick": {"patterns": [{"steps": "X...........o.....", "w": 1}]},
+             "snare": {"patterns": [{"steps": "......x...........", "w": 1}]},
+             "hat": {"patterns": [{"steps": "x.o.o.x.o.o.x.o.o.", "w": 1}]},
+             "crash": {"patterns": [{"steps": "X.................", "w": 1}]}},
+           "fill": {"every": 4, "parts": {"snare": "____________o.x.xX"}}}},
+  "12/8": {"feel": "compound quadruple: slow-ballad shuffle", "beats": [0, 6, 12, 18], "strong": [0, 12],
+           "chord_segments": [0, 12],
+           "drums": {"parts": {
+              "kick": {"patterns": [{"steps": "X...........x...........", "w": 2}, {"steps": "X.........o.x...........", "w": 1}]},
+              "snare": {"patterns": [{"steps": "......X...........X.....", "w": 1}]},
+              "hat": {"patterns": [{"steps": "x.o.o.x.o.o.x.o.o.x.o.o.", "w": 1}]},
+              "crash": {"patterns": [{"steps": "X.......................", "w": 1}]}},
+            "fill": {"every": 4, "parts": {"snare": "__________________o.x.xX"}}}},
+  "6/4": {"feel": "sextuple, felt 3+3", "beats": [0, 4, 8, 12, 16, 20], "strong": [0, 12], "chord_segments": [0, 12],
+          "drums": {"parts": {
+             "kick": {"patterns": [{"steps": "X...........x...........", "w": 1}]},
+             "snare": {"patterns": [{"steps": "........x...........x...", "w": 1}]},
+             "hat": {"patterns": [{"steps": "x.o.x.o.x.o.x.o.x.o.x.o.", "w": 1}]},
+             "crash": {"patterns": [{"steps": "X.......................", "w": 1}]}},
+           "fill": {"every": 4, "parts": {"snare": "________________o.x.xxxX"}}}},
+  "3/8": {"feel": "fast one-in-a-bar triple", "beats": [0], "strong": [0], "chord_segments": [0],
+          "drums": {"parts": {
+             "kick": {"patterns": [{"steps": "X.....", "w": 1}]},
+             "snare": {"patterns": [{"steps": "....o.", "w": 1}]},
+             "hat": {"patterns": [{"steps": "x.x.x.", "w": 1}]}},
+           "fill": {"every": 8, "parts": {"snare": "__oxxX"}}}},
+  "3/2": {"feel": "triple in half notes", "beats": [0, 8, 16], "strong": [0], "chord_segments": [0],
+          "drums": {"parts": {
+             "kick": {"patterns": [{"steps": "X.......................", "w": 1}]},
+             "snare": {"patterns": [{"steps": "........o.......o.......", "w": 1}]},
+             "hat": {"patterns": [{"steps": "x...o...x...o...x...o...", "w": 1}]},
+             "crash": {"patterns": [{"steps": "X.......................", "w": 1}]}},
+           "fill": {"every": 4, "parts": {"snare": "________________o.o.oxxX"}}}}
+ }
+}

@@ -1,0 +1,12 @@
+{
+ "name": "share_with_collaborator",
+ "description": "Check the project, then build a collaborator pack (project + samples, MIDI, stems, README, zip).",
+ "params": {
+  "project": {"description": "the .flp", "required": true},
+  "notes": {"description": "a message for the collaborator", "required": false}
+ },
+ "steps": [
+  {"tool": "fl_doctor", "args": {"project": "${project}"}, "note": "missing samples show up here first"},
+  {"tool": "flh_collab_pack", "args": {"project": "${project}", "notes": "${notes}"}}
+ ]
+}

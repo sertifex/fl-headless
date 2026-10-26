@@ -1,0 +1,19 @@
+{
+ "format": "flh-rise/1",
+ "note": "flp_build_rise (flh_rise): the orchestral / piano build into a climax. A user file <fl-headless state folder>/rise/rise.json wins key by key. ladders: roman numerals (flh_compose grammar; minor keys count from the natural minor scale, so #vii is the raised leading tone) spread evenly over the build bars - diminished 7ths a minor third / step apart that land on a suspended dominant holding the breath before the new section's tonic. tempo.push: the accelerando starts this fraction under the tempo and ends this fraction over it (times intensity). dynamics: the crescendo's target velocities at the build's start and end (end = from + (to - from) * intensity). roll: beats of the swell into the downbeat (short_beats when intensity < 0.75), strokes per second of a roll, the first stroke's velocity, the downbeat strike over the crescendo's top. low_strings: bars they hold from the downbeat, velocity as a share of the crescendo's top, register (sounding MIDI notes), and for a song without one: the new channel's name and the data/templates recipe whose 'Low Strings' channel choices pick its owned instrument (else a copy of the song's strings channel). words: channel names / plugins / samples that mark the roll and low-strings instruments.",
+ "ladders": {
+  "minor": ["#vii°7", "iv°7", "ii°7", "Vsus4"],
+  "major": ["vii°7", "ii°7", "#iv°7", "Vsus4"]
+ },
+ "climb_semitones": 3,
+ "tempo": {"push": 0.083},
+ "dynamics": {"from": 50, "to": 95},
+ "roll": {"beats": 2, "short_beats": 1, "strokes_per_s": 12, "from_vel": 34, "strike_over": 12, "strike_beats": 1},
+ "low_strings": {"bars": 2, "vel": 0.9, "register": [36, 47], "name": "Low Strings", "recipe": "cinematic"},
+ "words": {
+  "timpani": ["timpani", "timp", "kettle"],
+  "drum": ["taiko", "tom", "toms", "orch drum", "orchestral drum", "war drum", "surdo", "gran cassa", "frame drum"],
+  "low_strings": ["low string", "cello", "celli", "contrabass", "double bass", "basses", "bass string", "string bass"]
+ },
+ "roles": {"timpani": ["timpani"], "drum": ["tom", "perc drum"], "low_strings": ["low strings", "celli", "cello"]}
+}

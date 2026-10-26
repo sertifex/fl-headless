@@ -1,0 +1,18 @@
+{
+ "format": "flh-kit/1",
+ "name": "909",
+ "about": "909-style dance kit: round punchy kick, roomy clap, bright hats: house, techno.",
+ "roles": {
+  "kick": "909 punchy round",
+  "clap": "909 roomy",
+  "snare": "909",
+  "hat": "909 bright",
+  "openhat": "909 open",
+  "perc": "909 rim",
+  "ride": "909"
+ },
+ "avoid": [
+  "dusty",
+  "acoustic"
+ ]
+}

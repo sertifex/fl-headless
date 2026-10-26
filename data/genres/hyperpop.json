@@ -1,0 +1,96 @@
+{
+ "format": "flh-genre/1",
+ "name": "hyperpop",
+ "aliases": ["hyper pop", "digicore", "glitchcore", "pc music", "bubblegum bass"],
+ "about": "Hyperpop: 140-180 BPM, maximal and bright: trap-style half-time drums (snare on beat 3) with fast hats and rolls or hard dance kicks, a blown-out 808 that slides, sugary major-key four-chord loops on supersaws (add9 sparkle), pitched-up vocal-chop hooks with big leaps, glitchy stutters.",
+ "tempo": {"min": 140, "max": 180, "default": 160, "feel": "half-time"},
+ "guess_weight": 0.4,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 1, "vel": 3},
+ "loop_bars": 8,
+ "keys": {"modes": {"major": 5, "minor": 2}, "roots": ["C", "C#", "D", "E", "F", "F#", "G", "A", "B"], "default": "E major"},
+ "drums": {
+  "vel": {"X": 124, "x": 108, "o": 84, "g": 50},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X.....x...x.....X.......x.x.....", "w": 3}, {"steps": "X...X...X...X...", "w": 1}, {"steps": "X......x..x.....X.....x.....x...", "w": 2}], "maybe": "..............3...............3."},
+   "snare": {"patterns": [{"steps": "........X.......", "w": 3}, {"steps": "........X.....o.", "w": 1}]},
+   "clap": {"patterns": [{"steps": "........X.......", "w": 1}]},
+   "hat": {"patterns": [{"steps": "xoxoxoxoxoxoxoxo", "w": 3}, {"steps": "xxxxxxxxxxxxxxxx", "w": 1}], "rolls": {"chance": 0.5, "max_per_bar": 2, "at": [3, 7, 11, 14, 15], "len": [1, 2, 4], "rates": {"1/32": 3, "1/16t": 2, "1/64": 1}, "ramp": [-12, 6], "pitch_up_chance": 0.35}},
+   "openhat": {"patterns": [{"steps": "......o.......o.", "w": 1}, {"steps": "................", "w": 1}]},
+   "perc": {"patterns": [{"steps": "...o.......o....", "w": 1}, {"steps": "................", "w": 1}], "maybe": ".......2.......2"}
+  },
+  "fill": {"every": 4, "parts": {"snare": "____________xxxX"}, "roll": {"part": "snare", "at": 12, "len": 4, "rate": "1/32", "ramp": [-30, 4]}},
+  "variation": {"alt_pattern_chance": 0.35, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "808",
+  "register": [28, 45],
+  "rhythm": "kick",
+  "follow": "root",
+  "length": "until_next",
+  "gap_steps": 0.25,
+  "vel": [104, 120],
+  "octave_jump": 0.2,
+  "glide": {"chance": 0.3, "len_steps": [1, 2], "where": "late", "targets": {"octave_up": 3, "next_root": 2, "fifth": 1}},
+  "extra_hits": {"chance": 0.3, "at": [14, 15, 30, 31]}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["I", "V", "vi", "IV"], "mode": "major", "bars": 1, "w": 3},
+   {"rn": ["IV", "V", "vi", "I"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["vi", "IV", "I", "V"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["I", "iii", "IV", "V"], "mode": "major", "bars": 1, "w": 1},
+   {"rn": ["IV", "I", "V", "vi"], "mode": "major", "bars": 1, "w": 1},
+   {"rn": ["i", "VI", "III", "VII"], "mode": "minor", "bars": 1, "w": 2}
+  ],
+  "voicing": {"style": "triad", "register": [60, 79], "extensions": {"7": 0.1, "9": 0.5}},
+  "rhythm": {"patterns": [{"steps": "x---------------", "w": 2}, {"steps": "x-x-x-x-x-x-x-x-", "w": 2}, {"steps": "x--x--x-x--x--x-", "w": 1}]},
+  "vel": [80, 98]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "A", "S", "C"], "answer": "same", "breath": 2, "shapes": {"rise": 2, "arch": 2, "wave": 1}, "leap": 0.6},
+  "scale": "key",
+  "range": [67, 91],
+  "rhythms": [
+   {"steps": "x.x.x.x.x-x-x---", "w": 2},
+   {"steps": "x..x..x.x.x.x.x.", "w": 2},
+   {"steps": "x-x-x---x-xxx---", "w": 1},
+   {"steps": "..x-x-x-x---x---", "w": 1}
+  ],
+  "motif_bars": 1,
+  "form": ["A", "A'", "A", "B"],
+  "chord_tone_strong": 0.8,
+  "step_prob": 0.55,
+  "max_leap": 9,
+  "repeat_note": 0.2,
+  "vel": [92, 112],
+  "length": "as_written",
+  "max_len_steps": 4
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.5},
+ "form": {"default": [["Intro", 4], ["Verse", 8], ["Hook", 8], ["Verse", 8], ["Hook", 8], ["Bridge", 8], ["Hook", 8], ["Outro", 4]]},
+ "sections": {
+  "Intro": {"energy": 0.45, "layers": ["chords", "melody"], "drums": "sparse"},
+  "Verse": {"energy": 0.7, "layers": ["drums", "bass", "chords"], "drums": "light"},
+  "Hook": {"energy": 1.0, "layers": ["drums", "bass", "chords", "melody", "counter"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.5, "layers": ["chords", "melody"], "drums": "build"},
+  "Outro": {"energy": 0.35, "layers": ["chords", "melody"], "drums": "none"}
+ },
+ "transitions": {"into": {"Hook": ["stop", "riser:4", "impact", "sub_drop", "snare_build:4"], "Verse": ["fill"], "Bridge": ["dropout"], "Outro": ["fill"]}, "after": {"Hook": ["downlifter:4"]}},
+ "ear_candy": {"amount": "lots", "filters": ["intro", "build", "outro"], "build_beats": 8},
+ "roles": {
+  "kick": {"hint": "clipped punchy kick", "family": "drums"},
+  "snare": {"hint": "bright snappy snare", "family": "drums"},
+  "clap": {"hint": "layered clap", "family": "drums"},
+  "hat": {"hint": "crispy closed hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "perc": {"hint": "glitch / bubble perc", "family": "drums"},
+  "bass": {"hint": "distorted 808 with slides", "family": "bass", "name": "808"},
+  "chords": {"hint": "bright detuned supersaw chords", "family": "keys"},
+  "melody": {"hint": "pitched-up vocal chop or bright square lead", "family": "lead"},
+  "counter": {"hint": "sparkly bell or chiptune arp", "family": "lead"},
+  "pad": {"hint": "shiny supersaw pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -6, "notes": ["loud and bright: saturate and clip the bus", "vocals pitched and heavily tuned", "808 distorted, sidechained to the kick"], "sidechain": {"trigger": "kick", "target": "chords", "depth_db": 5}}
+}

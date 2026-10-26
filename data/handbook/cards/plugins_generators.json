@@ -1,0 +1,903 @@
+{
+ "_about": "FL Studio's stock instruments (generators) in plain words - our own notes. edition = lowest FL edition that includes it (fruity < producer < signature < all_plugins), kept in line with flh_catalog's NATIVE_MIN; verify=true = unconfirmed detail.",
+ "cards": [
+  {
+   "id": "plugin-3x-osc",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "3x Osc",
+   "title": "3x Osc",
+   "edition": "fruity",
+   "aliases": [
+    "3xosc",
+    "three oscillator"
+   ],
+   "tags": [
+    "synth",
+    "subtractive",
+    "bass",
+    "lead"
+   ],
+   "summary": "Simple three-oscillator synth: pick a waveform per oscillator, detune/mix them. Classic basses, leads and pads in seconds.",
+   "controls": [
+    [
+     "Shape",
+     "waveform per oscillator (sine, triangle, square, saw, noise, custom sample)"
+    ],
+    [
+     "Coarse / Fine",
+     "tuning in semitones / cents"
+    ],
+    [
+     "Mix / Pan",
+     "level and pan of oscillators 2 and 3"
+    ],
+    [
+     "Stereo phase / detune",
+     "width from phase or detune differences"
+    ],
+    [
+     "Invert, Phase rand",
+     "polarity and random start phase"
+    ]
+   ],
+   "settings": [
+    [
+     "Supersaw-ish lead",
+     "3 saws, fine ±10-20 cents, stereo detune up"
+    ],
+    [
+     "Sub bass",
+     "osc 1 sine, others off or an octave down at low level"
+    ]
+   ],
+   "tips": [
+    "Filtering and envelopes live in the channel's settings (Instrument properties tab), not in 3x Osc itself."
+   ]
+  },
+  {
+   "id": "plugin-sytrus",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Sytrus",
+   "title": "Sytrus",
+   "edition": "producer",
+   "aliases": [
+    "fm synth"
+   ],
+   "tags": [
+    "synth",
+    "fm",
+    "bells",
+    "pluck",
+    "bass",
+    "pads"
+   ],
+   "summary": "Deep FM / ring-mod / subtractive synth with 6 operators and 3 filters. Huge preset library; great for plucks, bells, e-pianos, growls.",
+   "controls": [
+    [
+     "Operators 1-6",
+     "each an oscillator with its own envelope, waveform and level"
+    ],
+    [
+     "FM / RM matrix",
+     "which operator modulates which (frequency or ring)"
+    ],
+    [
+     "Filters",
+     "3 filters with their own envelopes"
+    ],
+    [
+     "Main",
+     "unison, portamento, master envelopes"
+    ],
+    [
+     "X/Y modulation",
+     "macro controls you can automate"
+    ]
+   ],
+   "settings": [
+    [
+     "Pluck",
+     "fast attack, short decay on carrier; small FM amount that decays quickly"
+    ],
+    [
+     "Bell",
+     "inharmonic ratios (e.g. 3.5x) with long release"
+    ]
+   ],
+   "tips": [
+    "Start from a preset and tweak the master envelopes and filter - building FM from scratch takes practice."
+   ]
+  },
+  {
+   "id": "plugin-flex",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "FLEX",
+   "title": "FLEX",
+   "edition": "fruity",
+   "aliases": [
+    "flex presets",
+    "flex packs"
+   ],
+   "tags": [
+    "rompler",
+    "presets",
+    "free",
+    "packs"
+   ],
+   "summary": "Preset player with free downloadable packs (keys, pads, basses, leads, drums...). Each preset has 8 macro knobs and simple envelope/filter controls.",
+   "controls": [
+    [
+     "Preset browser",
+     "pick sounds; download more packs from the browser"
+    ],
+    [
+     "Macros (8)",
+     "preset-specific tone controls"
+    ],
+    [
+     "Envelope / filter",
+     "attack, release, cutoff, resonance"
+    ],
+    [
+     "Effects",
+     "reverb/delay/etc. per preset"
+    ]
+   ],
+   "tips": [
+    "Fast way to get good sounds in any edition - free with FL.",
+    "Download packs from FLEX's own browser (needs a login)."
+   ]
+  },
+  {
+   "id": "plugin-fpc",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "FPC",
+   "title": "FPC (drum pads)",
+   "edition": "fruity",
+   "aliases": [
+    "fruity pad controller",
+    "drum pads",
+    "mpc"
+   ],
+   "tags": [
+    "drums",
+    "pads",
+    "sampler",
+    "finger drumming"
+   ],
+   "summary": "MPC-style drum sampler: 16 pads per bank, each pad can layer several samples by velocity. Comes with kits; play pads or draw notes.",
+   "controls": [
+    [
+     "Pads",
+     "click to audition, drag samples onto them"
+    ],
+    [
+     "Layers",
+     "several samples per pad, split by velocity or round robin"
+    ],
+    [
+     "Per-pad",
+     "volume, pan, tune, output (to separate mixer tracks)"
+    ],
+    [
+     "Banks A/B",
+     "32 pads"
+    ]
+   ],
+   "tips": [
+    "Each pad can go to its own mixer track (pad output) for separate processing.",
+    "Right-click a pad for MIDI note mapping."
+   ]
+  },
+  {
+   "id": "plugin-fl-keys",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "FL Keys",
+   "title": "FL Keys",
+   "edition": "fruity",
+   "aliases": [
+    "piano"
+   ],
+   "tags": [
+    "piano",
+    "keys",
+    "rhodes"
+   ],
+   "summary": "Light sampled piano / electric piano / clavinet. Small and fast; good for sketching and simple keys parts.",
+   "controls": [
+    [
+     "Instrument",
+     "grand, e-piano, rhodes-style, clav"
+    ],
+    [
+     "Tone / decay / release",
+     "brightness and length"
+    ],
+    [
+     "Velocity / stereo",
+     "response and width"
+    ]
+   ]
+  },
+  {
+   "id": "plugin-channel-sampler",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Channel sampler",
+   "title": "Sampler (channel sampler)",
+   "edition": "fruity",
+   "aliases": [
+    "sampler",
+    "sample channel",
+    "audio channel"
+   ],
+   "tags": [
+    "samples",
+    "one shot",
+    "loops"
+   ],
+   "summary": "What you get when you drop a sample on the channel rack: plays the sample per note, with envelopes, filter, pitch, time stretch and processing.",
+   "controls": [
+    [
+     "Sample settings",
+     "loop, reverse, normalize, fade in/out, declick, trim"
+    ],
+    [
+     "Time stretching",
+     "pitch, multiply, stretch mode"
+    ],
+    [
+     "Envelope / instrument properties",
+     "volume/cutoff envelopes and LFOs"
+    ],
+    [
+     "Keep on disk / resample",
+     "memory and quality options"
+    ]
+   ],
+   "tips": [
+    "For one-shots turn off looping and set the root note to C5 so the piano roll plays it at pitch."
+   ]
+  },
+  {
+   "id": "plugin-slicex",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Slicex",
+   "title": "Slicex",
+   "edition": "producer",
+   "aliases": [
+    "slicer",
+    "slice loop",
+    "beat slicer"
+   ],
+   "tags": [
+    "slicing",
+    "chop",
+    "sampler",
+    "loops"
+   ],
+   "summary": "Loop slicer: cuts a sample into slices at its hits and plays each slice from its own key. Rearrange breaks, chop samples, play slices live.",
+   "controls": [
+    [
+     "Auto-slicing",
+     "detect slices from transients or a grid"
+    ],
+    [
+     "Slice markers",
+     "drag, add, remove"
+    ],
+    [
+     "Per-slice",
+     "pitch, pan, volume, reverse, envelope"
+    ],
+    [
+     "Dump score to piano roll",
+     "puts the original groove as notes"
+    ]
+   ],
+   "tips": [
+    "Load samples by dragging onto the Slicex waveform."
+   ],
+   "related": [
+    "workflow-slicing"
+   ]
+  },
+  {
+   "id": "plugin-fruity-slicer",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Fruity Slicer",
+   "title": "Fruity Slicer",
+   "edition": "fruity",
+   "aliases": [
+    "beat slicer basic"
+   ],
+   "tags": [
+    "slicing",
+    "loops"
+   ],
+   "summary": "Basic beat slicer: slices a loop into beats and plays them to the project tempo; writes the slice pattern to the piano roll.",
+   "controls": [
+    [
+     "Beats",
+     "how many beats the loop is"
+    ],
+    [
+     "Slicing",
+     "auto / grid"
+    ],
+    [
+     "Stretch, pitch",
+     "fit to tempo"
+    ]
+   ],
+   "related": [
+    "workflow-slicing"
+   ]
+  },
+  {
+   "id": "plugin-fruity-granulizer",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Fruity Granulizer",
+   "title": "Fruity Granulizer",
+   "edition": "fruity",
+   "aliases": [
+    "granular"
+   ],
+   "tags": [
+    "granular",
+    "texture",
+    "pads"
+   ],
+   "summary": "Granular sampler: plays a sample as many tiny overlapping grains. Stretchy textures, frozen pads, glitchy movement.",
+   "controls": [
+    [
+     "Grain spacing / length",
+     "density and size of grains"
+    ],
+    [
+     "Wave spacing",
+     "speed through the sample (0 = freeze)"
+    ],
+    [
+     "Attack / hold",
+     "grain envelope"
+    ]
+   ]
+  },
+  {
+   "id": "plugin-harmor",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Harmor",
+   "title": "Harmor",
+   "edition": "all_plugins",
+   "aliases": [
+    "additive synth"
+   ],
+   "tags": [
+    "synth",
+    "additive",
+    "resynthesis",
+    "bass",
+    "edm"
+   ],
+   "summary": "Additive/subtractive synth that can also resynthesize samples (load an image or audio). Powerful for evolving sounds, bass design and sound mangling.",
+   "controls": [
+    [
+     "Parts A/B",
+     "two layered engines"
+    ],
+    [
+     "Timbre / blur / harmonizer",
+     "spectral shaping"
+    ],
+    [
+     "Filters, phaser, prism",
+     "additive-style effects"
+    ],
+    [
+     "Image synthesis",
+     "draw or load images/audio as spectra"
+    ]
+   ]
+  },
+  {
+   "id": "plugin-harmless",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Harmless",
+   "title": "Harmless",
+   "edition": "signature",
+   "tags": [
+    "synth",
+    "additive",
+    "pads",
+    "leads"
+   ],
+   "summary": "Additive synth that behaves like a familiar subtractive one (filter, phaser, unison). Clean, punchy leads, pads and keys; light on CPU.",
+   "controls": [
+    [
+     "Timbre",
+     "harmonic content"
+    ],
+    [
+     "Filter / phaser",
+     "spectral filter and phaser"
+    ],
+    [
+     "Unison",
+     "voices and detune"
+    ]
+   ]
+  },
+  {
+   "id": "plugin-sakura",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Sakura",
+   "title": "Sakura",
+   "edition": "all_plugins",
+   "tags": [
+    "physical modeling",
+    "strings",
+    "pluck"
+   ],
+   "summary": "Physical-modeling string synth: plucked and bowed string sounds, harps, kotos and metallic tones.",
+   "controls": [
+    [
+     "Exciter",
+     "pluck / bow and its character"
+    ],
+    [
+     "String",
+     "material, damping"
+    ],
+    [
+     "Body",
+     "resonator"
+    ]
+   ]
+  },
+  {
+   "id": "plugin-morphine",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Morphine",
+   "title": "Morphine",
+   "edition": "all_plugins",
+   "tags": [
+    "synth",
+    "additive",
+    "morphing"
+   ],
+   "summary": "Additive synth that morphs between several sound layers over time; also resynthesizes samples."
+  },
+  {
+   "id": "plugin-ogun",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Ogun",
+   "title": "Ogun",
+   "edition": "all_plugins",
+   "tags": [
+    "synth",
+    "additive",
+    "metallic"
+   ],
+   "summary": "Additive synth specialised in bright, metallic and glassy tones (bells, shimmering pads)."
+  },
+  {
+   "id": "plugin-poizone",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "PoiZone",
+   "title": "PoiZone",
+   "edition": "all_plugins",
+   "tags": [
+    "synth",
+    "subtractive",
+    "va"
+   ],
+   "summary": "Straightforward virtual-analog subtractive synth: two oscillators, filter, envelopes. Easy leads and basses."
+  },
+  {
+   "id": "plugin-sawer",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Sawer",
+   "title": "Sawer",
+   "edition": "all_plugins",
+   "tags": [
+    "synth",
+    "vintage",
+    "analog"
+   ],
+   "summary": "Vintage analog-style synth with a warm character; good for retro pads and leads."
+  },
+  {
+   "id": "plugin-toxic-biohazard",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Toxic Biohazard",
+   "title": "Toxic Biohazard",
+   "edition": "all_plugins",
+   "tags": [
+    "synth",
+    "fm",
+    "subtractive"
+   ],
+   "summary": "Hybrid FM/subtractive synth with built-in effects; aggressive leads, basses and pads."
+  },
+  {
+   "id": "plugin-drumaxx",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Drumaxx",
+   "title": "Drumaxx",
+   "edition": "all_plugins",
+   "tags": [
+    "drums",
+    "physical modeling"
+   ],
+   "summary": "Physical-modeling drum synth: drums built from membrane/body models instead of samples, with a pad editor."
+  },
+  {
+   "id": "plugin-transistor-bass",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Transistor Bass",
+   "title": "Transistor Bass",
+   "edition": "all_plugins",
+   "verify": true,
+   "tags": [
+    "bass",
+    "303",
+    "acid"
+   ],
+   "summary": "TB-303-style bass synth with its own step sequencer (slides, accents) - acid basslines."
+  },
+  {
+   "id": "plugin-kepler",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Kepler",
+   "title": "Kepler / Kepler Exo",
+   "edition": "all_plugins",
+   "verify": true,
+   "tags": [
+    "synth"
+   ],
+   "summary": "Newer Image-Line synth (Kepler Exo is the full version). Check your plugin list for which version you have.",
+   "aliases": [
+    "Kepler Exo"
+   ]
+  },
+  {
+   "id": "plugin-fruity-dx10",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Fruity DX10",
+   "title": "Fruity DX10",
+   "edition": "fruity",
+   "tags": [
+    "fm",
+    "synth",
+    "bells",
+    "electric piano"
+   ],
+   "summary": "Simple 2-operator FM synth in the style of classic FM keyboards: e-pianos, bells, plucky basses."
+  },
+  {
+   "id": "plugin-fruity-kick",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Fruity Kick",
+   "title": "Fruity Kick",
+   "edition": "fruity",
+   "aliases": [
+    "Fruit Kick",
+    "kick synth"
+   ],
+   "tags": [
+    "drums",
+    "kick",
+    "808"
+   ],
+   "summary": "Tiny kick synth: a pitched sine drop with click and distortion. Quick electronic kicks or 808-ish booms.",
+   "controls": [
+    [
+     "Max / Min",
+     "start and end pitch"
+    ],
+    [
+     "Decay",
+     "pitch drop speed"
+    ],
+    [
+     "Amp decay",
+     "length"
+    ],
+    [
+     "Click, Dist",
+     "attack and grit"
+    ]
+   ]
+  },
+  {
+   "id": "plugin-bassdrum",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "BassDrum",
+   "title": "BassDrum",
+   "edition": "fruity",
+   "tags": [
+    "drums",
+    "kick"
+   ],
+   "summary": "Kick drum synth with a sine body and a sample layer for the click; tune it to the song's key."
+  },
+  {
+   "id": "plugin-fruity-drumsynth-live",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Fruity DrumSynth Live",
+   "title": "Fruity DrumSynth Live",
+   "edition": "fruity",
+   "tags": [
+    "drums",
+    "synth drums"
+   ],
+   "summary": "Synthesised drum kit (kicks, snares, hats) from presets - lightweight electronic drums."
+  },
+  {
+   "id": "plugin-boobass",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "BooBass",
+   "title": "BooBass",
+   "edition": "fruity",
+   "tags": [
+    "bass",
+    "bass guitar"
+   ],
+   "summary": "Very simple electric bass emulation with bass/mid/treble knobs."
+  },
+  {
+   "id": "plugin-plucked",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Plucked!",
+   "title": "Plucked!",
+   "edition": "fruity",
+   "tags": [
+    "pluck",
+    "strings",
+    "physical modeling"
+   ],
+   "summary": "Karplus-Strong plucked string: quick harp/guitar-like plucks with decay and color knobs."
+  },
+  {
+   "id": "plugin-simsynth",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "SimSynth",
+   "title": "SimSynth",
+   "edition": "fruity",
+   "tags": [
+    "synth",
+    "subtractive",
+    "legacy"
+   ],
+   "summary": "Older 3-oscillator virtual-analog synth with filter envelope and chorus; retro sounds."
+  },
+  {
+   "id": "plugin-autogun",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Autogun",
+   "title": "Autogun",
+   "edition": "fruity",
+   "tags": [
+    "synth",
+    "fm",
+    "presets"
+   ],
+   "summary": "Preset-only FM synth with a huge numbered bank of sounds: scroll for random inspiration."
+  },
+  {
+   "id": "plugin-beepmap",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "BeepMap",
+   "title": "BeepMap",
+   "edition": "fruity",
+   "tags": [
+    "sound design",
+    "image"
+   ],
+   "summary": "Turns a picture into sound (reads the image as a spectrogram). For FX and experiments."
+  },
+  {
+   "id": "plugin-wave-traveller",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Wave Traveller",
+   "title": "Wave Traveller",
+   "edition": "fruity",
+   "tags": [
+    "scratch",
+    "dj",
+    "sampler"
+   ],
+   "summary": "Sample player whose playback position follows an envelope: scratch and DJ-style effects."
+  },
+  {
+   "id": "plugin-fruity-soundfont-player",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Fruity Soundfont Player",
+   "title": "Fruity Soundfont Player",
+   "edition": "fruity",
+   "aliases": [
+    "Soundfont Player",
+    "sf2",
+    "soundfont"
+   ],
+   "tags": [
+    "sf2",
+    "sampler"
+   ],
+   "summary": "Plays .sf2 SoundFont files (general MIDI and sampled instruments)."
+  },
+  {
+   "id": "plugin-layer",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Layer",
+   "title": "Layer",
+   "edition": "fruity",
+   "tags": [
+    "layering",
+    "split"
+   ],
+   "summary": "Plays several other channels at once from one channel's notes (layering) or splits the keyboard between them.",
+   "related": [
+    "workflow-layering"
+   ]
+  },
+  {
+   "id": "plugin-midi-out",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "MIDI Out",
+   "title": "MIDI Out",
+   "edition": "fruity",
+   "tags": [
+    "midi",
+    "hardware",
+    "routing"
+   ],
+   "summary": "Sends the channel's notes and CCs out as MIDI: to hardware synths or to a plugin that listens on a MIDI port."
+  },
+  {
+   "id": "plugin-dashboard",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Dashboard",
+   "title": "Dashboard",
+   "edition": "fruity",
+   "tags": [
+    "controller",
+    "midi",
+    "ui"
+   ],
+   "summary": "Build your own control panel (knobs, sliders, buttons) that sends MIDI to hardware or plugins."
+  },
+  {
+   "id": "plugin-fl-slayer",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "FL Slayer",
+   "title": "FL Slayer",
+   "edition": "fruity",
+   "verify": true,
+   "tags": [
+    "guitar",
+    "legacy"
+   ],
+   "summary": "Older electric guitar emulation with amp/effects; legacy plugin."
+  },
+  {
+   "id": "plugin-minisynth",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "MiniSynth",
+   "title": "MiniSynth",
+   "edition": "fruity",
+   "verify": true,
+   "tags": [
+    "synth",
+    "simple"
+   ],
+   "summary": "Small, simple synth for quick sounds."
+  },
+  {
+   "id": "plugin-groove-machine-synth",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "Groove Machine Synth",
+   "title": "Groove Machine Synth",
+   "edition": "fruity",
+   "verify": true,
+   "tags": [
+    "groovebox",
+    "synth"
+   ],
+   "summary": "Groovebox-style synth (from FL Studio Mobile's Groove Machine)."
+  },
+  {
+   "id": "plugin-directwave",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "DirectWave",
+   "title": "DirectWave",
+   "edition": "signature",
+   "verify": true,
+   "tags": [
+    "sampler",
+    "multisample",
+    "legacy"
+   ],
+   "summary": "Multisample sampler/recorder: map samples across keys and velocities, build sampled instruments."
+  },
+  {
+   "id": "plugin-fl-studio-mobile",
+   "kind": "plugin",
+   "type": "generator",
+   "plugin": "FL Studio Mobile",
+   "title": "FL Studio Mobile (plugin)",
+   "edition": "producer",
+   "verify": true,
+   "tags": [
+    "mobile",
+    "rompler"
+   ],
+   "summary": "Opens FL Studio Mobile projects and plays its instruments inside FL Studio."
+  },
+  {
+   "id": "plugin-fruity-envelope-controller",
+   "kind": "plugin",
+   "type": "controller",
+   "plugin": "Fruity Envelope Controller",
+   "title": "Fruity Envelope Controller",
+   "edition": "fruity",
+   "tags": [
+    "modulation",
+    "envelope",
+    "lfo"
+   ],
+   "summary": "Draw envelopes or LFOs that play per note and drive any linked knob - note-triggered modulation for plugins without their own."
+  },
+  {
+   "id": "plugin-fruity-keyboard-controller",
+   "kind": "plugin",
+   "type": "controller",
+   "plugin": "Fruity Keyboard Controller",
+   "title": "Fruity Keyboard Controller",
+   "edition": "fruity",
+   "tags": [
+    "modulation",
+    "key tracking"
+   ],
+   "summary": "Turns the notes you play into a control value (pitch/velocity) to link to any knob."
+  }
+ ]
+}

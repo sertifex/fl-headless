@@ -1,0 +1,38 @@
+{
+ "plugin": "Soundgoodizer",
+ "aliases": [],
+ "edition": "producer",
+ "roles": [
+  "maximizer"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "amount_pct": {
+   "index": null,
+   "fl_name": "Amount",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "mode": {
+   "index": null,
+   "fl_name": "Mode",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "A",
+    "B",
+    "C",
+    "D"
+   ],
+   "confidence": "low"
+  }
+ }
+}

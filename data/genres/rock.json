@@ -1,0 +1,107 @@
+{
+ "format": "flh-genre/1",
+ "name": "rock",
+ "aliases": ["rock music", "alt rock", "alternative", "indie rock", "pop punk", "punk", "hard rock", "garage rock"],
+ "about": "Rock: 100-150 BPM, straight 8ths, kick on 1 and 3 with pushes, snare backbeat on 2 and 4, 8th-note hats or ride, crash on section downbeats, power-chord guitars in parallel motion on I-bVII-IV / I-V-vi-IV / minor riffs, root-note 8th bass locked to the guitars, tom fills into sections.",
+ "tempo": {"min": 100, "max": 150, "default": 122, "feel": "straight"},
+ "guess_weight": 0.7,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 5, "vel": 7},
+ "loop_bars": 8,
+ "keys": {"modes": {"major": 3, "minor": 3, "mixolydian": 1}, "roots": ["E", "A", "D", "G", "C", "B", "F#"], "default": "E minor"},
+ "drums": {
+  "vel": {"X": 122, "x": 104, "o": 82, "g": 44},
+  "parts": {
+   "kick": {"patterns": [
+     {"steps": "X.......X.x.....X.......X.x.....", "w": 3},
+     {"steps": "X.....x.X.......X.....x.X.......", "w": 2},
+     {"steps": "X.x.....X.x.....X.x.....X.x.....", "w": 1}]},
+   "snare": {"patterns": [{"steps": "....X.......X...", "w": 1}], "ghosts": {"at": [7, 15], "chance": 0.15}},
+   "hat": {"patterns": [{"steps": "x.o.x.o.x.o.x.o.", "w": 3}, {"steps": "x.x.x.x.x.x.x.x.", "w": 1}]},
+   "crash": {"patterns": [{"steps": "X...............................", "w": 1}]},
+   "tom": {"patterns": [{"steps": "................", "w": 1}]}
+  },
+  "fill": {"every": 8, "parts": {"tom": "________xoxoxxoo", "snare": "________x.......", "hat": "________........", "kick": "________........"}},
+  "meters": {"6/8": {"parts": {"kick": {"patterns": [{"steps": "X.....x.....", "w": 2}, {"steps": "X...x.x.....", "w": 1}]},
+                                 "snare": {"patterns": [{"steps": "......X.....", "w": 1}]},
+                                 "hat": {"patterns": [{"steps": "x.x.x.x.x.x.", "w": 2}, {"steps": "x.o.o.x.o.o.", "w": 1}]},
+                                 "crash": {"patterns": [{"steps": "X...........", "w": 1}]}},
+                       "fill": {"every": 8, "parts": {"tom": "______xoxoxx", "snare": "______......", "hat": "______......"}}},
+             "3/4": {"parts": {"kick": {"patterns": [{"steps": "X.......x...", "w": 1}, {"steps": "X...........", "w": 1}]},
+                                 "snare": {"patterns": [{"steps": "....X.......", "w": 1}]},
+                                 "hat": {"patterns": [{"steps": "x.x.x.x.x.x.", "w": 1}]},
+                                 "crash": {"patterns": [{"steps": "X...........", "w": 1}]}},
+                       "fill": {"every": 8, "parts": {"tom": "____xoxoxxoo", "snare": "____........", "hat": "____........"}}}},
+  "variation": {"alt_pattern_chance": 0.2, "kick_maybe_scale": 0.0}
+ },
+ "bass": {
+  "type": "bass",
+  "register": [28, 48],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "x-x-x-x-x-x-x-x-", "w": 3},
+   {"steps": "x---x-x-x---x-x-", "w": 1}],
+  "follow": "root",
+  "length": "as_written",
+  "gap_steps": 0.2,
+  "vel": [96, 112],
+  "octave_jump": 0.05,
+  "approach": 0.15,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["I", "bVII", "IV", "I"], "mode": "major", "bars": 1, "w": 3},
+   {"rn": ["I", "V", "vi", "IV"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["I", "IV", "V", "IV"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["i", "VI", "VII", "i"], "mode": "minor", "bars": 1, "w": 3},
+   {"rn": ["i", "VII", "VI", "VII"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i", "III", "VII", "IV"], "mode": "minor", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "power", "register": [40, 64], "extensions": {"7": 0.0, "9": 0.0}},
+  "rhythm": {"patterns": [{"steps": "x-x-x-x-x-x-x-x-", "w": 3}, {"steps": "x-------x-------", "w": 1}, {"steps": "x--x--x-x--x--x-", "w": 1}]},
+  "vel": [92, 110]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "S", "A", "C"], "answer": "same", "breath": 3, "shapes": {"arch": 3, "rise": 1, "fall": 2}, "leap": 0.5},
+  "scale": "pentatonic",
+  "range": [60, 84],
+  "rhythms": [
+   {"steps": "x-x-x---x-x-x---", "w": 2},
+   {"steps": "x---x-x-x-------", "w": 2},
+   {"steps": "..x-x-x-x---x---", "w": 1}],
+  "motif_bars": 2,
+  "form": ["A", "A'", "B", "A"],
+  "chord_tone_strong": 0.75,
+  "step_prob": 0.65,
+  "max_leap": 7,
+  "repeat_note": 0.2,
+  "vel": [90, 110],
+  "length": "as_written",
+  "max_len_steps": 8
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.4},
+ "form": {"default": [["Intro", 8], ["Verse", 16], ["Hook", 16], ["Verse", 16], ["Hook", 16], ["Bridge", 8], ["Hook", 16], ["Outro", 8]]},
+ "sections": {
+  "Intro": {"energy": 0.5, "layers": ["chords", "drums"], "drums": "light"},
+  "Verse": {"energy": 0.6, "layers": ["drums", "bass", "chords"], "drums": "light"},
+  "Hook": {"energy": 0.95, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.5, "layers": ["bass", "chords", "melody"], "drums": "sparse"},
+  "Outro": {"energy": 0.6, "layers": ["drums", "bass", "chords"], "drums": "full"}
+ },
+ "transitions": {"into": {"Hook": ["fill", "reverse_crash"], "Verse": ["fill"], "Bridge": ["stop"], "Outro": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": []},
+ "roles": {
+  "kick": {"hint": "live rock kick", "family": "drums"},
+  "snare": {"hint": "big live snare", "family": "drums"},
+  "hat": {"hint": "live hi-hat", "family": "drums"},
+  "crash": {"hint": "crash cymbal", "family": "drums"},
+  "tom": {"hint": "rack and floor toms", "family": "drums"},
+  "bass": {"hint": "picked electric bass", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "distorted rhythm guitar (power chords)", "family": "guitar"},
+  "melody": {"hint": "lead guitar or synth lead", "family": "lead"},
+  "counter": {"hint": "clean guitar arpeggio", "family": "guitar"}
+ },
+ "mix": {"loudness_lufs": -9, "notes": ["double-track the rhythm guitars hard left/right", "snare and vocal centre, bass and kick glued"], "sidechain": null}
+}

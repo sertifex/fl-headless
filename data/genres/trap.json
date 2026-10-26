@@ -1,0 +1,114 @@
+{
+ "format": "flh-genre/1",
+ "name": "trap",
+ "aliases": ["trap beat", "rap", "rap beat", "hip hop", "hip-hop", "atlanta", "type beat", "dark trap"],
+ "about": "Atlanta-style trap: half-time feel at 130-160 BPM (snare/clap on beat 3), straight 16th hats with 1/32 and triplet rolls, sparse syncopated kicks, a long 808 that follows the chord roots and slides, dark minor loops with a bell/piano/pluck melody.",
+ "tempo": {"min": 130, "max": 160, "default": 140, "feel": "half-time"},
+ "guess_weight": 0.9,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 2, "vel": 4},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 6, "harmonic minor": 2, "phrygian": 1}, "roots": ["C", "C#", "D", "E", "F", "F#", "G", "A", "B"], "default": "C# minor"},
+ "drums": {
+  "vel": {"X": 120, "x": 102, "o": 78, "g": 46},
+  "parts": {
+   "kick": {"patterns": [
+     {"steps": "X.....x...x.....X......x..x.....", "w": 3},
+     {"steps": "X......x..x.....X.....x.......x.", "w": 2},
+     {"steps": "X.........x..x..X.......x.x.....", "w": 1}],
+    "maybe": "..........................2...3."},
+   "snare": {"patterns": [
+     {"steps": "........X...............X.......", "w": 4},
+     {"steps": "........X...............X.....o.", "w": 1}],
+    "ghosts": {"at": [14, 30, 23], "chance": 0.2}},
+   "clap": {"patterns": [{"steps": "........X...............X.......", "w": 1}]},
+   "hat": {"patterns": [
+     {"steps": "xoxoxoxoxoxoxoxo", "w": 3},
+     {"steps": "x.x.x.x.x.x.x.x.", "w": 2},
+     {"steps": "xoxoxoxox.xoxoxo", "w": 1}],
+    "rolls": {"chance": 0.5, "max_per_bar": 2, "at": [3, 6, 7, 11, 14, 15], "len": [1, 2, 2, 4],
+              "rates": {"1/32": 4, "1/16t": 3, "1/32t": 2, "1/8t": 1}, "ramp": [-14, 6], "pitch_up_chance": 0.2},
+    "bar_alts": [{"chance": 0.12, "grid": 12, "steps": "xooxooxooxoo", "not_first": true}]},
+   "openhat": {"patterns": [{"steps": "..............o.", "w": 2}, {"steps": "................", "w": 2}, {"steps": "......o.......o.", "w": 1}]},
+   "perc": {"patterns": [{"steps": "...o.......o....", "w": 1}, {"steps": "......o.....o...", "w": 1}], "maybe": ".........2....2."}
+  },
+  "fill": {"every": 8, "parts": {"snare": "____________g.go", "kick": "______________.."},
+           "roll": {"part": "snare", "at": 12, "len": 4, "rate": "1/16t", "ramp": [-30, 0]}},
+  "variation": {"alt_pattern_chance": 0.3, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "808",
+  "register": [26, 42],
+  "rhythm": "kick",
+  "follow": "root",
+  "length": "until_next",
+  "gap_steps": 0.25,
+  "vel": [100, 118],
+  "octave_jump": 0.15,
+  "glide": {"chance": 0.35, "len_steps": [1, 2], "where": "late", "targets": {"octave_up": 3, "octave_down": 1, "next_root": 3, "fifth": 1}},
+  "extra_hits": {"chance": 0.25, "at": [14, 15, 30, 31]}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i", "VI"], "mode": "minor", "bars": 2, "w": 3},
+   {"rn": ["i", "iv"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i", "VII", "VI", "V"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i", "bII"], "mode": "minor", "bars": 2, "w": 1},
+   {"rn": ["i", "iv", "VI", "V"], "mode": "minor", "bars": 2, "w": 1},
+   {"rn": ["i", "i", "VI", "VII"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["vi", "IV", "I", "V"], "mode": "major", "bars": 2, "w": 1}
+  ],
+  "voicing": {"style": "triad", "register": [55, 74], "extensions": {"7": 0.15, "9": 0.0}},
+  "rhythm": {"patterns": [{"steps": "x---------------", "w": 3}, {"steps": "x-------x-------", "w": 1}]},
+  "vel": [70, 86]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "S", "A", "C"], "answer": "same", "breath": 3, "shapes": {"fall": 3, "arch": 2, "hold": 1}, "leap": 0.5},
+  "scale": "key",
+  "range": [67, 88],
+  "rhythms": [
+    {"steps": "x..x..x.....", "grid": 12, "w": 1},
+    {"steps": "x.xx.x......", "grid": 12, "w": 1},
+   {"steps": "x..x..x...x.x...", "w": 3},
+   {"steps": "x.x...x.x...x...", "w": 2},
+   {"steps": "x..x..x.x..x..x.", "w": 2},
+   {"steps": "x-----x-x-x-----", "w": 1},
+   {"steps": "....x..x..x.x...", "w": 1}],
+  "motif_bars": 1,
+  "form": ["A", "A'", "A", "B"],
+  "chord_tone_strong": 0.75,
+  "step_prob": 0.65,
+  "max_leap": 7,
+  "repeat_note": 0.2,
+  "vel": [84, 104],
+  "length": "until_next",
+  "max_len_steps": 4
+ },
+ "counter": {"mode": "fills", "register": "below", "density": 0.5},
+ "form": {"default": [["Intro", 8], ["Hook", 16], ["Verse", 16], ["Hook", 16], ["Verse", 16], ["Hook", 16], ["Outro", 8]],
+          "short": [["Intro", 4], ["Hook", 8], ["Verse", 16], ["Hook", 8], ["Outro", 4]]},
+ "sections": {
+  "Intro": {"energy": 0.25, "layers": ["chords", "melody"], "drums": "none"},
+  "Verse": {"energy": 0.6, "layers": ["drums", "bass", "chords"], "drums": "light"},
+  "Hook": {"energy": 0.9, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.45, "layers": ["chords", "melody", "bass"], "drums": "sparse"},
+  "Outro": {"energy": 0.2, "layers": ["chords", "melody"], "drums": "none"}
+ },
+ "transitions": {"into": {"Hook": ["dropout", "riser:4", "impact", "sub_drop", "snare_build:8"], "Verse": ["fill"], "Outro": ["stop"]}, "after": {"Hook": ["downlifter:4"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "build", "outro"], "build_beats": 8},
+ "roles": {
+  "kick": {"hint": "punchy trap kick, short", "family": "drums"},
+  "snare": {"hint": "crisp trap snare", "family": "drums"},
+  "clap": {"hint": "layered clap", "family": "drums"},
+  "hat": {"hint": "tight closed hi-hat", "family": "drums"},
+  "openhat": {"hint": "short open hat", "family": "drums"},
+  "perc": {"hint": "rim / perc shot", "family": "drums"},
+  "bass": {"hint": "808 with long tail, mono, glide/porta on", "family": "bass", "name": "808"},
+  "chords": {"hint": "dark piano or pad", "family": "keys"},
+  "melody": {"hint": "bell, pluck or flute lead", "family": "lead"},
+  "counter": {"hint": "soft pluck or choir", "family": "lead"},
+  "pad": {"hint": "dark ambient pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -8, "notes": ["808 and kick share the low end: duck the 808 under the kick or tune the kick to the key", "808 saturation for translation on small speakers", "hats bright and panned slightly, melody with plate reverb"], "sidechain": {"trigger": "kick", "target": "bass", "depth_db": 4}}
+}

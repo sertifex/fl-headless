@@ -1,0 +1,120 @@
+{
+ "format": "flh-template/1",
+ "genre": "metal",
+ "name": "metal starter",
+ "about": "Metal: tight clicky double kick, cracking snare, bell ride, china/crash, big toms, distorted bass and high-gain rhythm guitars.",
+ "tempo": null,
+ "key": null,
+ "kit": "acoustic",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "tight clicky"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "cracking"
+  },
+  {
+   "role": "ride",
+   "name": "Ride",
+   "query": "bell",
+   "group": "Cymbals"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "",
+   "group": "Hats"
+  },
+  {
+   "role": "crash",
+   "name": "Crash",
+   "query": "china crash",
+   "group": "Cymbals"
+  },
+  {
+   "role": "tom",
+   "name": "Tom",
+   "query": "big"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "character": {
+    "query": "pick distorted"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Rhythm Guitar",
+   "family": "guitar",
+   "choices": [
+    {
+     "labs": "guitar"
+    },
+    {
+     "flex": "guitar"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*dist*",
+      "*guitar*"
+     ]
+    },
+    {
+     "fl_instrument": "guitar"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "notes": "stock FL has no high-gain guitar: swap for a guitar plugin you own",
+   "character": {
+    "query": "distorted heavy"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Lead Guitar",
+   "family": "lead",
+   "character": {
+    "query": "distorted lead solo"
+   },
+   "choices": [
+    {
+     "labs": "guitar"
+    },
+    {
+     "flex": "guitar"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*dist*",
+      "*guitar*",
+      "*lead*"
+     ]
+    },
+    {
+     "fl_instrument": "guitar"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ]
+  },
+  {
+   "role": "pad",
+   "name": "Choir",
+   "family": "choir",
+   "character": {
+    "query": "dark epic choir"
+   }
+  }
+ ]
+}

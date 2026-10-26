@@ -1,0 +1,112 @@
+{
+ "format": "flh-template/1",
+ "genre": "rock",
+ "name": "rock starter",
+ "about": "Rock: live kick/snare/hats, crash, toms, picked electric bass, rhythm guitar, lead guitar or synth.",
+ "tempo": null,
+ "key": null,
+ "kit": "acoustic",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "live acoustic"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "big live"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "live",
+   "group": "Hats"
+  },
+  {
+   "role": "crash",
+   "name": "Crash",
+   "query": "crash",
+   "group": "Cymbals"
+  },
+  {
+   "role": "tom",
+   "name": "Tom",
+   "query": "rack floor"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "character": {
+    "query": "pick electric"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Guitar",
+   "family": "guitar",
+   "choices": [
+    {
+     "labs": "guitar"
+    },
+    {
+     "flex": "guitar"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*guitar*",
+      "*dist*"
+     ]
+    },
+    {
+     "fl_instrument": "guitar"
+    },
+    {
+     "plugin": "Plucked!"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "notes": "stock FL has no distorted rhythm guitar: listen, and swap for a guitar plugin you own",
+   "character": {
+    "query": "overdrive crunch"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Lead",
+   "family": "lead",
+   "character": {
+    "query": "overdrive lead solo"
+   },
+   "choices": [
+    {
+     "labs": "guitar"
+    },
+    {
+     "flex": "guitar"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*dist*",
+      "*guitar*",
+      "*lead*"
+     ]
+    },
+    {
+     "fl_instrument": "guitar"
+    },
+    {
+     "plugin": "Plucked!"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ]
+  }
+ ]
+}

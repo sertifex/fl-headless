@@ -1,0 +1,111 @@
+{
+ "format": "flh-genre/1",
+ "name": "cinematic",
+ "aliases": ["film score", "score", "epic", "orchestral", "trailer", "soundtrack", "epic orchestral", "game music"],
+ "about": "Cinematic / trailer: 70-120 BPM, big low drums (taiko/toms on the downbeats with building 8th/16th ostinatos), driving string ostinatos, minor-key epic progressions (i-VI-III-VII, VI-VII-i, i-bII), open octave-doubled voicings, a broad heroic melody in long notes, builds that add layers and end in a hit.",
+ "tempo": {"min": 70, "max": 120, "default": 90, "feel": "straight"},
+ "guess_weight": 0.5,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 5, "vel": 6},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 5, "harmonic minor": 1, "major": 2, "dorian": 1}, "roots": ["C", "D", "E", "F", "G", "A", "B"], "default": "D minor"},
+ "drums": {
+  "vel": {"X": 124, "x": 104, "o": 82, "g": 50},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X.......X.......X.......X..x.x..", "w": 2}, {"steps": "X...........x...X.......x.......", "w": 1}]},
+   "tom": {"patterns": [{"steps": "..x...x...x...x.", "w": 2}, {"steps": "x.x.x.x.x.xxx.xx", "w": 1}, {"steps": "x...x...x..x.x..", "w": 1}], "maybe": "......2.......3."},
+   "snare": {"patterns": [{"steps": "........X...............X.......", "w": 1}, {"steps": "....x.......x...", "w": 1}]},
+   "crash": {"patterns": [{"steps": "X...............................", "w": 1}]},
+   "perc": {"patterns": [{"steps": "x.o.x.o.x.o.x.o.", "w": 1}, {"steps": "................", "w": 1}]}
+  },
+  "fill": {"every": 8, "parts": {"tom": "________x.x.xxxx", "snare": "____________xxxX"}},
+  "meters": {"3/4": {"parts": {"kick": {"patterns": [{"steps": "X...........", "w": 2}, {"steps": "X.......x...", "w": 1}]},
+                                 "tom": {"patterns": [{"steps": "....x...x...", "w": 2}, {"steps": "..x.x.x.x.xx", "w": 1}]},
+                                 "snare": {"patterns": [{"steps": "........x...", "w": 1}]},
+                                 "crash": {"patterns": [{"steps": "X...........", "w": 1}]},
+                                 "perc": {"patterns": [{"steps": "x.o.x.o.x.o.", "w": 1}]}},
+                       "fill": {"every": 8, "parts": {"tom": "________x.xx", "snare": "_________xxX"}}},
+             "6/8": {"parts": {"kick": {"patterns": [{"steps": "X.....X.....", "w": 2}, {"steps": "X.........x.", "w": 1}]},
+                                 "tom": {"patterns": [{"steps": "..x.x...x.x.", "w": 2}, {"steps": "x.x.x.x.x.xx", "w": 1}]},
+                                 "snare": {"patterns": [{"steps": "......X.....", "w": 1}]},
+                                 "crash": {"patterns": [{"steps": "X...........", "w": 1}]},
+                                 "perc": {"patterns": [{"steps": "x.o.o.x.o.o.", "w": 1}]}},
+                       "fill": {"every": 8, "parts": {"tom": "______x.x.xx", "snare": "_________xxX"}}}},
+  "variation": {"alt_pattern_chance": 0.2, "kick_maybe_scale": 0.0}
+ },
+ "bass": {
+  "lock": "free",
+  "type": "bass",
+  "register": [28, 48],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "x-x-x-x-x-x-x-x-", "w": 2},
+   {"steps": "x---------------", "w": 2},
+   {"steps": "x-xxx-xxx-xxx-xx", "w": 1}],
+  "follow": "root",
+  "length": "as_written",
+  "gap_steps": 0.25,
+  "vel": [90, 110],
+  "octave_jump": 0.0,
+  "octave_double": true,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i", "VI", "III", "VII"], "mode": "minor", "bars": 2, "w": 3},
+   {"rn": ["VI", "VII", "i", "i"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i", "VI", "iv", "V"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i", "bII", "i", "V"], "mode": "minor", "bars": 2, "w": 1},
+   {"rn": ["I", "bVI", "bVII", "I"], "mode": "major", "bars": 2, "w": 2},
+   {"rn": ["IV", "I", "V", "vi"], "mode": "major", "bars": 2, "w": 1}
+  ],
+  "voicing": {"style": "open", "register": [43, 79], "extensions": {"7": 0.0, "9": 0.1}},
+  "rhythm": {"patterns": [{"steps": "x---------------", "w": 2}, {"steps": "x-x-x-x-x-x-x-x-", "w": 2}, {"steps": "xxx-xxx-xxx-xxx-", "w": 1}]},
+  "vel": [76, 96]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "S", "B", "C"], "answer": "same", "breath": 3, "shapes": {"rise": 2, "arch": 3}, "leap": 0.6},
+  "scale": "key",
+  "range": [62, 86],
+  "rhythms": [
+   {"steps": "x-----------x---x---------------", "w": 2},
+   {"steps": "x-------x-------x-------x---x---", "w": 2},
+   {"steps": "x---x---x-------x---------------", "w": 1}],
+  "motif_bars": 2,
+  "form": ["A", "A'", "B", "A'"],
+  "chord_tone_strong": 0.85,
+  "step_prob": 0.6,
+  "max_leap": 9,
+  "repeat_note": 0.1,
+  "vel": [86, 110],
+  "length": "as_written",
+  "max_len_steps": 16
+ },
+ "counter": {"mode": "guide", "register": "below", "density": 0.4},
+ "form": {"default": [["Intro", 8], ["A", 16], ["Build", 8], ["Climax", 16], ["Outro", 8]]},
+ "sections": {
+  "Intro": {"energy": 0.2, "layers": ["chords"], "drums": "none"},
+  "A": {"energy": 0.5, "layers": ["chords", "bass", "melody"], "drums": "sparse"},
+  "Verse": {"energy": 0.5, "layers": ["chords", "bass", "melody"], "drums": "sparse"},
+  "Build": {"energy": 0.75, "layers": ["chords", "bass", "drums", "counter"], "drums": "build"},
+  "Climax": {"energy": 1.0, "layers": ["chords", "bass", "drums", "melody", "counter"], "drums": "full"},
+  "Hook": {"energy": 1.0, "layers": ["chords", "bass", "drums", "melody", "counter"], "drums": "full"},
+  "Outro": {"energy": 0.2, "layers": ["chords"], "drums": "none"}
+ },
+ "transitions": {"into": {"Climax": ["stop", "riser:16", "cymbal_swell:8", "boom", "sub_drop"], "Build": ["fill"], "Hook": ["stop", "reverse_swell:8", "boom"]}},
+ "ear_candy": {"amount": "subtle", "mode": "organic", "filters": ["outro"], "beds": ["wind"]},
+ "roles": {
+  "kick": {"hint": "taiko / big low cinematic hit", "family": "drums"},
+  "tom": {"hint": "ensemble toms / taikos", "family": "drums"},
+  "snare": {"hint": "orchestral snare ensemble", "family": "drums"},
+  "crash": {"hint": "cymbal swell / crash", "family": "drums"},
+  "perc": {"hint": "frame drums / anvils", "family": "drums"},
+  "bass": {"hint": "low strings (celli + basses) or brass low", "family": "bass", "name": "Low Strings"},
+  "chords": {"hint": "string ensemble (staccato ostinato or long)", "family": "strings"},
+  "melody": {"hint": "french horns / brass or solo strings", "family": "lead"},
+  "counter": {"hint": "choir or high strings", "family": "pad"},
+  "pad": {"hint": "dark choir pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -11, "notes": ["big hall reverb, low drums dominant", "keep dynamics between sections"], "sidechain": null}
+}

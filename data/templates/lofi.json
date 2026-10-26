@@ -1,0 +1,138 @@
+{
+ "format": "flh-template/1",
+ "genre": "lofi",
+ "name": "lofi starter",
+ "about": "Lo-fi hip hop: soft dusty swung drums, warm round bass, felt piano/rhodes with 7ths and 9ths, mellow guitar/flute lead, tape pad, vinyl crackle.",
+ "tempo": null,
+ "key": null,
+ "kit": "dusty",
+ "layers": [
+  {
+   "role": "pad",
+   "level": "support"
+  }
+ ],
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "soft dusty"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "dusty rimshot"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "soft crunchy",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "soft open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "shaker",
+   "sample": "shaker",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "character": {
+    "query": "upright warm round mellow fingered",
+    "avoid": [
+     "slap",
+     "synth bass"
+    ]
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Keys",
+   "family": "keys",
+   "character": {
+    "query": "felt rhodes soft tape warm dusty",
+    "avoid": [
+     "electric grand",
+     "bright",
+     "honky",
+     "supersaw"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Guitar",
+   "family": "guitar",
+   "choices": [
+    {
+     "labs": "guitar"
+    },
+    {
+     "flex": "guitar"
+    },
+    {
+     "plugin": "Sakura",
+     "presets": [
+      "*guitar*",
+      "*koto*",
+      "*harp*",
+      "*pluck*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*guitar*",
+      "*flute*",
+      "*soft*lead*"
+     ]
+    },
+    {
+     "fl_instrument": "guitar"
+    },
+    {
+     "plugin": "Plucked!"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "mellow clean soft nylon warm",
+    "avoid": [
+     "distorted",
+     "overdrive",
+     "metal"
+    ]
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "warm tape soft dusty",
+    "avoid": [
+     "supersaw",
+     "bright"
+    ]
+   }
+  },
+  {
+   "role": "texture",
+   "name": "Vinyl",
+   "sample": "texture",
+   "query": "vinyl crackle",
+   "notes": "a noise bed: place it under the song (no notes are written for it)"
+  }
+ ]
+}

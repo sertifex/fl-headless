@@ -1,0 +1,189 @@
+{
+ "plugin": "Fruity Multiband Compressor",
+ "aliases": [],
+ "edition": "fruity",
+ "roles": [
+  "multiband",
+  "compressor"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "low_freq_hz": {
+   "index": null,
+   "fl_name": "L Freq",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 20,
+   "max": 2000,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name guessed from the band naming FL showed for the high band ('H Freq', 'H Threshold', 'H Output', 'H Attack', 'H Release'); confirm with fl_pc_check mix.map_names"
+  },
+  "high_freq_hz": {
+   "index": null,
+   "fl_name": "H Freq",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 500,
+   "max": 20000,
+   "confidence": "medium"
+  },
+  "output_db": {
+   "index": null,
+   "fl_name": "Master volume",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -24,
+   "max": 24,
+   "confidence": "medium"
+  },
+  "low_gain_db": {
+   "index": null,
+   "fl_name": "L Output",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -24,
+   "max": 24,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name guessed from the band naming FL showed for the high band ('H Freq', 'H Threshold', 'H Output', 'H Attack', 'H Release'); confirm with fl_pc_check mix.map_names"
+  },
+  "low_threshold_db": {
+   "index": null,
+   "fl_name": "L Threshold",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -60,
+   "max": 0,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name guessed from the band naming FL showed for the high band ('H Freq', 'H Threshold', 'H Output', 'H Attack', 'H Release'); confirm with fl_pc_check mix.map_names"
+  },
+  "low_attack_ms": {
+   "index": null,
+   "fl_name": "L Attack",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 0,
+   "max": 500,
+   "exp": 2,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name guessed from the band naming FL showed for the high band ('H Freq', 'H Threshold', 'H Output', 'H Attack', 'H Release'); confirm with fl_pc_check mix.map_names"
+  },
+  "low_release_ms": {
+   "index": null,
+   "fl_name": "L Release",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 1,
+   "max": 2000,
+   "exp": 2,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name guessed from the band naming FL showed for the high band ('H Freq', 'H Threshold', 'H Output', 'H Attack', 'H Release'); confirm with fl_pc_check mix.map_names"
+  },
+  "mid_gain_db": {
+   "index": null,
+   "fl_name": "M Output",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -24,
+   "max": 24,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name guessed from the band naming FL showed for the high band ('H Freq', 'H Threshold', 'H Output', 'H Attack', 'H Release'); confirm with fl_pc_check mix.map_names"
+  },
+  "mid_threshold_db": {
+   "index": null,
+   "fl_name": "M Threshold",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -60,
+   "max": 0,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name guessed from the band naming FL showed for the high band ('H Freq', 'H Threshold', 'H Output', 'H Attack', 'H Release'); confirm with fl_pc_check mix.map_names"
+  },
+  "mid_attack_ms": {
+   "index": null,
+   "fl_name": "M Attack",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 0,
+   "max": 500,
+   "exp": 2,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name guessed from the band naming FL showed for the high band ('H Freq', 'H Threshold', 'H Output', 'H Attack', 'H Release'); confirm with fl_pc_check mix.map_names"
+  },
+  "mid_release_ms": {
+   "index": null,
+   "fl_name": "M Release",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 1,
+   "max": 2000,
+   "exp": 2,
+   "confidence": "low",
+   "pc_verify": "PC-VERIFY: name guessed from the band naming FL showed for the high band ('H Freq', 'H Threshold', 'H Output', 'H Attack', 'H Release'); confirm with fl_pc_check mix.map_names"
+  },
+  "high_gain_db": {
+   "index": null,
+   "fl_name": "H Output",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -24,
+   "max": 24,
+   "confidence": "medium"
+  },
+  "high_threshold_db": {
+   "index": null,
+   "fl_name": "H Threshold",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -60,
+   "max": 0,
+   "confidence": "medium"
+  },
+  "high_attack_ms": {
+   "index": null,
+   "fl_name": "H Attack",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 0,
+   "max": 500,
+   "exp": 2,
+   "confidence": "medium: name seen live 2026-10-23"
+  },
+  "high_release_ms": {
+   "index": null,
+   "fl_name": "H Release",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 1,
+   "max": 2000,
+   "exp": 2,
+   "confidence": "medium: name seen live 2026-10-23"
+  }
+ },
+ "live_names_unmapped": [
+  "Limiter",
+  "Filter type",
+  "High band state",
+  "H Ratio",
+  "H Knee",
+  "Mid band state"
+ ],
+ "band_naming": "FL names the bands 'L ...' / 'M ...' / 'H ...' (high band confirmed live 2026-10-23; L/M guessed: see pc_verify)"
+}

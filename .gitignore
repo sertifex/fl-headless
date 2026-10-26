@@ -1,0 +1,13 @@
+*.bak
+*.log
+*.pyc
+*.tmp
+__pycache__/
+install_log.txt
+tests/data/
+undo_log.txt
+tests/data
+fl_headless_launch.py
+review/
+.claude/
+dist/

@@ -1,0 +1,8 @@
+{
+  "_about": "Where a lead vocal usually sits over the beat, as vocal minus beat loudness (LU, K-weighted) in the vocal band, measured only while the vocal is singing. Starting points by genre, not rules: the ears decide. Override in <state folder>/vocal/balance.json or with the journal / profile style notes.",
+  "vocal_band_hz": [250, 5000],
+  "duck_band_hz": [1000, 4000],
+  "norms_lu": {"rap": [2.0, 5.0], "pop": [1.0, 4.0], "rnb": [1.0, 3.5], "rock": [0.0, 3.0], "airy": [0.0, 2.5], "podcast": [10.0, 20.0], "default": [1.0, 4.0]},
+  "max_move_db": 6.0,
+  "duck": {"depth_db": 2.0, "max_db": 4.0, "attack_s": 0.05, "release_s": 0.25}
+}

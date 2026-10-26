@@ -1,0 +1,107 @@
+{
+ "format": "flh-genre/1",
+ "name": "gospel",
+ "aliases": ["gospel soul", "soul", "church", "worship", "praise", "motown", "southern soul", "classic soul", "gospel music"],
+ "about": "Gospel / soul: 66-120 BPM (ballads ~70, praise breaks faster), a swung 12/8-flavoured backbeat with ghost-note snares, rich extended harmony (7ths, 9ths, 13ths) with ii-V-I motion, secondary dominants (VI7, III7), the plagal IV-I and passing diminished chords, a busy soulful bass that walks and approaches the next root, organ/piano comping, a singable melody with stepwise motion and held climaxes.",
+ "tempo": {"min": 64, "max": 124, "default": 76, "feel": "straight"},
+ "guess_weight": 0.5,
+ "meter": 4,
+ "swing": 0.6,
+ "humanize": {"timing_ms": 7, "vel": 8},
+ "loop_bars": 8,
+ "keys": {"modes": {"major": 5, "minor": 2}, "roots": ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"], "default": "Ab major"},
+ "drums": {
+  "vel": {"X": 112, "x": 98, "o": 76, "g": 36},
+  "parts": {
+   "kick": {"patterns": [{"steps": "x.....x.x.......", "w": 3}, {"steps": "x......x..x.....", "w": 2}, {"steps": "x.......x.......", "w": 1}]},
+   "snare": {"patterns": [{"steps": "....x.......x...", "w": 1}], "ghosts": {"at": [2, 7, 10, 15], "chance": 0.45}},
+   "hat": {"patterns": [{"steps": "x.o.x.o.x.o.x.o.", "w": 3}, {"steps": "x.oox.oox.oox.oo", "w": 1}]},
+   "openhat": {"patterns": [{"steps": "..............o.", "w": 2}, {"steps": "................", "w": 1}]},
+   "ride": {"patterns": [{"steps": "................", "w": 3}, {"steps": "x..ox..ox..ox..o", "w": 1}]},
+   "crash": {"patterns": [{"steps": "X...............................", "w": 1}]},
+   "tom": {"patterns": [{"steps": "................", "w": 1}]}
+  },
+  "fill": {"every": 4, "parts": {"tom": "____________xoxo", "snare": "____________o..x"}},
+  "variation": {"alt_pattern_chance": 0.25, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "bass",
+  "register": [28, 52],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "x-----x-x---x---", "w": 2},
+   {"steps": "x---x-x-x---x-x-", "w": 2},
+   {"steps": "x-----x---x-x-x-", "w": 1}
+  ],
+  "follow": "root_fifth",
+  "length": "as_written",
+  "gap_steps": 0.3,
+  "vel": [86, 104],
+  "octave_jump": 0.15,
+  "approach": 0.5,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["Imaj7", "vi7", "ii7", "V7"], "mode": "major", "bars": 1, "w": 3},
+   {"rn": ["IVmaj7", "iii7", "vi7", "ii7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["I", "IV", "I", "V7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["iii7", "VI7", "ii7", "V7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["IV", "#iv°7", "I", "vi7"], "mode": "major", "bars": 1, "w": 1},
+   {"rn": ["ii9", "V13", "Imaj9", "Imaj9"], "mode": "major", "bars": 1, "w": 1},
+   {"rn": ["i7", "iv7", "VII7", "IIImaj7"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["iiø", "V7", "i7", "i7"], "mode": "minor", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "extended", "register": [50, 74], "extensions": {"7": 1.0, "9": 0.7}},
+  "rhythm": {"patterns": [{"steps": "x-----x-x-------", "w": 2}, {"steps": "x---------------", "w": 2}, {"steps": "x--x--x---x--x--", "w": 1}]},
+  "vel": [70, 90],
+  "strum_ms": 6
+ },
+ "melody": {
+  "hook": {"plan": ["A", "B", "A", "C"], "answer": "other", "breath": 3, "shapes": {"arch": 3, "fall": 2, "rise": 1}, "leap": 0.5},
+  "scale": "key",
+  "range": [64, 84],
+  "rhythms": [
+   {"steps": "x-x-x---x-------", "w": 2},
+   {"steps": "..x-x-x-x-x-----", "w": 2},
+   {"steps": "x---x-x-x-x-x---", "w": 1},
+   {"steps": "x-------x---x---", "w": 1}
+  ],
+  "motif_bars": 2,
+  "form": ["A", "A'", "B", "A'"],
+  "chord_tone_strong": 0.85,
+  "step_prob": 0.75,
+  "max_leap": 7,
+  "repeat_note": 0.15,
+  "vel": [80, 104],
+  "length": "as_written",
+  "max_len_steps": 12
+ },
+ "counter": {"mode": "guide", "register": "below", "density": 0.45},
+ "form": {"default": [["Intro", 4], ["Verse", 8], ["Hook", 8], ["Verse", 8], ["Hook", 8], ["Bridge", 8], ["Hook", 8], ["Outro", 4]]},
+ "sections": {
+  "Intro": {"energy": 0.3, "layers": ["chords"], "drums": "none"},
+  "Verse": {"energy": 0.55, "layers": ["drums", "bass", "chords"], "drums": "light"},
+  "Hook": {"energy": 0.9, "layers": ["drums", "bass", "chords", "melody", "counter"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.7, "layers": ["drums", "bass", "chords", "melody"], "drums": "build"},
+  "Outro": {"energy": 0.35, "layers": ["chords", "melody"], "drums": "sparse"}
+ },
+ "transitions": {"into": {"Hook": ["fill", "reverse_crash"], "Bridge": ["fill"], "Outro": ["stop"]}},
+ "ear_candy": {"amount": "normal", "filters": []},
+ "roles": {
+  "kick": {"hint": "warm live kick", "family": "drums"},
+  "snare": {"hint": "crisp live snare with ghost notes", "family": "drums"},
+  "hat": {"hint": "live hi-hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "ride": {"hint": "ride cymbal", "family": "drums"},
+  "crash": {"hint": "crash", "family": "drums"},
+  "tom": {"hint": "live toms", "family": "drums"},
+  "bass": {"hint": "fingered electric bass", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "grand piano or Hammond organ", "family": "keys"},
+  "melody": {"hint": "lead vocal line (or a sax / organ lead)", "family": "lead"},
+  "counter": {"hint": "choir pad or organ", "family": "lead"},
+  "pad": {"hint": "choir 'ooh' pad", "family": "pad"},
+  "organ": {"hint": "Hammond B3 with Leslie", "family": "keys"}
+ },
+ "mix": {"loudness_lufs": -11, "notes": ["vocal-first: everything leaves room for the lead", "organ Leslie on the swells", "live room on the drums"], "sidechain": {"trigger": "kick", "target": "bass", "depth_db": 1}}
+}

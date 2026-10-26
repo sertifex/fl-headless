@@ -1,0 +1,84 @@
+{
+ "_about": "Scoring for fl_vocal_comp: each metric adds penalty points (lower = better); a take's phrase score is 100 - penalty. 'per' is the metric amount (above 'free_below') that costs 1 point, times the style weight; 'cap' limits one metric's points. switch_cost: extra points a take change must win by (hysteresis, so the comp doesn't hop takes every phrase). Override per style; user overrides go in <state folder>/vocal/comp.json.",
+ "metrics": {
+  "pitch_cents": {
+   "per": 2.5,
+   "cap": 40,
+   "free_below": 5
+  },
+  "instability": {
+   "per": 2.0,
+   "cap": 15,
+   "free_below": 3
+  },
+  "timing_ms": {
+   "per": 4.0,
+   "cap": 20,
+   "free_below": 8
+  },
+  "noise_db": {
+   "per": 3.0,
+   "cap": 10,
+   "free_below": -60
+  },
+  "clipped": {
+   "per": 2.0,
+   "cap": 25
+  },
+  "plosives": {
+   "per": 0.5,
+   "cap": 6
+  },
+  "sibilance": {
+   "per": 1.0,
+   "cap": 4
+  },
+  "energy_dev_db": {
+   "per": 1.5,
+   "cap": 10
+  },
+  "missing": {
+   "per": 1.0,
+   "cap": 60
+  }
+ },
+ "weights": {
+  "default": {
+   "pitch_cents": 1.0,
+   "instability": 0.6,
+   "timing_ms": 0.6,
+   "noise_db": 0.5,
+   "clipped": 1.0,
+   "plosives": 1.0,
+   "sibilance": 0.5,
+   "energy_dev_db": 0.5,
+   "missing": 1.0
+  },
+  "rap": {
+   "pitch_cents": 0.15,
+   "instability": 0.1,
+   "timing_ms": 1.5,
+   "noise_db": 0.5,
+   "clipped": 1.0,
+   "plosives": 1.0,
+   "sibilance": 0.5,
+   "energy_dev_db": 0.8,
+   "missing": 1.0
+  },
+  "podcast": {
+   "pitch_cents": 0.0,
+   "instability": 0.0,
+   "timing_ms": 0.0,
+   "noise_db": 1.0,
+   "clipped": 1.0,
+   "plosives": 1.5,
+   "sibilance": 0.8,
+   "energy_dev_db": 0.8,
+   "missing": 1.0
+  }
+ },
+ "switch_cost": 4.0,
+ "crossfade_ms": 20,
+ "min_gap_s": 0.25,
+ "min_phrase_s": 0.25
+}

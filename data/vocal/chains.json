@@ -1,0 +1,322 @@
+{
+ "_about": "Vocal chains for fl_vocal_chain (fl-headless). Stock FL plugins first; the numbers are starting points that fl_vocal_chain adjusts from measuring the take (sibilance band, mud, proximity low end, dynamic range, tempo). Extend or override: put a chains.json with the same shape in <fl-headless state folder>/vocal/ (it is merged over this one). When applying, settings go through flh_mixeng's plugin maps (ns plugin_set_named: units, enums, read-back) when it is loaded; 'param_hints' are only the fallback (words matched against the plugin's live parameter names; enums such as band types are then left to the user) - PC-VERIFY them per FL version. Timing: reverb decay_beats and delay beats are in quarter-note beats at the song tempo; predelay_note is a fraction of a whole note (1/64 = 0.015625), clamped to 10-80 ms.",
+ "plugins": {
+  "eq": "Fruity Parametric EQ 2",
+  "compressor": "Fruity Compressor",
+  "leveler": "Fruity Limiter",
+  "deesser": "Fruity Multiband Compressor",
+  "deesser_alt": "Maximus",
+  "saturation": "Fruity Blood Overdrive",
+  "reverb": "Fruity Reeverb 2",
+  "delay": "Fruity Delay 3",
+  "width": "Fruity Stereo Shaper"
+ },
+ "tuners": {
+  "native": [
+   "Pitcher",
+   "NewTone"
+  ],
+  "free_third_party": [
+   {
+    "name": "MAutoPitch",
+    "maker": "MeldaProduction",
+    "note": "free (MFreeFXBundle); simple automatic tuning with a speed knob"
+   },
+   {
+    "name": "Graillon 3 (free edition)",
+    "maker": "Auburn Sounds",
+    "note": "free edition includes pitch correction"
+   }
+  ],
+  "note": "Optional third-party plugins: fl-headless never downloads or installs anything. Tuning is a taste choice; many rap and podcast vocals use none."
+ },
+ "param_hints": {
+  "Fruity Parametric EQ 2": {
+   "band{n}_freq_hz": "Band {n} freq",
+   "band{n}_gain_db": "Band {n} level",
+   "band{n}_width": "Band {n} width"
+  },
+  "Fruity Compressor": {
+   "threshold_db": "Threshold",
+   "ratio": "Ratio",
+   "attack_ms": "Attack",
+   "release_ms": "Release",
+   "gain_db": "Gain"
+  },
+  "Fruity Limiter": {
+   "comp_threshold_db": "Comp thres",
+   "comp_ratio": "Comp ratio",
+   "comp_attack_ms": "Comp attack",
+   "comp_release_ms": "Comp release"
+  },
+  "Fruity Multiband Compressor": {
+   "high_threshold_db": "High threshold",
+   "high_freq_hz": "High freq"
+  },
+  "Fruity Reeverb 2": {
+   "decay_s": "Decay",
+   "predelay_ms": "Delay",
+   "wet_pct": "Wet",
+   "dry_pct": "Dry",
+   "low_cut_hz": "Low cut",
+   "high_cut_hz": "High cut"
+  },
+  "Fruity Delay 3": {
+   "feedback_pct": "Feedback",
+   "wet_pct": "Wet",
+   "dry_pct": "Dry"
+  }
+ },
+ "styles": {
+  "rap": {
+   "about": "upfront, dry-ish, controlled; intelligibility first",
+   "hpf_hz": 100,
+   "presence": {
+    "hz": 3500,
+    "db": 2.5
+   },
+   "air": {
+    "hz": 11000,
+    "db": 1.5
+   },
+   "comp": [
+    {
+     "ratio": 4.0,
+     "attack_ms": 5,
+     "release_ms": 60,
+     "target_gr_db": 6
+    },
+    {
+     "ratio": 2.0,
+     "attack_ms": 15,
+     "release_ms": 100,
+     "target_gr_db": 3
+    }
+   ],
+   "deess_max_db": 6,
+   "saturation": "light",
+   "reverb": {
+    "decay_beats": 1.5,
+    "wet": 0.08,
+    "predelay_note": 0.015625
+   },
+   "delay": {
+    "beats": 1.0,
+    "feedback": 0.2,
+    "wet": 0.08
+   },
+   "tuner": {
+    "use": "optional",
+    "speed": "fast",
+    "note": "only if the hook is sung"
+   },
+   "balance_lu": [
+    2.0,
+    5.0
+   ]
+  },
+  "pop": {
+   "about": "polished, bright, compressed, wet",
+   "hpf_hz": 90,
+   "presence": {
+    "hz": 4000,
+    "db": 2.0
+   },
+   "air": {
+    "hz": 12000,
+    "db": 3.0
+   },
+   "comp": [
+    {
+     "ratio": 3.0,
+     "attack_ms": 10,
+     "release_ms": 80,
+     "target_gr_db": 5
+    },
+    {
+     "ratio": 2.0,
+     "attack_ms": 20,
+     "release_ms": 120,
+     "target_gr_db": 3
+    }
+   ],
+   "deess_max_db": 7,
+   "saturation": "light",
+   "reverb": {
+    "decay_beats": 3.0,
+    "wet": 0.14,
+    "predelay_note": 0.03125
+   },
+   "delay": {
+    "beats": 0.75,
+    "feedback": 0.3,
+    "wet": 0.1
+   },
+   "tuner": {
+    "use": "common",
+    "speed": "medium"
+   },
+   "balance_lu": [
+    1.0,
+    4.0
+   ]
+  },
+  "rnb": {
+   "about": "smooth, warm, intimate; long tails",
+   "hpf_hz": 80,
+   "presence": {
+    "hz": 3000,
+    "db": 1.5
+   },
+   "air": {
+    "hz": 12000,
+    "db": 2.5
+   },
+   "comp": [
+    {
+     "ratio": 2.5,
+     "attack_ms": 15,
+     "release_ms": 120,
+     "target_gr_db": 4
+    }
+   ],
+   "deess_max_db": 6,
+   "saturation": "light",
+   "reverb": {
+    "decay_beats": 4.0,
+    "wet": 0.18,
+    "predelay_note": 0.03125
+   },
+   "delay": {
+    "beats": 0.75,
+    "feedback": 0.35,
+    "wet": 0.12
+   },
+   "tuner": {
+    "use": "common",
+    "speed": "medium-slow"
+   },
+   "balance_lu": [
+    1.0,
+    3.5
+   ]
+  },
+  "podcast": {
+   "about": "clear, even, dry speech",
+   "hpf_hz": 80,
+   "presence": {
+    "hz": 3000,
+    "db": 2.0
+   },
+   "air": {
+    "hz": 10000,
+    "db": 0.0
+   },
+   "comp": [
+    {
+     "ratio": 3.0,
+     "attack_ms": 10,
+     "release_ms": 100,
+     "target_gr_db": 6
+    },
+    {
+     "ratio": 6.0,
+     "attack_ms": 2,
+     "release_ms": 50,
+     "target_gr_db": 2
+    }
+   ],
+   "deess_max_db": 6,
+   "saturation": "none",
+   "reverb": null,
+   "delay": null,
+   "tuner": {
+    "use": "none"
+   },
+   "balance_lu": [
+    10.0,
+    20.0
+   ]
+  },
+  "rock": {
+   "about": "gritty, mid-forward, sits inside the band",
+   "hpf_hz": 110,
+   "presence": {
+    "hz": 2500,
+    "db": 2.5
+   },
+   "air": {
+    "hz": 10000,
+    "db": 1.0
+   },
+   "comp": [
+    {
+     "ratio": 4.0,
+     "attack_ms": 3,
+     "release_ms": 60,
+     "target_gr_db": 7
+    }
+   ],
+   "deess_max_db": 5,
+   "saturation": "medium",
+   "reverb": {
+    "decay_beats": 2.0,
+    "wet": 0.1,
+    "predelay_note": 0.015625
+   },
+   "delay": {
+    "beats": 0.5,
+    "feedback": 0.2,
+    "wet": 0.07
+   },
+   "tuner": {
+    "use": "optional",
+    "speed": "slow"
+   },
+   "balance_lu": [
+    0.0,
+    3.0
+   ]
+  },
+  "airy": {
+   "about": "breathy, wide, lots of top and space",
+   "hpf_hz": 120,
+   "presence": {
+    "hz": 5000,
+    "db": 1.0
+   },
+   "air": {
+    "hz": 12000,
+    "db": 4.0
+   },
+   "comp": [
+    {
+     "ratio": 2.0,
+     "attack_ms": 20,
+     "release_ms": 150,
+     "target_gr_db": 3
+    }
+   ],
+   "deess_max_db": 8,
+   "saturation": "none",
+   "reverb": {
+    "decay_beats": 6.0,
+    "wet": 0.25,
+    "predelay_note": 0.03125
+   },
+   "delay": {
+    "beats": 1.5,
+    "feedback": 0.4,
+    "wet": 0.14
+   },
+   "tuner": {
+    "use": "optional",
+    "speed": "slow"
+   },
+   "balance_lu": [
+    0.0,
+    2.5
+   ]
+  }
+ }
+}

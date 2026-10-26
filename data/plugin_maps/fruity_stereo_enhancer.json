@@ -1,0 +1,68 @@
+{
+ "plugin": "Fruity Stereo Enhancer",
+ "aliases": [],
+ "edition": "fruity",
+ "roles": [
+  "stereo"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "pan": {
+   "index": 0,
+   "fl_name": "Panning",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": -100,
+   "max": 100,
+   "confidence": "low"
+  },
+  "volume_db": {
+   "index": 1,
+   "fl_name": "Volume",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -60,
+   "max": 6,
+   "confidence": "low"
+  },
+  "stereo_separation": {
+   "index": 2,
+   "fl_name": "Stereo separation",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": -100,
+   "max": 100,
+   "confidence": "low: direction (which side widens) unknown - learn it"
+  },
+  "phase_offset_ms": {
+   "index": 3,
+   "fl_name": "Phase offset",
+   "unit": "ms",
+   "curve": "linear",
+   "verified": false,
+   "min": -20,
+   "max": 20,
+   "confidence": "low"
+  },
+  "phase_inversion": {
+   "index": 5,
+   "fl_name": "Phase inversion",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "None",
+    "Left",
+    "Right"
+   ],
+   "confidence": "low"
+  }
+ },
+ "names_seen_on_pc": "2026-10-21 (FL 2026, fl_plugin_maps_check)"
+}

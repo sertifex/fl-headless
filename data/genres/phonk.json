@@ -1,0 +1,96 @@
+{
+ "format": "flh-genre/1",
+ "name": "phonk",
+ "aliases": ["drift phonk", "memphis phonk", "phonk beat", "cowbell phonk", "brazilian phonk", "gym phonk"],
+ "about": "Drift phonk: 130-160 BPM, hard distorted kick and clap/snare on 2 and 4, rattling 16th hats, a distorted 808 that slides, and the signature pitched 808-cowbell riff (short 16th figures on a few notes of a minor/phrygian scale, repeated hypnotically), dark Memphis-style minor loops with a b2.",
+ "tempo": {"min": 125, "max": 165, "default": 145, "feel": "straight"},
+ "guess_weight": 0.5,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 1, "vel": 3},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 4, "phrygian": 3, "harmonic minor": 1}, "roots": ["C", "C#", "D", "E", "F", "F#", "G", "G#", "A"], "default": "G# minor"},
+ "drums": {
+  "vel": {"X": 124, "x": 108, "o": 84, "g": 50},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X.....x...x.....", "w": 3}, {"steps": "X.......X.x.....", "w": 2}, {"steps": "X..x......x..x..", "w": 1}], "maybe": "..............3."},
+   "clap": {"patterns": [{"steps": "....X.......X...", "w": 1}]},
+   "snare": {"patterns": [{"steps": "................", "w": 3}, {"steps": "...............o", "w": 1}], "ghosts": {"at": [7, 14], "chance": 0.25}},
+   "hat": {"patterns": [{"steps": "xoxoxoxoxoxoxoxo", "w": 3}, {"steps": "xxxoxxxoxxxoxxxo", "w": 1}], "rolls": {"chance": 0.25, "max_per_bar": 1, "at": [6, 14], "len": [2], "rates": {"1/32": 1}, "ramp": [-10, 4]}},
+   "openhat": {"patterns": [{"steps": "..o...o...o...o.", "w": 1}, {"steps": "................", "w": 1}]},
+   "perc": {"patterns": [{"steps": "................", "w": 2}, {"steps": "......o.......o.", "w": 1}]}
+  },
+  "fill": {"every": 8, "parts": {"snare": "____________oxxX", "kick": "____________...."}},
+  "variation": {"alt_pattern_chance": 0.25, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "808",
+  "register": [26, 43],
+  "rhythm": "kick",
+  "follow": "root",
+  "length": "until_next",
+  "gap_steps": 0.25,
+  "vel": [104, 120],
+  "octave_jump": 0.15,
+  "glide": {"chance": 0.4, "len_steps": [1, 2], "where": "late", "targets": {"octave_up": 3, "next_root": 2, "octave_down": 1}}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i", "bII"], "mode": "minor", "bars": 2, "w": 3},
+   {"rn": ["i", "VI"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i", "iv"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i", "VI", "VII", "i"], "mode": "minor", "bars": 2, "w": 1},
+   {"rn": ["i", "i", "bII", "i"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["vi", "IV"], "mode": "major", "bars": 2, "w": 1}
+  ],
+  "voicing": {"style": "triad", "register": [55, 72], "extensions": {"7": 0.0, "9": 0.0}},
+  "rhythm": {"patterns": [{"steps": "x---------------", "w": 3}, {"steps": "x-------x-------", "w": 1}]},
+  "vel": [64, 82]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "A", "S", "C"], "answer": "same", "breath": 0, "land": [], "shapes": {"hold": 2, "wave": 2, "fall": 1}, "leap": 0.4},
+  "scale": "key",
+  "range": [72, 91],
+  "rhythms": [
+   {"steps": "x.xx.x.xx.x.x.x.", "w": 3},
+   {"steps": "x..x..x.x..x..x.", "w": 3},
+   {"steps": "xx.x.xx.x.x.xx..", "w": 1},
+   {"steps": "x.x.x.xxx.x.x.x.", "w": 1}
+  ],
+  "motif_bars": 1,
+  "form": ["A", "A", "A'", "B"],
+  "chord_tone_strong": 0.75,
+  "step_prob": 0.55,
+  "max_leap": 7,
+  "repeat_note": 0.35,
+  "vel": [92, 112],
+  "length": "short",
+  "max_len_steps": 2,
+  "pickup": 0.2
+ },
+ "counter": {"mode": "fills", "register": "below", "density": 0.35},
+ "form": {"default": [["Intro", 8], ["Hook", 16], ["Verse", 16], ["Hook", 16], ["Outro", 8]]},
+ "sections": {
+  "Intro": {"energy": 0.45, "layers": ["melody", "chords"], "drums": "sparse"},
+  "Hook": {"energy": 1.0, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Verse": {"energy": 0.75, "layers": ["drums", "bass", "melody"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.4, "layers": ["chords", "melody"], "drums": "none"},
+  "Outro": {"energy": 0.4, "layers": ["melody", "chords"], "drums": "light"}
+ },
+ "transitions": {"into": {"Hook": ["stop", "riser:4", "impact", "sub_drop"], "Verse": ["fill"], "Outro": ["fill"]}, "after": {"Hook": ["downlifter:4"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "outro"]},
+ "roles": {
+  "kick": {"hint": "hard distorted phonk kick", "family": "drums"},
+  "clap": {"hint": "crunchy clap", "family": "drums"},
+  "snare": {"hint": "lo-fi Memphis snare", "family": "drums"},
+  "hat": {"hint": "bright rattling closed hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "perc": {"hint": "Memphis vocal shot or perc", "family": "drums"},
+  "bass": {"hint": "heavily distorted 808 with slides", "family": "bass", "name": "808"},
+  "chords": {"hint": "dark detuned pad or Memphis keys", "family": "keys"},
+  "melody": {"hint": "pitched 808 cowbell (the phonk cowbell)", "family": "lead", "name": "Cowbell"},
+  "counter": {"hint": "dark bell or vocal chop", "family": "lead"},
+  "pad": {"hint": "dark atmospheric pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -6, "notes": ["808 and kick distorted and loud: clip/saturate them", "cowbell bright and upfront, a little reverb", "everything mono in the low end"], "sidechain": {"trigger": "kick", "target": "bass", "depth_db": 6}}
+}

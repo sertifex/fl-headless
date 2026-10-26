@@ -1,0 +1,92 @@
+{
+ "plugin": "Fruity Delay 3",
+ "aliases": [],
+ "edition": "fruity",
+ "roles": [
+  "delay"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "wet_pct": {
+   "index": 23,
+   "fl_name": "Output wet",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "dry_pct": {
+   "index": 25,
+   "fl_name": "Output dry",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "time": {
+   "index": 4,
+   "fl_name": "Time",
+   "unit": "display",
+   "curve": "linear",
+   "verified": false,
+   "confidence": "low: tempo-synced steps or ms depending on the sync switch"
+  },
+  "feedback_pct": {
+   "index": 14,
+   "fl_name": "Feedback level",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "feedback_cutoff_hz": {
+   "index": 16,
+   "fl_name": "Feedback cutoff",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 20,
+   "max": 20000,
+   "confidence": "low"
+  },
+  "stereo_offset": {
+   "index": 5,
+   "fl_name": "Delay time R/L offset",
+   "unit": "display",
+   "curve": "linear",
+   "verified": false,
+   "confidence": "low"
+  },
+  "input_wet_pct": {
+   "index": 0,
+   "fl_name": "Input wet",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "medium"
+  },
+  "stereo_spread_pct": {
+   "index": 7,
+   "fl_name": "Stereo spread",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "medium"
+  }
+ },
+ "index_note": "indices not shipped (unknown): resolved by name live, or learn the map",
+ "names_seen_on_pc": "2026-10-21 (FL 2026): parameter names and indexes read live; curves still unverified"
+}

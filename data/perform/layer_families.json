@@ -1,0 +1,20 @@
+{
+ "note": "Instrument family from a channel's name / plugin / preset / journal name (first text with a match wins; within a text the first family in this order). Families listed in 'realism' are played like a person on a real instrument by flh_realism (expression curves, per-family timing, breaths, legato) when flp_perform / flp_compose write them; the others (piano rules, drums, synths) are left to their own rules. Users can override with a part's \"family\" in the performance spec, or family= on flp_compose.",
+ "realism": ["strings", "choir", "pad", "brass", "woodwind", "bells"],
+ "words": [
+  ["drums", ["kick", "snare", "hat", "hihat", "hi hat", "clap", "drum", "drums", "perc", "percussion", "cymbal", "fpc", "taiko", "timpani"]],
+  ["piano", ["piano", "grand", "upright", "rhodes", "epiano", "e piano", "wurli", "wurlitzer", "keys", "clav", "harpsichord"]],
+  ["organ", ["organ", "harmonium", "accordion"]],
+  ["choir", ["choir", "choral", "chorus", "voices", "aah", "ooh", "soprano", "sopranos", "alto", "altos", "tenor", "tenors"]],
+  ["strings", ["string", "strings", "violin", "violins", "viola", "violas", "cello", "cellos", "celli", "contrabass", "double bass", "ensemble", "orchestra", "orchestral", "spiccato", "pizz", "pizzicato", "tremolo", "quartet", "fiddle"]],
+  ["brass", ["brass", "horn", "horns", "trumpet", "trumpets", "trombone", "trombones", "tuba", "cornet", "flugelhorn"]],
+  ["woodwind", ["woodwind", "woodwinds", "flute", "flutes", "piccolo", "clarinet", "clarinets", "oboe", "oboes", "bassoon", "bassoons", "recorder", "sax", "saxophone"]],
+  ["bells", ["bell", "bells", "glock", "glockenspiel", "chime", "chimes", "celesta", "celeste", "music box", "xylophone", "vibraphone", "vibes", "marimba", "crotales"]],
+  ["pad", ["pad", "pads", "drone", "drones", "atmos", "atmosphere", "texture", "swell", "swells"]],
+  ["guitar", ["guitar", "guitars", "gtr", "nylon"]],
+  ["bass", ["bass", "808", "sub", "reese"]],
+  ["synth", ["synth", "saw", "supersaw", "pluck", "arp", "sytrus", "chip", "square"]],
+  ["lead", ["lead", "melody", "solo"]]
+ ],
+ "layer_roles": {"pad": "pad", "strings": "strings", "choir": "choir", "brass": "brass", "bell": "bells"}
+}

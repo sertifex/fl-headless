@@ -1,0 +1,101 @@
+{
+ "format": "flh-template/1",
+ "genre": "lofi-house",
+ "name": "lofi-house starter",
+ "about": "Lo-fi house: dusty saturated house kick, soft roomy clap, crunchy shuffled hats, warm analog bass, tape-warped rhodes, filtered pad.",
+ "tempo": null,
+ "key": null,
+ "kit": "dusty",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "dusty saturated"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "soft roomy"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "crunchy",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "lofi open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "shaker dusty",
+   "sample": "shaker",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "choices": [
+    {
+     "flex": "bass"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*analog*bass*",
+      "*bass*"
+     ]
+    },
+    {
+     "plugin": "BooBass"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "deep warm round analog"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Rhodes",
+   "family": "keys",
+   "character": {
+    "query": "rhodes tape warm dusty",
+    "avoid": [
+     "grand",
+     "bright"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Lead",
+   "family": "lead",
+   "character": {
+    "query": "soft warm"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "tape warm"
+   }
+  },
+  {
+   "role": "texture",
+   "name": "Vinyl",
+   "sample": "texture",
+   "query": "vinyl crackle",
+   "notes": "a noise bed: place it under the song (no notes are written for it)"
+  }
+ ]
+}

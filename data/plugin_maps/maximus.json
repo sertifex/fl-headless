@@ -1,0 +1,67 @@
+{
+ "plugin": "Maximus",
+ "aliases": [],
+ "edition": "producer",
+ "roles": [
+  "limiter",
+  "multiband"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "master_pre_gain_db": {
+   "index": null,
+   "fl_name": "Master pre gain",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -24,
+   "max": 24,
+   "confidence": "low"
+  },
+  "master_post_gain_db": {
+   "index": null,
+   "fl_name": "Master post gain",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -24,
+   "max": 24,
+   "confidence": "low"
+  },
+  "master_threshold_db": {
+   "index": null,
+   "fl_name": "Master soft saturation threshold",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -60,
+   "max": 0,
+   "confidence": "low"
+  },
+  "low_freq_hz": {
+   "index": null,
+   "fl_name": "Low band frequency",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 20,
+   "max": 1000,
+   "confidence": "low"
+  },
+  "high_freq_hz": {
+   "index": null,
+   "fl_name": "High band frequency",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 1000,
+   "max": 20000,
+   "confidence": "low"
+  }
+ },
+ "index_note": "Maximus has hundreds of parameters; only the master band and crossovers are named here",
+ "names_seen_on_pc": "2026-10-21 (FL 2026, fl_plugin_maps_check)"
+}

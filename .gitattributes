@@ -1,0 +1,23 @@
+# cmd.exe needs CRLF line endings in batch files. They are stored in git WITH their CRLF bytes and never converted
+# (-text), so every clone, raw download and release ZIP keeps CRLF whatever core.autocrlf says. (`text eol=crlf`
+# would store LF in git and leave the CRLF to each checkout - not what a raw download or the release builder sees.)
+install.bat -text
+*.bat -text
+*.cmd -text
+
+# Binary files: never touch line endings, never diff/merge as text
+*.flp binary
+*.fst binary
+*.flac binary
+*.wav binary
+*.aif binary
+*.aiff binary
+*.mid binary
+*.midi binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ogg binary
+*.mp3 binary
+*.zip binary
+*.mcpb binary

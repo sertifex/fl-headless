@@ -1,0 +1,11 @@
+# Used only by the Claude Desktop extension (fl-headless.mcpb, built by tools/make_mcpb.py): Claude's uv reads it to
+# set up Python and numpy. fl-headless itself needs nothing else (stdlib + numpy). No [build-system]: the code runs
+# from the extension folder as it is, nothing gets built or installed as a package.
+[project]
+name = "fl-headless"
+version = "2.1.0"
+description = "A patient studio partner for FL Studio: learn it, and make music more easily, by talking to Claude."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24,<3",
+]

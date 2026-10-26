@@ -1,0 +1,16 @@
+{
+ "format": "flh-kit/1",
+ "name": "dark",
+ "about": "Dark, heavy kit: drill, techno, cinematic.",
+ "roles": {
+  "kick": "dark hard",
+  "snare": "dark hard",
+  "clap": "dark",
+  "hat": "dark",
+  "perc": "dark metallic",
+  "808": "dark distorted"
+ },
+ "avoid": [
+  "bright"
+ ]
+}

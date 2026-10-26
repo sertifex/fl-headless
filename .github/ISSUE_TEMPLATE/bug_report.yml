@@ -1,0 +1,81 @@
+name: Bug report
+description: Something in fl-headless didn't work, or worked wrongly.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time - every report makes fl-headless better for everyone.
+
+        **The quickest way to a fix:** in Claude, say *"run flh_bug_report"* (or *"make a bug report"*). It makes a
+        small zip on your PC, in `%LOCALAPPDATA%\fl-headless\bug_reports\` (the result tells you the exact path),
+        with versions, your setup check, the last errors and timings.
+
+        **It is privacy-scrubbed:** your Windows user name is replaced by `<user>`, e-mail addresses by `<email>`;
+        it holds no audio and no project contents. It's plain JSON inside - open it and read it first if you like.
+        Nothing is ever sent anywhere by fl-headless; you decide what to share here.
+
+        Setup trouble? First try *"is everything OK?"* (`fl_watchdog`) and *"set me up"* (`flh_setup`) in Claude, and
+        the README's Troubleshooting and FAQ.
+  - type: textarea
+    id: asked
+    attributes:
+      label: What did you ask Claude?
+      description: Your words, roughly as you typed or said them.
+      placeholder: e.g. "Make the chorus 8 bars longer and render a preview"
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened?
+      description: What Claude or FL did, any error message, and what you expected instead.
+      placeholder: e.g. "Claude said it worked, but in FL the chorus is still 8 bars."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Can you make it happen again? How?
+      description: Optional. Steps, or "only once" - both help.
+    validations:
+      required: false
+  - type: input
+    id: fl_version
+    attributes:
+      label: FL Studio version and edition
+      description: In FL, *Help > About*. Edition = Fruity, Producer, Signature or All Plugins.
+      placeholder: e.g. FL Studio 2026 (26.1), Producer Edition
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Press Win+R, type `winver`, Enter.
+      placeholder: e.g. Windows 11 24H2
+    validations:
+      required: true
+  - type: input
+    id: flh_version
+    attributes:
+      label: fl-headless version and how you installed it
+      description: The version is inside the bug report zip, and at the top of CHANGELOG.md in your fl-headless folder.
+      placeholder: e.g. 2.1.0, Claude Desktop extension / install.bat / git
+    validations:
+      required: false
+  - type: textarea
+    id: zip
+    attributes:
+      label: Bug report zip
+      description: Drag the `flh-bug-....zip` from `flh_bug_report` into this box. No zip? Say why (e.g. Claude can't
+        reach fl-headless at all) and paste `%LOCALAPPDATA%\fl-headless\install_log.txt` instead if you have it.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you send
+      options:
+        - label: I looked at the zip / anything I pasted and I'm OK sharing it publicly.
+          required: true

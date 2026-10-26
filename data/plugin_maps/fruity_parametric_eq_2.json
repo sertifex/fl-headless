@@ -1,0 +1,504 @@
+{
+ "plugin": "Fruity Parametric EQ 2",
+ "aliases": [
+  "Parametric EQ 2",
+  "PEQ2"
+ ],
+ "edition": "fruity",
+ "roles": [
+  "eq"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "band1_gain_db": {
+   "index": 0,
+   "fl_name": "Band 1 level",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -18,
+   "max": 18,
+   "confidence": "medium: fl_mix_apply uses params 0-6 as band gains"
+  },
+  "band1_freq_hz": {
+   "index": 7,
+   "fl_name": "Band 1 freq",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 10,
+   "max": 22000,
+   "confidence": "medium: fl_mix_apply uses params 7-13 as band frequencies"
+  },
+  "band1_width": {
+   "index": 14,
+   "fl_name": "Band 1 width",
+   "unit": "oct",
+   "curve": "linear",
+   "verified": false,
+   "min": 0.1,
+   "max": 4.0,
+   "confidence": "low: unit/range from memory (bandwidth); learn it"
+  },
+  "band1_type": {
+   "index": 21,
+   "fl_name": "Band 1 type",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "Off",
+    "Low pass",
+    "Band pass",
+    "High pass",
+    "Notch",
+    "Low shelf",
+    "Peaking",
+    "High shelf"
+   ],
+   "confidence": "medium: fl_mix_apply sets 3/7 for High pass on params 21-27"
+  },
+  "band1_order": {
+   "index": 28,
+   "fl_name": "Band 1 order",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "1",
+    "2",
+    "3",
+    "4"
+   ],
+   "confidence": "low"
+  },
+  "band2_gain_db": {
+   "index": 1,
+   "fl_name": "Band 2 level",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -18,
+   "max": 18,
+   "confidence": "medium: fl_mix_apply uses params 0-6 as band gains"
+  },
+  "band2_freq_hz": {
+   "index": 8,
+   "fl_name": "Band 2 freq",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 10,
+   "max": 22000,
+   "confidence": "medium: fl_mix_apply uses params 7-13 as band frequencies"
+  },
+  "band2_width": {
+   "index": 15,
+   "fl_name": "Band 2 width",
+   "unit": "oct",
+   "curve": "linear",
+   "verified": false,
+   "min": 0.1,
+   "max": 4.0,
+   "confidence": "low: unit/range from memory (bandwidth); learn it"
+  },
+  "band2_type": {
+   "index": 22,
+   "fl_name": "Band 2 type",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "Off",
+    "Low pass",
+    "Band pass",
+    "High pass",
+    "Notch",
+    "Low shelf",
+    "Peaking",
+    "High shelf"
+   ],
+   "confidence": "medium: fl_mix_apply sets 3/7 for High pass on params 21-27"
+  },
+  "band2_order": {
+   "index": 29,
+   "fl_name": "Band 2 order",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "1",
+    "2",
+    "3",
+    "4"
+   ],
+   "confidence": "low"
+  },
+  "band3_gain_db": {
+   "index": 2,
+   "fl_name": "Band 3 level",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -18,
+   "max": 18,
+   "confidence": "medium: fl_mix_apply uses params 0-6 as band gains"
+  },
+  "band3_freq_hz": {
+   "index": 9,
+   "fl_name": "Band 3 freq",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 10,
+   "max": 22000,
+   "confidence": "medium: fl_mix_apply uses params 7-13 as band frequencies"
+  },
+  "band3_width": {
+   "index": 16,
+   "fl_name": "Band 3 width",
+   "unit": "oct",
+   "curve": "linear",
+   "verified": false,
+   "min": 0.1,
+   "max": 4.0,
+   "confidence": "low: unit/range from memory (bandwidth); learn it"
+  },
+  "band3_type": {
+   "index": 23,
+   "fl_name": "Band 3 type",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "Off",
+    "Low pass",
+    "Band pass",
+    "High pass",
+    "Notch",
+    "Low shelf",
+    "Peaking",
+    "High shelf"
+   ],
+   "confidence": "medium: fl_mix_apply sets 3/7 for High pass on params 21-27"
+  },
+  "band3_order": {
+   "index": 30,
+   "fl_name": "Band 3 order",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "1",
+    "2",
+    "3",
+    "4"
+   ],
+   "confidence": "low"
+  },
+  "band4_gain_db": {
+   "index": 3,
+   "fl_name": "Band 4 level",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -18,
+   "max": 18,
+   "confidence": "medium: fl_mix_apply uses params 0-6 as band gains"
+  },
+  "band4_freq_hz": {
+   "index": 10,
+   "fl_name": "Band 4 freq",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 10,
+   "max": 22000,
+   "confidence": "medium: fl_mix_apply uses params 7-13 as band frequencies"
+  },
+  "band4_width": {
+   "index": 17,
+   "fl_name": "Band 4 width",
+   "unit": "oct",
+   "curve": "linear",
+   "verified": false,
+   "min": 0.1,
+   "max": 4.0,
+   "confidence": "low: unit/range from memory (bandwidth); learn it"
+  },
+  "band4_type": {
+   "index": 24,
+   "fl_name": "Band 4 type",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "Off",
+    "Low pass",
+    "Band pass",
+    "High pass",
+    "Notch",
+    "Low shelf",
+    "Peaking",
+    "High shelf"
+   ],
+   "confidence": "medium: fl_mix_apply sets 3/7 for High pass on params 21-27"
+  },
+  "band4_order": {
+   "index": 31,
+   "fl_name": "Band 4 order",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "1",
+    "2",
+    "3",
+    "4"
+   ],
+   "confidence": "low"
+  },
+  "band5_gain_db": {
+   "index": 4,
+   "fl_name": "Band 5 level",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -18,
+   "max": 18,
+   "confidence": "medium: fl_mix_apply uses params 0-6 as band gains"
+  },
+  "band5_freq_hz": {
+   "index": 11,
+   "fl_name": "Band 5 freq",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 10,
+   "max": 22000,
+   "confidence": "medium: fl_mix_apply uses params 7-13 as band frequencies"
+  },
+  "band5_width": {
+   "index": 18,
+   "fl_name": "Band 5 width",
+   "unit": "oct",
+   "curve": "linear",
+   "verified": false,
+   "min": 0.1,
+   "max": 4.0,
+   "confidence": "low: unit/range from memory (bandwidth); learn it"
+  },
+  "band5_type": {
+   "index": 25,
+   "fl_name": "Band 5 type",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "Off",
+    "Low pass",
+    "Band pass",
+    "High pass",
+    "Notch",
+    "Low shelf",
+    "Peaking",
+    "High shelf"
+   ],
+   "confidence": "medium: fl_mix_apply sets 3/7 for High pass on params 21-27"
+  },
+  "band5_order": {
+   "index": 32,
+   "fl_name": "Band 5 order",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "1",
+    "2",
+    "3",
+    "4"
+   ],
+   "confidence": "low"
+  },
+  "band6_gain_db": {
+   "index": 5,
+   "fl_name": "Band 6 level",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -18,
+   "max": 18,
+   "confidence": "medium: fl_mix_apply uses params 0-6 as band gains"
+  },
+  "band6_freq_hz": {
+   "index": 12,
+   "fl_name": "Band 6 freq",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 10,
+   "max": 22000,
+   "confidence": "medium: fl_mix_apply uses params 7-13 as band frequencies"
+  },
+  "band6_width": {
+   "index": 19,
+   "fl_name": "Band 6 width",
+   "unit": "oct",
+   "curve": "linear",
+   "verified": false,
+   "min": 0.1,
+   "max": 4.0,
+   "confidence": "low: unit/range from memory (bandwidth); learn it"
+  },
+  "band6_type": {
+   "index": 26,
+   "fl_name": "Band 6 type",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "Off",
+    "Low pass",
+    "Band pass",
+    "High pass",
+    "Notch",
+    "Low shelf",
+    "Peaking",
+    "High shelf"
+   ],
+   "confidence": "medium: fl_mix_apply sets 3/7 for High pass on params 21-27"
+  },
+  "band6_order": {
+   "index": 33,
+   "fl_name": "Band 6 order",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "1",
+    "2",
+    "3",
+    "4"
+   ],
+   "confidence": "low"
+  },
+  "band7_gain_db": {
+   "index": 6,
+   "fl_name": "Band 7 level",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -18,
+   "max": 18,
+   "confidence": "medium: fl_mix_apply uses params 0-6 as band gains"
+  },
+  "band7_freq_hz": {
+   "index": 13,
+   "fl_name": "Band 7 freq",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 10,
+   "max": 22000,
+   "confidence": "medium: fl_mix_apply uses params 7-13 as band frequencies"
+  },
+  "band7_width": {
+   "index": 20,
+   "fl_name": "Band 7 width",
+   "unit": "oct",
+   "curve": "linear",
+   "verified": false,
+   "min": 0.1,
+   "max": 4.0,
+   "confidence": "low: unit/range from memory (bandwidth); learn it"
+  },
+  "band7_type": {
+   "index": 27,
+   "fl_name": "Band 7 type",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "Off",
+    "Low pass",
+    "Band pass",
+    "High pass",
+    "Notch",
+    "Low shelf",
+    "Peaking",
+    "High shelf"
+   ],
+   "confidence": "medium: fl_mix_apply sets 3/7 for High pass on params 21-27"
+  },
+  "band7_order": {
+   "index": 34,
+   "fl_name": "Band 7 order",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "1",
+    "2",
+    "3",
+    "4"
+   ],
+   "confidence": "low"
+  },
+  "main_level_db": {
+   "index": 35,
+   "fl_name": "Main level",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -18,
+   "max": 18,
+   "confidence": "low"
+  }
+ },
+ "band_defaults_hz": [
+  63,
+  136,
+  294,
+  632,
+  1363,
+  2936,
+  6324
+ ],
+ "band_default_type": [
+  "Low shelf",
+  "Peaking",
+  "Peaking",
+  "Peaking",
+  "Peaking",
+  "Peaking",
+  "High shelf"
+ ],
+ "band_default_note": "default band frequencies match fl_mix.py; default types are from memory (verify)",
+ "unit_bridges": [
+  {
+   "controls": "band*_width",
+   "to": "%",
+   "via": "oct",
+   "points": [[0.1, 0.0], [4.0, 100.0]],
+   "verified": false,
+   "note": "FL shows a band's width as a % of the knob; a Q or octave width is put there through this table (the same 0.1-4 octave linear curve as the width controls). Unverified: look at the band's shape in the EQ window (a Q 1.4 bell spans about one octave) and listen."
+  }
+ ],
+ "file_state": {
+  "format": "int32le",
+  "verified": false,
+  "min_ints": 28,
+  "groups": [
+   {"controls": "band{n}_gain_db", "first": 0, "count": 7, "ints": [-1800, 1800]},
+   {"controls": "band{n}_freq_hz", "first": 7, "count": 7, "ints": [0, 65536]},
+   {"controls": "band{n}_width", "first": 14, "count": 7, "ints": [0, 65536]},
+   {"controls": "band{n}_type", "first": 21, "count": 7, "ints": "enum"}
+  ],
+  "default_check": {"band{n}_type": "band_default_type", "band{n}_gain_db": 0},
+  "evidence": "FL 2026 projects with the older 'Fruity Parametric EQ' save 29 little-endian int32s: 7 band levels in 0.01 dB (-200 = -2 dB), 7 frequencies and 7 widths on 0..65536, 7 band types as indices of the options list (defaults 5,6,6,6,6,6,7 = Low shelf, Peaking x5, High shelf). Parametric EQ 2 is assumed to start the same way.",
+  "note": "How fl-headless writes Parametric EQ 2 bands straight into a project file (flp_master_tone). NOT verified on a PC for Parametric EQ 2: before any write the layout is proven on FL's own default Parametric EQ 2 preset on this PC (band types must read Low shelf, Peaking x5, High shelf and every level 0 dB); if that fails nothing is written into the file and the bands are set live in FL instead. The int -> value step goes through the controls' curves (int scaled to 0..1 by 'ints'), so a learned map (fl_plugin_map_learn) corrects frequencies/widths too."
+ }
+}

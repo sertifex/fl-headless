@@ -1,0 +1,95 @@
+{
+  "format": "flh-flip/1",
+  "_about": "Flip styles for fl_flip_sample. A user copy in <fl-headless state folder>/flip/styles.json adds or overrides styles by name. Loop events are in beats from the loop start (4/4): {at, chop: letter (A, B, C, D; A' = a chop that sounds like A), stutter?: hits, div?: beats per hit, vel?}. 'turn' is the second half of a 4-bar loop (default: the loop again). pitch: semitones {default, range} applied by speeding the sample up/down like a classic sampler (length follows). chop_beats: chop lengths (in the sample's beats) the picker tries.",
+  "default_style": "boombap",
+  "_classes": "the sample's kind (measured: melodic keys/piano/guitar/pad loop, vocal/soul phrase, drum loop) picks the style unless style= is given: the genre's style is used when the kind allows it, else the kind's default ('intact' = the default for a melodic loop that is already musical over its whole length)",
+  "classes": {"melodic": {"default": "loop", "intact": "loop-intact", "allowed": ["loop-intact", "loop", "lofi", "boombap"]},
+              "vocal": {"default": "soul", "allowed": ["soul", "call-answer", "lofi", "stutter", "boombap"]},
+              "drums": {"default": "stutter", "allowed": ["stutter", "boombap"]}},
+  "lead_over_drums_db": 4.0,
+  "_levels": "after a write the chop channels' mixer inserts are set so the chops sit lead_over_drums_db over the drums (measured from the files at the pattern's notes); a chop fader never goes over chop_fader_max_db - the drums (and bass) are tucked instead",
+  "chop_fader_max_db": 3.0,
+  "genre_styles": {"boombap": "boombap", "lofi": "lofi", "lofi-house": "lofi", "jazzhop": "lofi", "ambient": "lofi",
+                   "rnb": "soul", "gospel": "soul", "pop": "call-answer", "trap": "call-answer", "afrobeats": "call-answer",
+                   "drill-uk": "stutter", "drill-ny": "stutter", "phonk": "stutter", "hyperpop": "stutter"},
+  "palette": ["#4A2A2A", "#2A3A4E", "#3A2E4E", "#2A4A3A", "#4E3A22", "#2E3E4A", "#4A2A3E", "#3A4226", "#22424A",
+              "#46301E", "#2E2E4E", "#3E2A2A"],
+  "pattern_color": "#3A2A44",
+  "styles": {
+    "boombap": {
+      "about": "boom bap chops: a stab on the 1, an answer on the and-of-2, the 1 again on 3, a pickup on the and-of-4",
+      "pitch": {"default": 0, "range": [-2, 2]},
+      "cut": "short",
+      "chop_beats": [0.5, 1, 1.5],
+      "loop": [{"at": 0, "chop": "A"}, {"at": 1.5, "chop": "B"}, {"at": 2.5, "chop": "A"}, {"at": 3.5, "chop": "C"},
+               {"at": 4, "chop": "A"}, {"at": 5.5, "chop": "B"}, {"at": 6.5, "chop": "D"}, {"at": 7.5, "chop": "C"}],
+      "turn": [{"at": 0, "chop": "A"}, {"at": 1.5, "chop": "B"}, {"at": 2.5, "chop": "A"}, {"at": 3.5, "chop": "C"},
+               {"at": 4, "chop": "D"}, {"at": 5, "chop": "A'"}, {"at": 6, "chop": "B"},
+               {"at": 7, "chop": "C", "stutter": 2, "div": 0.5}],
+      "listen": "the stab on the 1 should hit with the kick; the and-of-2 answer gives the bounce"
+    },
+    "soul": {
+      "about": "chipmunk soul (sped-up sample): A A B A' with a 1/16 stutter on beat 4 of bar 2",
+      "pitch": {"default": 4, "range": [3, 5]},
+      "cut": "ring",
+      "chop_beats": [1, 2, 1.5],
+      "loop": [{"at": 0, "chop": "A"}, {"at": 2, "chop": "A"}, {"at": 4, "chop": "B"}, {"at": 6, "chop": "A'"},
+               {"at": 7, "chop": "A", "stutter": 4, "div": 0.25}],
+      "turn": [{"at": 0, "chop": "A"}, {"at": 2, "chop": "A"}, {"at": 4, "chop": "C"}, {"at": 5.5, "chop": "B"},
+               {"at": 7, "chop": "B", "stutter": 4, "div": 0.25}],
+      "listen": "sped up a few semitones the voices go bright and 'chipmunk'; the stutter should roll into the next bar"
+    },
+    "stutter": {
+      "about": "stutter chops: short slices fired in 1/8 and 1/16 rolls between the main hits",
+      "pitch": {"default": 0, "range": [-2, 3]},
+      "cut": "short",
+      "chop_beats": [0.5, 1],
+      "loop": [{"at": 0, "chop": "A"}, {"at": 1, "chop": "A", "stutter": 2, "div": 0.5}, {"at": 2, "chop": "B"},
+               {"at": 3, "chop": "B", "stutter": 4, "div": 0.25}, {"at": 4, "chop": "A"}, {"at": 5, "chop": "C"},
+               {"at": 6, "chop": "A", "stutter": 4, "div": 0.25}, {"at": 7, "chop": "D", "stutter": 2, "div": 0.5}],
+      "listen": "rolls should land tight on the grid; too many feels busy - mute a roll or two"
+    },
+    "call-answer": {
+      "about": "call and answer: chop A states a phrase in bar 1, chop B answers in bar 2",
+      "pitch": {"default": 0, "range": [-2, 2]},
+      "cut": "ring",
+      "chop_beats": [1, 1.5, 0.5],
+      "loop": [{"at": 0, "chop": "A"}, {"at": 1.5, "chop": "A"}, {"at": 2.5, "chop": "A'"},
+               {"at": 4, "chop": "B"}, {"at": 5.5, "chop": "B"}, {"at": 6.5, "chop": "C"}],
+      "turn": [{"at": 0, "chop": "A"}, {"at": 1.5, "chop": "A"}, {"at": 2.5, "chop": "A'"},
+               {"at": 4, "chop": "C"}, {"at": 5.5, "chop": "B"}, {"at": 6.5, "chop": "D"}],
+      "listen": "the answer in bar 2 should feel like a reply to bar 1, with a breath at the end of each bar"
+    },
+    "lofi": {
+      "about": "lofi: slowed a little (down 2 semitones), long dusty chops with room to breathe",
+      "pitch": {"default": -2, "range": [-3, -1]},
+      "cut": "ring",
+      "chop_beats": [2, 1, 1.5],
+      "loop": [{"at": 0, "chop": "A"}, {"at": 2, "chop": "B"}, {"at": 4, "chop": "A"}, {"at": 6, "chop": "C"}],
+      "turn": [{"at": 0, "chop": "A"}, {"at": 2, "chop": "B"}, {"at": 4, "chop": "D"}, {"at": 6, "chop": "C"},
+               {"at": 7.5, "chop": "C", "stutter": 2, "div": 0.25}],
+      "listen": "the slowed chops should feel warm and lazy; a low-pass or vinyl texture on them suits the style"
+    },
+    "loop": {
+      "about": "melodic loop flip: phrase-length chops (half a bar to 2 bars, the original rhythm and every chord's ring kept) rearranged A B A C, with a half-phrase + repeat in the last bar",
+      "pitch": {"default": 0, "range": [0, 0]},
+      "cut": "ring",
+      "bars": 4,
+      "chop_beats": [4, 2, 8],
+      "loop": [{"at": 0, "chop": "A"}, {"at": 4, "chop": "B"}],
+      "turn": [{"at": 0, "chop": "A"}, {"at": 4, "chop": "C"}, {"at": 6, "chop": "C", "stutter": 2, "div": 1, "vel": 96}],
+      "listen": "each phrase should ring into the next (no chord cut short); the last bar's repeat should lead back to the top"
+    },
+    "loop-intact": {
+      "about": "the loop as recorded (bars on the grid, every ring kept) with a chopped variation at the phrase end: the last half bar repeats its hit (1/2-beat roll)",
+      "pitch": {"default": 0, "range": [0, 0]},
+      "cut": "ring",
+      "keep": "loop",
+      "bars": 4,
+      "variation": {"beats": 2, "hit_beats": 1, "stutter": 2, "div": 0.5},
+      "chop_beats": [4, 2],
+      "loop": [{"at": 0, "chop": "A"}],
+      "listen": "the loop should sound like the original; the roll at the end of the last bar is the flip - it should land back on the 1"
+    }
+  }
+}

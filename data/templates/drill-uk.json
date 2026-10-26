@@ -1,0 +1,121 @@
+{
+ "format": "flh-template/1",
+ "genre": "drill-uk",
+ "name": "drill-uk starter",
+ "about": "UK drill: short tight kick, dry snappy snare, tight hats, sliding distorted 808, dark piano/strings, eerie bells.",
+ "tempo": null,
+ "key": null,
+ "kit": "808",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "short tight"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "dry snappy"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "tight",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "short open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "rim woodblock",
+   "sample": "rim",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "808",
+   "family": "808",
+   "sample": "808",
+   "query": "distorted slide"
+  },
+  {
+   "role": "chords",
+   "name": "Piano",
+   "family": "keys",
+   "choices": [
+    {
+     "labs": "piano",
+     "query": "soft felt"
+    },
+    {
+     "flex": "keys"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*piano*",
+      "*dark*pad*"
+     ]
+    },
+    {
+     "plugin": "FL Keys",
+     "presets": [
+      "*grand*",
+      "*piano*"
+     ]
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "dark sad piano grand",
+    "avoid": [
+     "honky",
+     "bright"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Bells",
+   "family": "bell",
+   "character": {
+    "query": "dark glock bell",
+    "avoid": [
+     "church bell",
+     "tubular"
+    ]
+   },
+   "choices": [
+    {
+     "labs": "bells"
+    },
+    {
+     "flex": "bells"
+    },
+    {
+     "flex": "pluck",
+     "query": "dark"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*bell*"
+     ]
+    },
+    {
+     "plugin": "Fruity DX10"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ]
+  }
+ ]
+}

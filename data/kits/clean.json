@@ -1,0 +1,15 @@
+{
+ "format": "flh-kit/1",
+ "name": "clean",
+ "about": "Clean, bright modern kit: pop, EDM, dnb.",
+ "roles": {
+  "kick": "clean punchy",
+  "snare": "clean bright",
+  "clap": "clean",
+  "hat": "clean bright",
+  "openhat": "clean"
+ },
+ "avoid": [
+  "dusty"
+ ]
+}

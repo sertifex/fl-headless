@@ -1,0 +1,148 @@
+{
+ "format": "flh-template/1",
+ "genre": "trap",
+ "name": "trap starter",
+ "about": "Trap: punchy short kick, crisp snare, layered clap, tight rolling hats, short open hat, long 808 with glides, dark piano/pad, bell or pluck lead.",
+ "tempo": null,
+ "key": null,
+ "kit": "808",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "punchy short"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "crisp"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "layered"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "tight",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "short open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "rim",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "808",
+   "family": "808",
+   "sample": "808",
+   "query": "long tail"
+  },
+  {
+   "role": "chords",
+   "name": "Keys",
+   "family": "keys",
+   "choices": [
+    {
+     "labs": "piano",
+     "query": "soft felt"
+    },
+    {
+     "flex": "keys"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*piano*",
+      "*dark*pad*"
+     ]
+    },
+    {
+     "plugin": "FL Keys",
+     "presets": [
+      "*grand*",
+      "*piano*"
+     ]
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "dark piano grand",
+    "avoid": [
+     "honky",
+     "bright"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Bells",
+   "family": "bell",
+   "character": {
+    "query": "dark music box glock",
+    "avoid": [
+     "church bell",
+     "tubular"
+    ]
+   },
+   "choices": [
+    {
+     "labs": "bells"
+    },
+    {
+     "flex": "bells"
+    },
+    {
+     "flex": "pluck",
+     "query": "dark"
+    },
+    {
+     "flex": "keys",
+     "query": "dark"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*bell*",
+      "*pluck*"
+     ]
+    },
+    {
+     "plugin": "Fruity DX10"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ]
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "dark ambient atmos",
+    "avoid": [
+     "bright"
+    ]
+   }
+  },
+  {
+   "role": "fx",
+   "name": "FX",
+   "sample": "fx",
+   "query": "riser uplifter",
+   "notes": "arrange_song writes riser notes here"
+  }
+ ]
+}

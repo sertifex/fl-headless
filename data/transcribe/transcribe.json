@@ -1,0 +1,102 @@
+{
+ "_doc": "flh_transcribe tables - edit freely; the code falls back to its built-in copy if this file is missing or broken. chord_qualities: chord suffix -> semitones from the root (the vocabulary audio chord recognition chooses from). harmonic_decay/harmonics: how chord templates model each tone's overtones. drum_bands_hz: band edges for the drum hit analysis. drums: class -> GM note (+ open-hat and tom variants). drum_rules: thresholds (levels relative to the recording's own 90th percentiles; noise_peak_share = energy share of the strongest 5% of bins in what a hit added: noise ~0.2-0.4, a pitched attack > 0.6; snare_top_ratio caps how much top end a snare is assumed to bring - more than that is a hat on top). midi_channels: MIDI channel per part in written .mid files (9 = GM drums).",
+ "chord_qualities": {
+  "": [
+   0,
+   4,
+   7
+  ],
+  "m": [
+   0,
+   3,
+   7
+  ],
+  "7": [
+   0,
+   4,
+   7,
+   10
+  ],
+  "dim": [
+   0,
+   3,
+   6
+  ],
+  "sus4": [
+   0,
+   5,
+   7
+  ],
+  "maj7": [
+   0,
+   4,
+   7,
+   11
+  ],
+  "m7": [
+   0,
+   3,
+   7,
+   10
+  ]
+ },
+ "harmonic_decay": 0.6,
+ "harmonics": 6,
+ "drum_bands_hz": [
+  20,
+  70,
+  130,
+  250,
+  500,
+  1000,
+  2000,
+  4000,
+  7000,
+  12000,
+  24000
+ ],
+ "drums": {
+  "kick": {
+   "gm": 36
+  },
+  "snare": {
+   "gm": 38
+  },
+  "hat": {
+   "gm": 42,
+   "open_gm": 46,
+   "open_after_s": 0.15
+  },
+  "perc": {
+   "gm": 39,
+   "tom_gm": [
+    45,
+    47,
+    50
+   ]
+  }
+ },
+ "drum_rules": {
+  "kick": 0.25,
+  "snare": 0.25,
+  "hat": 0.25,
+  "perc": 0.3,
+  "noise_peak_share": 0.55,
+  "snare_top_ratio": 0.35
+ },
+ "midi_channels": {
+  "melody": 0,
+  "chords": 1,
+  "bass": 2,
+  "drums": 9
+ },
+ "chord_voicing_range": [
+  52,
+  76
+ ],
+ "chord_bass_octave": 3,
+ "seventh_min_excess": 0.08,
+ "seventh_penalty": 0.25,
+ "seventh_voice_min_conf": 0.7,
+ "seventh_note": "a 7th chord needs its 7th's chroma to beat the triad's own harmonics by seventh_min_excess (else seventh_penalty); chord MIDI voices 7ths only when the chart confidence >= seventh_voice_min_conf"
+}

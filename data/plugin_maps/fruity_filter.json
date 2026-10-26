@@ -1,0 +1,65 @@
+{
+ "plugin": "Fruity Filter",
+ "aliases": [],
+ "edition": "fruity",
+ "roles": [
+  "filter"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "cutoff_hz": {
+   "index": 0,
+   "fl_name": "Cutoff frequency",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 10,
+   "max": 22000,
+   "confidence": "low"
+  },
+  "resonance_pct": {
+   "index": 1,
+   "fl_name": "Resonance",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "low_pass_pct": {
+   "index": 2,
+   "fl_name": "Low pass",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "band_pass_pct": {
+   "index": 3,
+   "fl_name": "Band pass",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "high_pass_pct": {
+   "index": 4,
+   "fl_name": "High pass",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  }
+ },
+ "names_seen_on_pc": "2026-10-21 (FL 2026, fl_plugin_maps_check)"
+}

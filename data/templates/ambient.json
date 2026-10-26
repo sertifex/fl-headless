@@ -1,0 +1,158 @@
+{
+ "format": "flh-template/1",
+ "genre": "ambient",
+ "name": "ambient starter",
+ "about": "Ambient: evolving wide pads, a soft drone bass, glassy piano/bells, granular textures, barely-there drums.",
+ "tempo": null,
+ "key": null,
+ "kit": null,
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "soft sub thump"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "soft texture",
+   "group": "Perc"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "soft shaker",
+   "sample": "shaker",
+   "group": "Hats"
+  },
+  {
+   "role": "bass",
+   "name": "Drone",
+   "family": "pad",
+   "choices": [
+    {
+     "plugin": "Harmor",
+     "presets": [
+      "*drone*",
+      "*sub*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*drone*",
+      "*sub*"
+     ]
+    },
+    {
+     "flex": "pad"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "drone warm evolving"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "evolving airy lush"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Bells",
+   "family": "bell",
+   "choices": [
+    {
+     "labs": "bells"
+    },
+    {
+     "labs": "piano"
+    },
+    {
+     "plugin": "Sakura",
+     "presets": [
+      "*harp*",
+      "*bell*",
+      "*music*box*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*bell*",
+      "*glass*"
+     ]
+    },
+    {
+     "flex": "bells"
+    },
+    {
+     "plugin": "Fruity DX10"
+    },
+    {
+     "plugin": "FL Keys"
+    }
+   ],
+   "character": {
+    "query": "soft glass felt music box"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Texture Pad",
+   "family": "pad",
+   "choices": [
+    {
+     "labs": "pad"
+    },
+    {
+     "plugin": "Harmor",
+     "presets": [
+      "*atmo*",
+      "*texture*",
+      "*pad*"
+     ]
+    },
+    {
+     "plugin": "Harmless",
+     "presets": [
+      "*pad*"
+     ]
+    },
+    {
+     "flex": "pad"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*atmo*",
+      "*texture*",
+      "*pad*"
+     ]
+    },
+    {
+     "plugin": "3x Osc",
+     "presets": [
+      "*pad*"
+     ]
+    }
+   ],
+   "character": {
+    "query": "texture atmos evolving"
+   }
+  },
+  {
+   "role": "texture",
+   "name": "Vinyl",
+   "sample": "texture",
+   "query": "texture atmosphere ambience",
+   "notes": "a noise bed: place it under the song (no notes are written for it)"
+  }
+ ]
+}

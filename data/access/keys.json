@@ -1,0 +1,24 @@
+{
+ "format": "flh-access-keys/1",
+ "about": "Keyboard alternatives for people who can't use a mouse well. Everything fl-headless does already works by chat; these are FL's own keys for doing things by hand. FL's defaults - verify on your FL version (checklists/access.md); users can override in <state folder>/access/keys.json.",
+ "fl_keys": {
+  "play / stop": "Space",
+  "song / pattern mode": "L",
+  "playlist": "F5",
+  "channel rack": "F6",
+  "piano roll": "F7",
+  "mixer": "F9",
+  "browser": "Alt+F8",
+  "save": "Ctrl+S",
+  "undo": "Ctrl+Z",
+  "close the focused window": "Esc"
+ },
+ "by_chat": {
+  "a popup is open": "fl_dialog (list, then click a button by name)",
+  "show a window": "fl_show(window='mixer' | 'playlist' | 'channel_rack' | 'piano_roll' | 'browser')",
+  "play / stop": "fl_transport(action='play' | 'stop')",
+  "where am I": "fl_where",
+  "change a channel or mixer track": "fl_channel_set / fl_mixer_set (volume, pan, mute, name, color)",
+  "jump to a bar or marker": "fl_song(action='goto', bar=...)"
+ }
+}

@@ -1,0 +1,45 @@
+{
+  "format": "flh-drum-character/1",
+  "about": "What a drum one-shot should measure like per genre family, used to rank samples whose names say nothing (e.g. 'Kick 23'). Ranges of measured features: centroid (Hz, spectral centre), sub (energy share below 120 Hz, 0-1), decay_s (seconds until it has died away), attack_ms, noise (spectral flatness 0-1). Each feature inside its range adds weight, outside subtracts (by how far). A user's own words in the query still count more. Edit freely: this is taste, not truth.",
+  "weight": 0.4,
+  "families": {
+    "warm": ["lofi", "jazzhop", "boombap", "rnb", "gospel", "lofi-house", "ambient", "cinematic", "kpop"],
+    "trap": ["trap", "drill-uk", "drill-ny", "phonk", "hyperpop"],
+    "club": ["house", "techno", "dnb", "jersey-club", "afrobeats", "amapiano", "reggaeton", "dancehall", "synthwave"],
+    "band": ["rock", "metal", "pop"]
+  },
+  "targets": {
+    "default": {
+      "kick": {"sub": [0.3, 1.0], "decay_s": [0.1, 0.7]},
+      "snare": {"centroid": [700, 6000], "decay_s": [0.06, 0.45]},
+      "hat": {"centroid": [3000, 15000], "decay_s": [0.01, 0.2]}
+    },
+    "warm": {
+      "kick": {"centroid": [40, 700], "sub": [0.35, 1.0], "decay_s": [0.15, 0.6], "attack_ms": [0.5, 20]},
+      "snare": {"centroid": [700, 4500], "decay_s": [0.08, 0.4], "noise": [0.15, 0.85]},
+      "clap": {"centroid": [800, 5000], "decay_s": [0.08, 0.5]},
+      "rim": {"decay_s": [0.02, 0.25]},
+      "hat": {"centroid": [2500, 11000], "decay_s": [0.02, 0.18]},
+      "openhat": {"decay_s": [0.15, 0.9]}
+    },
+    "trap": {
+      "kick": {"centroid": [60, 2000], "decay_s": [0.06, 0.4], "attack_ms": [0, 8]},
+      "snare": {"centroid": [1000, 7000], "decay_s": [0.08, 0.45]},
+      "clap": {"centroid": [1000, 7000], "decay_s": [0.08, 0.5]},
+      "hat": {"centroid": [5000, 16000], "decay_s": [0.01, 0.12]},
+      "openhat": {"decay_s": [0.12, 0.7]}
+    },
+    "club": {
+      "kick": {"sub": [0.4, 1.0], "decay_s": [0.18, 0.65], "attack_ms": [0, 8]},
+      "clap": {"centroid": [900, 6000], "decay_s": [0.1, 0.5]},
+      "snare": {"centroid": [900, 6000], "decay_s": [0.08, 0.45]},
+      "hat": {"centroid": [4000, 16000], "decay_s": [0.01, 0.15]},
+      "openhat": {"decay_s": [0.12, 0.6]}
+    },
+    "band": {
+      "kick": {"sub": [0.25, 0.9], "decay_s": [0.1, 0.5], "attack_ms": [0, 10]},
+      "snare": {"centroid": [600, 5000], "decay_s": [0.12, 0.6]},
+      "hat": {"centroid": [3000, 14000], "decay_s": [0.02, 0.3]}
+    }
+  }
+}

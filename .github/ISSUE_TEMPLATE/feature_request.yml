@@ -1,0 +1,32 @@
+name: Idea or wish
+description: Something fl-headless could help you learn or do more easily.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        fl-headless is a learning and ease-of-use partner for FL Studio: it helps you make your music, it doesn't
+        make it for you. Ideas that make FL easier to learn, or open it up to more people (including people who
+        can't hear the speakers well, can't see the screen or can't use a mouse), are especially welcome.
+  - type: textarea
+    id: wish
+    attributes:
+      label: What would you like to do?
+      description: In your own words - as you'd say it to Claude.
+      placeholder: e.g. "Tell me in words when two parts clash, so I don't have to hear it."
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What makes it hard today?
+      description: Optional. What you tried, and where it got in the way.
+    validations:
+      required: false
+  - type: input
+    id: fl
+    attributes:
+      label: FL Studio edition (if it matters)
+      placeholder: e.g. Fruity Edition
+    validations:
+      required: false

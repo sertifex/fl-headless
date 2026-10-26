@@ -1,0 +1,381 @@
+{
+ "note": "What each mix intent means in measurable terms. metric: see flh_mixeng.metrics(); dir +1 = should go up, -1 = down; min = smallest change worth calling 'achieved' (below it: 'barely changed'). alt metrics count too (any achieved = achieved). Band metrics are each band's share of the whole spectrum in dB, so a level change alone doesn't move them.",
+ "intents": {
+  "darker": {
+   "metric": "high_db",
+   "dir": -1,
+   "min": 1.0,
+   "label": "high end (2.5-16 kHz)",
+   "alt": [
+    {
+     "metric": "tilt",
+     "dir": -1,
+     "min": 0.3
+    }
+   ]
+  },
+  "brighter": {
+   "metric": "high_db",
+   "dir": 1,
+   "min": 1.0,
+   "label": "high end (2.5-16 kHz)",
+   "alt": [
+    {
+     "metric": "tilt",
+     "dir": 1,
+     "min": 0.3
+    }
+   ]
+  },
+  "airier": {
+   "metric": "air_db",
+   "dir": 1,
+   "min": 1.0,
+   "label": "air (6-16 kHz)"
+  },
+  "warmer": {
+   "metric": "warmth_db",
+   "dir": 1,
+   "min": 1.0,
+   "label": "lows+low-mids vs highs"
+  },
+  "colder": {
+   "metric": "warmth_db",
+   "dir": -1,
+   "min": 1.0,
+   "label": "lows+low-mids vs highs"
+  },
+  "punchier": {
+   "metric": "transient_db",
+   "dir": 1,
+   "min": 1.0,
+   "label": "transient strength",
+   "alt": [
+    {
+     "metric": "crest_db",
+     "dir": 1,
+     "min": 1.0
+    }
+   ]
+  },
+  "softer_attack": {
+   "metric": "transient_db",
+   "dir": -1,
+   "min": 1.0,
+   "label": "transient strength"
+  },
+  "wider": {
+   "metric": "width_db",
+   "dir": 1,
+   "min": 1.5,
+   "label": "stereo side level",
+   "alt": [
+    {
+     "metric": "corr",
+     "dir": -1,
+     "min": 0.05
+    }
+   ]
+  },
+  "narrower": {
+   "metric": "width_db",
+   "dir": -1,
+   "min": 1.5,
+   "label": "stereo side level",
+   "alt": [
+    {
+     "metric": "corr",
+     "dir": 1,
+     "min": 0.05
+    }
+   ]
+  },
+  "louder": {
+   "metric": "lufs",
+   "dir": 1,
+   "min": 0.5,
+   "label": "integrated loudness"
+  },
+  "quieter": {
+   "metric": "lufs",
+   "dir": -1,
+   "min": 0.5,
+   "label": "integrated loudness"
+  },
+  "less_muddy": {
+   "metric": "low_mid_db",
+   "dir": -1,
+   "min": 1.0,
+   "label": "low-mids (250-800 Hz)"
+  },
+  "fuller": {
+   "metric": "low_mid_db",
+   "dir": 1,
+   "min": 1.0,
+   "label": "low-mids (250-800 Hz)"
+  },
+  "less_harsh": {
+   "metric": "presence_db",
+   "dir": -1,
+   "min": 1.0,
+   "label": "presence (2.5-6 kHz)"
+  },
+  "clearer": {
+   "metric": "presence_db",
+   "dir": 1,
+   "min": 1.0,
+   "label": "presence (2.5-6 kHz)",
+   "alt": [
+    {
+     "metric": "low_mid_db",
+     "dir": -1,
+     "min": 1.0
+    }
+   ]
+  },
+  "more_bass": {
+   "metric": "low_db",
+   "dir": 1,
+   "min": 1.0,
+   "label": "low end (20-250 Hz)"
+  },
+  "less_bass": {
+   "metric": "low_db",
+   "dir": -1,
+   "min": 1.0,
+   "label": "low end (20-250 Hz)"
+  },
+  "tighter": {
+   "metric": "sub_db",
+   "dir": -1,
+   "min": 0.8,
+   "label": "sub (20-60 Hz)",
+   "proxy": true,
+   "alt": [
+    {
+     "metric": "transient_db",
+     "dir": 1,
+     "min": 1.0
+    }
+   ]
+  },
+  "cleaner": {
+   "metric": "low_mid_db",
+   "dir": -1,
+   "min": 0.8,
+   "label": "low-mids (250-800 Hz)",
+   "proxy": true,
+   "alt": [
+    {
+     "metric": "sub_db",
+     "dir": -1,
+     "min": 0.8
+    }
+   ]
+  },
+  "more_compressed": {
+   "metric": "crest_db",
+   "dir": -1,
+   "min": 1.0,
+   "label": "crest factor"
+  },
+  "more_dynamic": {
+   "metric": "crest_db",
+   "dir": 1,
+   "min": 1.0,
+   "label": "crest factor"
+  }
+ },
+ "words": {
+  "darker": [
+   "darker",
+   "dark",
+   "less bright",
+   "duller"
+  ],
+  "brighter": [
+   "brighter",
+   "bright",
+   "more top",
+   "more highs"
+  ],
+  "airier": [
+   "air",
+   "airy",
+   "airier"
+  ],
+  "warmer": [
+   "warmer",
+   "warm",
+   "warmth"
+  ],
+  "colder": [
+   "colder",
+   "thinner"
+  ],
+  "punchier": [
+   "punch",
+   "punchier",
+   "punchy",
+   "snappier",
+   "more attack"
+  ],
+  "softer_attack": [
+   "softer attack",
+   "less attack",
+   "smoother"
+  ],
+  "wider": [
+   "wider",
+   "wide",
+   "more stereo",
+   "width"
+  ],
+  "narrower": [
+   "narrower",
+   "narrow",
+   "more mono",
+   "mono"
+  ],
+  "louder": [
+   "louder",
+   "loud",
+   "more volume"
+  ],
+  "quieter": [
+   "quieter",
+   "quiet",
+   "softer",
+   "less volume"
+  ],
+  "less_muddy": [
+   "mud",
+   "muddy",
+   "boomy",
+   "boxy",
+   "less muddy"
+  ],
+  "fuller": [
+   "fuller",
+   "body",
+   "thicker"
+  ],
+  "less_harsh": [
+   "harsh",
+   "shrill",
+   "piercing",
+   "sibilant",
+   "less harsh",
+   "fatiguing"
+  ],
+  "clearer": [
+   "clear",
+   "clearer",
+   "clarity",
+   "upfront",
+   "presence",
+   "intelligible",
+   "cut through",
+   "stand out",
+   "audible",
+   "buried"
+  ],
+  "more_bass": [
+   "more bass",
+   "more low end",
+   "heavier",
+   "fatter"
+  ],
+  "less_bass": [
+   "less bass",
+   "less low end",
+   "lighter"
+  ],
+  "tighter": [
+   "tight",
+   "tighter"
+  ],
+  "cleaner": [
+   "clean",
+   "cleaner",
+   "less cluttered",
+   "separation"
+  ],
+  "more_compressed": [
+   "glue",
+   "glued",
+   "more compressed",
+   "consistent",
+   "even"
+  ],
+  "more_dynamic": [
+   "more dynamic",
+   "less compressed",
+   "breathe"
+  ]
+ },
+ "opposites": {
+  "louder": "quieter",
+  "quieter": "louder",
+  "brighter": "darker",
+  "darker": "brighter",
+  "wider": "narrower",
+  "narrower": "wider",
+  "warmer": "colder",
+  "colder": "warmer",
+  "punchier": "softer_attack",
+  "softer_attack": "punchier",
+  "more_bass": "less_bass",
+  "less_bass": "more_bass",
+  "more_compressed": "more_dynamic",
+  "more_dynamic": "more_compressed",
+  "airier": "darker",
+  "fuller": "colder",
+  "tighter": null,
+  "cleaner": null,
+  "clearer": null
+ },
+ "problem_words": [
+  "mud",
+  "muddy",
+  "boomy",
+  "boxy",
+  "harsh",
+  "shrill",
+  "piercing",
+  "sibilant",
+  "fatiguing",
+  "buried"
+ ],
+ "flip_before": [
+  "too",
+  "overly",
+  "less",
+  "not",
+  "isnt",
+  "isn t",
+  "not as",
+  "not so",
+  "reduce",
+  "reduce the",
+  "cut",
+  "cut the",
+  "lower",
+  "lower the",
+  "tame",
+  "tame the",
+  "kill",
+  "kill the",
+  "lose",
+  "lose the",
+  "fewer",
+  "way too",
+  "much too",
+  "far too",
+  "a bit too",
+  "a little too",
+  "too much",
+  "so"
+ ],
+ "note_parse": "goal text: a word preceded by a flip_before modifier ('too loud', 'less wide', 'reduce the width') means the opposite intent; problem_words ('too muddy', 'less harsh') keep their fix intent; a flipped word without an opposite is reported as ambiguous instead of guessed"
+}

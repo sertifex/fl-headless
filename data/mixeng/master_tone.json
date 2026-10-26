@@ -1,0 +1,30 @@
+{
+ "format": "flh-master-tone/1",
+ "note": "Shortcut tone curves for flp_master_tone(preset=...): gentle, genre-neutral starting points for the master's Fruity Parametric EQ 2, not anyone's taste. Bands: type peak | low_shelf | high_shelf | high_pass | low_pass, hz, gain_db, q. Override or add presets in <fl-headless state folder>/master_tone.json (same layout; a preset there replaces the shipped one of that name). Always listen: a master curve changes every instrument.",
+ "presets": {
+  "clean": {
+   "description": "less low-mid mud, a little more air",
+   "bands": [
+    {"type": "peak", "hz": 150, "gain_db": -1.5, "q": 0.9},
+    {"type": "peak", "hz": 300, "gain_db": -3.0, "q": 0.9},
+    {"type": "high_shelf", "hz": 4500, "gain_db": 3.0}
+   ]
+  },
+  "warm": {
+   "description": "fuller lows, softer upper mids and top",
+   "bands": [
+    {"type": "low_shelf", "hz": 120, "gain_db": 2.0},
+    {"type": "peak", "hz": 3500, "gain_db": -1.5, "q": 0.8},
+    {"type": "high_shelf", "hz": 9000, "gain_db": -1.5}
+   ]
+  },
+  "bright": {
+   "description": "a lighter low-mid, more presence and air",
+   "bands": [
+    {"type": "peak", "hz": 250, "gain_db": -1.5, "q": 1.0},
+    {"type": "peak", "hz": 3000, "gain_db": 1.0, "q": 0.8},
+    {"type": "high_shelf", "hz": 6000, "gain_db": 2.5}
+   ]
+  }
+ }
+}

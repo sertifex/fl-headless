@@ -1,0 +1,91 @@
+{
+ "format": "flh-genre/1",
+ "name": "reggaeton",
+ "aliases": ["dembow", "perreo", "latin urban", "urbano", "reggaetón"],
+ "about": "Reggaeton: 88-100 BPM, the dembow rhythm (kick on every beat; snare/rim on the 3-3-2 figure: 16ths 4, 7, 12, 15 of each bar, i.e. the 'and-a' of beats 1 and 3), steady 8th hats, a bass that locks to the kicks on the root, minor four-chord loops (i-VI-III-VII), a catchy minor-key hook.",
+ "tempo": {"min": 88, "max": 100, "default": 94, "feel": "dembow"},
+ "guess_weight": 0.6,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 2, "vel": 4},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 5, "phrygian": 1, "major": 1}, "roots": ["C", "C#", "D", "E", "F", "F#", "G", "A", "B"], "default": "A minor"},
+ "drums": {
+  "vel": {"X": 116, "x": 100, "o": 78, "g": 44},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X...x...X...x...", "w": 1}]},
+   "snare": {"patterns": [{"steps": "...x..x....x..x.", "w": 3}, {"steps": "...x..x....x.xx.", "w": 1}]},
+   "hat": {"patterns": [{"steps": "x.o.x.o.x.o.x.o.", "w": 2}, {"steps": "x.oox.o.x.oox.o.", "w": 1}],
+    "bar_alts": [{"chance": 0.12, "steps": "x.oox.oox.oox.oo", "not_first": true}]},
+   "openhat": {"patterns": [{"steps": "................", "w": 2}, {"steps": "..............o.", "w": 1}]},
+   "perc": {"patterns": [{"steps": "..o.......o.....", "w": 1}, {"steps": "......o.......o.", "w": 1}], "maybe": "....2.........2."}
+  },
+  "fill": {"every": 8, "parts": {"snare": "____________xxxx", "kick": "____________...."}},
+  "variation": {"alt_pattern_chance": 0.2, "kick_maybe_scale": 0.0}
+ },
+ "bass": {
+  "type": "808",
+  "register": [28, 45],
+  "rhythm": "kick",
+  "follow": "root",
+  "length": "steps:3",
+  "gap_steps": 0.25,
+  "vel": [96, 112],
+  "octave_jump": 0.1,
+  "glide": {"chance": 0.1, "len_steps": [1], "where": "late", "targets": {"next_root": 2, "octave_up": 1}}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i", "VI", "III", "VII"], "mode": "minor", "bars": 1, "w": 4},
+   {"rn": ["i", "iv", "VII", "III"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i", "VII", "VI", "VII"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i", "iv", "v", "i"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["vi", "IV", "I", "V"], "mode": "major", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "triad", "register": [55, 74], "extensions": {"7": 0.1, "9": 0.0}},
+  "rhythm": {"patterns": [{"steps": "x--x--x---x--x--", "w": 2}, {"steps": "x---------------", "w": 1}, {"steps": "...x..x....x..x.", "w": 1}]},
+  "vel": [72, 90]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "A", "S", "C"], "answer": "same", "breath": 2, "shapes": {"wave": 2, "fall": 2, "arch": 1}, "leap": 0.4},
+  "scale": "key",
+  "range": [62, 84],
+  "rhythms": [
+   {"steps": "x-.x-.x-x-.x-.x-", "w": 2},
+   {"steps": "x..x..x...x.x...", "w": 2},
+   {"steps": "..x.x.x.x...x...", "w": 1}],
+  "motif_bars": 1,
+  "form": ["A", "A'", "A", "B"],
+  "chord_tone_strong": 0.75,
+  "step_prob": 0.7,
+  "max_leap": 7,
+  "repeat_note": 0.3,
+  "vel": [84, 104],
+  "length": "until_next",
+  "max_len_steps": 4
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.45},
+ "form": {"default": [["Intro", 8], ["Hook", 8], ["Verse", 16], ["Pre", 8], ["Hook", 8], ["Verse", 16], ["Hook", 8], ["Outro", 8]]},
+ "sections": {
+  "Intro": {"energy": 0.35, "layers": ["chords", "melody"], "drums": "sparse"},
+  "Verse": {"energy": 0.65, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Pre": {"energy": 0.55, "layers": ["chords", "melody", "bass"], "drums": "light"},
+  "Hook": {"energy": 0.95, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.45, "layers": ["chords", "melody"], "drums": "light"},
+  "Outro": {"energy": 0.3, "layers": ["chords", "melody"], "drums": "sparse"}
+ },
+ "transitions": {"into": {"Hook": ["stop", "riser:4", "impact"], "Verse": ["fill"], "Outro": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "outro"]},
+ "roles": {
+  "kick": {"hint": "deep boomy reggaeton kick", "family": "drums"},
+  "snare": {"hint": "dembow snare / rim", "family": "drums"},
+  "hat": {"hint": "closed hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "perc": {"hint": "timbal / bongo perc", "family": "drums"},
+  "bass": {"hint": "round 808 sub, short", "family": "bass", "name": "808"},
+  "chords": {"hint": "synth stab, guitar or piano", "family": "keys"},
+  "melody": {"hint": "pluck, plucked guitar or flute lead", "family": "lead"},
+  "counter": {"hint": "bell or pluck", "family": "lead"}
+ },
+ "mix": {"loudness_lufs": -8, "notes": ["dembow snare loud and centred", "kick and 808 locked, 808 short so the groove breathes"], "sidechain": {"trigger": "kick", "target": "bass", "depth_db": 3}}
+}

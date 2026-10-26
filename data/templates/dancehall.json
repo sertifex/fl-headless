@@ -1,0 +1,93 @@
+{
+ "format": "flh-template/1",
+ "genre": "dancehall",
+ "name": "dancehall starter",
+ "about": "Dancehall: deep punchy riddim kick, tight clap, rim/stick, shakers, deep sub, short synth/organ stabs, chant-like lead.",
+ "tempo": null,
+ "key": null,
+ "kit": "808",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "deep punchy"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "tight"
+  },
+  {
+   "role": "rim",
+   "name": "Rim",
+   "query": "stick",
+   "group": "Perc"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "shaker bongo",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Sub",
+   "family": "bass",
+   "choices": [
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*sub*",
+      "*bass*"
+     ]
+    },
+    {
+     "flex": "bass"
+    },
+    {
+     "plugin": "3x Osc",
+     "hint": "sine sub"
+    }
+   ],
+   "character": {
+    "query": "sub deep"
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Stabs",
+   "family": "organ",
+   "character": {
+    "query": "organ stab"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Lead",
+   "family": "lead",
+   "character": {
+    "query": "bright"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "warm"
+   }
+  }
+ ]
+}

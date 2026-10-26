@@ -1,0 +1,770 @@
+{
+ "note": "fl_sound_shape: words -> moves. 'inst': nudges of the channel's own instrument controls, found by their FL parameter names (roles below), as a share of the knob's range at amount 'medium'. 'fx': stock effects on the channel's mixer track (controls in real units through the plugin maps; numbers listed in 'scale' grow with the amount), 'eq': Parametric EQ 2 moves. 'alt': used when the user's FL edition doesn't own 'plugin'. 'intents': what the before/after measurement checks. 'fx_tune': settings for effects OTHER words add (never adds the effect itself; a lower Hz wins), e.g. a darker reverb/delay tail. A word with the 'darker' intent wins on the top end: boosts at 2 kHz and up from other words are left out, the EQ goes after the reverb/delay so their tails are darkened too. A user copy in the state folder's sound/ wins.",
+ "amounts": {
+  "subtle": 0.5,
+  "medium": 1.0,
+  "heavy": 1.5,
+  "insane": 2.2
+ },
+ "roles": {
+  "cutoff": [
+   "cutoff",
+   "cut off",
+   "cut",
+   "vcf",
+   "vcf freq",
+   "filter freq",
+   "filter cut",
+   "fil cutoff",
+   "fil freq",
+   "flt cutoff",
+   "flt freq",
+   "freq",
+   "frequency",
+   "fc",
+   "lpf",
+   "brightness filter"
+  ],
+  "resonance": [
+   "resonance",
+   "reso",
+   "res",
+   "peak",
+   "q"
+  ],
+  "attack": [
+   "attack",
+   "att",
+   "atk",
+   "a"
+  ],
+  "decay": [
+   "decay",
+   "dec",
+   "d"
+  ],
+  "sustain": [
+   "sustain",
+   "sus",
+   "s"
+  ],
+  "release": [
+   "release",
+   "rel",
+   "r"
+  ],
+  "detune": [
+   "detune",
+   "unison detune",
+   "uni detune",
+   "uni det",
+   "spread",
+   "unison",
+   "uni"
+  ],
+  "drive": [
+   "drive",
+   "distortion",
+   "dist",
+   "saturation",
+   "sat",
+   "overdrive",
+   "crush",
+   "fold",
+   "grit",
+   "heat",
+   "warmth"
+  ],
+  "tone": [
+   "tone",
+   "brightness",
+   "bright",
+   "hardness",
+   "timbre",
+   "color",
+   "colour",
+   "tilt"
+  ],
+  "width": [
+   "width",
+   "stereo width",
+   "stereo",
+   "wide",
+   "image",
+   "pan spread"
+  ],
+  "mix": [
+   "mix",
+   "wet",
+   "dry wet",
+   "blend",
+   "amount",
+   "fx mix"
+  ],
+  "chorus": [
+   "chorus"
+  ],
+  "reverb": [
+   "reverb",
+   "rev",
+   "reverb mix",
+   "rev amount",
+   "space"
+  ],
+  "delay": [
+   "delay mix",
+   "echo",
+   "delay amount"
+  ],
+  "glide": [
+   "glide",
+   "porta",
+   "portamento",
+   "slide"
+  ],
+  "lofi": [
+   "lo fi",
+   "lofi",
+   "wobble",
+   "bitcrush",
+   "bit crush",
+   "tape"
+  ],
+  "phaser": [
+   "phaser",
+   "flanger"
+  ]
+ },
+ "skip_names": [
+  "volume",
+  "vol",
+  "master",
+  "pan",
+  "tune",
+  "pitch",
+  "transpose",
+  "midi",
+  "preset",
+  "type",
+  "mode",
+  "on",
+  "off",
+  "bypass",
+  "polyphony",
+  "voices",
+  "key",
+  "velocity",
+  "lfo",
+  "rate",
+  "speed",
+  "sync",
+  "retrig",
+  "phase",
+  "seed",
+  "octave",
+  "semi",
+  "fine",
+  "coarse",
+  "band",
+  "eq",
+  "gain"
+ ],
+ "words": {
+  "warm": {
+   "aliases": [
+    "warmer",
+    "warmth",
+    "cozy",
+    "mellow"
+   ],
+   "intents": [
+    "warmer"
+   ],
+   "inst": {
+    "cutoff": -0.08,
+    "tone": -0.08
+   },
+   "eq": [
+    {
+     "hz": 250,
+     "gain_db": 2.0,
+     "type": "Peaking",
+     "q": 0.8
+    },
+    {
+     "hz": 7000,
+     "gain_db": -2.5,
+     "type": "High shelf"
+    }
+   ]
+  },
+  "dark": {
+   "aliases": [
+    "darker",
+    "dull",
+    "muffled",
+    "moody"
+   ],
+   "intents": [
+    "darker"
+   ],
+   "inst": {
+    "cutoff": -0.18,
+    "tone": -0.15
+   },
+   "eq": [
+    {
+     "hz": 3000,
+     "gain_db": -6,
+     "type": "High shelf"
+    },
+    {
+     "hz": 8000,
+     "gain_db": -3,
+     "type": "High shelf"
+    }
+   ],
+   "fx_tune": [
+    {
+     "plugin": "Fruity Reeverb 2",
+     "controls": {
+      "high_cut_hz": 5000,
+      "high_damping_hz": 3500
+     }
+    },
+    {
+     "plugin": "Fruity Delay 3",
+     "controls": {
+      "feedback_cutoff_hz": 3000
+     }
+    }
+   ]
+  },
+  "bright": {
+   "aliases": [
+    "brighter",
+    "shiny",
+    "crisp",
+    "sparkle",
+    "sparkly"
+   ],
+   "intents": [
+    "brighter"
+   ],
+   "inst": {
+    "cutoff": 0.15,
+    "tone": 0.12
+   },
+   "eq": [
+    {
+     "hz": 6000,
+     "gain_db": 3.5,
+     "type": "High shelf"
+    },
+    {
+     "hz": 3000,
+     "gain_db": 1.5,
+     "type": "Peaking",
+     "q": 0.9
+    }
+   ]
+  },
+  "airy": {
+   "aliases": [
+    "air",
+    "airier",
+    "breathy",
+    "open"
+   ],
+   "intents": [
+    "airier"
+   ],
+   "eq": [
+    {
+     "hz": 11000,
+     "gain_db": 4,
+     "type": "High shelf"
+    }
+   ],
+   "fx": [
+    {
+     "plugin": "Fruity Reeverb 2",
+     "controls": {
+      "wet_pct": 12,
+      "decay_s": 1.8,
+      "predelay_ms": 20,
+      "low_cut_hz": 300
+     },
+     "scale": [
+      "wet_pct"
+     ]
+    }
+   ],
+   "inst": {
+    "reverb": 0.08,
+    "tone": 0.08
+   }
+  },
+  "wide": {
+   "aliases": [
+    "wider",
+    "stereo",
+    "spread"
+   ],
+   "intents": [
+    "wider"
+   ],
+   "inst": {
+    "width": 0.15,
+    "detune": 0.08,
+    "chorus": 0.12
+   },
+   "fx": [
+    {
+     "plugin": "Fruity Stereo Enhancer",
+     "controls": {
+      "stereo_separation": -35
+     },
+     "scale": [
+      "stereo_separation"
+     ]
+    }
+   ]
+  },
+  "punchy": {
+   "aliases": [
+    "punch",
+    "punchier",
+    "snappy",
+    "hard",
+    "harder",
+    "knock",
+    "slap"
+   ],
+   "intents": [
+    "punchier"
+   ],
+   "inst": {
+    "attack": -0.15,
+    "decay": -0.05
+   },
+   "eq": [
+    {
+     "hz": 90,
+     "gain_db": 2,
+     "type": "Peaking",
+     "q": 1.0
+    },
+    {
+     "hz": 3500,
+     "gain_db": 1.5,
+     "type": "Peaking",
+     "q": 1.0
+    }
+   ],
+   "fx": [
+    {
+     "plugin": "Fruity Compressor",
+     "controls": {
+      "threshold_db": -16,
+      "ratio": 4,
+      "attack_ms": 12,
+      "release_ms": 90,
+      "gain_db": 3
+     },
+     "scale": []
+    }
+   ]
+  },
+  "soft": {
+   "aliases": [
+    "softer",
+    "smooth",
+    "smoother",
+    "gentle",
+    "silky"
+   ],
+   "intents": [
+    "softer_attack"
+   ],
+   "inst": {
+    "attack": 0.12,
+    "cutoff": -0.06
+   },
+   "eq": [
+    {
+     "hz": 5500,
+     "gain_db": -3,
+     "type": "High shelf"
+    }
+   ]
+  },
+  "gritty": {
+   "aliases": [
+    "grit",
+    "dirty",
+    "distorted",
+    "crunchy",
+    "crunch",
+    "saturated",
+    "fuzzy",
+    "aggressive",
+    "angry"
+   ],
+   "intents": [
+    "fuller"
+   ],
+   "inst": {
+    "drive": 0.2,
+    "resonance": 0.08
+   },
+   "fx": [
+    {
+     "plugin": "Soundgoodizer",
+     "controls": {
+      "mode": "D",
+      "amount_pct": 35
+     },
+     "scale": [
+      "amount_pct"
+     ],
+     "alt": {
+      "plugin": "Fruity Limiter",
+      "controls": {
+       "limit_saturation": 40,
+       "limit_gain_db": 3
+      },
+      "scale": [
+       "limit_saturation"
+      ]
+     }
+    }
+   ]
+  },
+  "lofi": {
+   "aliases": [
+    "lo-fi",
+    "dusty",
+    "vintage",
+    "tape",
+    "old",
+    "retro",
+    "worn"
+   ],
+   "intents": [
+    "darker"
+   ],
+   "inst": {
+    "cutoff": -0.1,
+    "lofi": 0.25
+   },
+   "eq": [
+    {
+     "hz": 110,
+     "gain_db": 0,
+     "type": "High pass"
+    }
+   ],
+   "fx": [
+    {
+     "plugin": "Fruity Filter",
+     "controls": {
+      "cutoff_hz": 5200,
+      "low_pass_pct": 100,
+      "resonance_pct": 10
+     },
+     "scale": []
+    },
+    {
+     "plugin": "Soundgoodizer",
+     "controls": {
+      "mode": "A",
+      "amount_pct": 20
+     },
+     "scale": [
+      "amount_pct"
+     ]
+    }
+   ]
+  },
+  "dreamy": {
+   "aliases": [
+    "dream",
+    "spacey",
+    "spacy",
+    "ethereal",
+    "ambient",
+    "floaty",
+    "washed",
+    "lush"
+   ],
+   "intents": [],
+   "inst": {
+    "attack": 0.1,
+    "release": 0.15,
+    "chorus": 0.1,
+    "reverb": 0.2,
+    "delay": 0.12
+   },
+   "eq": [
+    {
+     "hz": 9000,
+     "gain_db": 2,
+     "type": "High shelf"
+    }
+   ],
+   "fx": [
+    {
+     "plugin": "Fruity Reeverb 2",
+     "controls": {
+      "wet_pct": 28,
+      "decay_s": 4.5,
+      "predelay_ms": 35,
+      "low_cut_hz": 250,
+      "room_size": 80
+     },
+     "scale": [
+      "wet_pct"
+     ]
+    },
+    {
+     "plugin": "Fruity Delay 3",
+     "controls": {
+      "wet_pct": 16,
+      "feedback_pct": 35
+     },
+     "scale": [
+      "wet_pct"
+     ]
+    }
+   ]
+  },
+  "huge": {
+   "aliases": [
+    "big",
+    "bigger",
+    "epic",
+    "massive",
+    "fat",
+    "fatter",
+    "thick",
+    "thicker",
+    "cinematic"
+   ],
+   "intents": [
+    "fuller",
+    "wider"
+   ],
+   "inst": {
+    "detune": 0.15,
+    "width": 0.12,
+    "release": 0.08,
+    "reverb": 0.1
+   },
+   "eq": [
+    {
+     "hz": 120,
+     "gain_db": 2,
+     "type": "Peaking",
+     "q": 0.9
+    }
+   ],
+   "fx": [
+    {
+     "plugin": "Fruity Compressor",
+     "controls": {
+      "threshold_db": -20,
+      "ratio": 3,
+      "attack_ms": 25,
+      "release_ms": 150,
+      "gain_db": 3
+     },
+     "scale": []
+    },
+    {
+     "plugin": "Fruity Stereo Enhancer",
+     "controls": {
+      "stereo_separation": -30
+     },
+     "scale": [
+      "stereo_separation"
+     ]
+    },
+    {
+     "plugin": "Fruity Reeverb 2",
+     "controls": {
+      "wet_pct": 16,
+      "decay_s": 3,
+      "predelay_ms": 25,
+      "low_cut_hz": 300
+     },
+     "scale": [
+      "wet_pct"
+     ]
+    }
+   ]
+  },
+  "clean": {
+   "aliases": [
+    "cleaner",
+    "clear",
+    "clearer",
+    "polished",
+    "crisp clean",
+    "pristine"
+   ],
+   "intents": [
+    "less_muddy"
+   ],
+   "eq": [
+    {
+     "hz": 70,
+     "gain_db": 0,
+     "type": "High pass"
+    },
+    {
+     "hz": 320,
+     "gain_db": -2.5,
+     "type": "Peaking",
+     "q": 1.2
+    },
+    {
+     "hz": 3500,
+     "gain_db": 1.5,
+     "type": "Peaking",
+     "q": 0.9
+    }
+   ]
+  },
+  "tight": {
+   "aliases": [
+    "tighter",
+    "short",
+    "shorter",
+    "dry"
+   ],
+   "intents": [
+    "tighter"
+   ],
+   "inst": {
+    "release": -0.2,
+    "decay": -0.08
+   },
+   "eq": [
+    {
+     "hz": 55,
+     "gain_db": 0,
+     "type": "High pass"
+    }
+   ]
+  },
+  "insane": {
+   "aliases": [
+    "crazy",
+    "wild",
+    "nuts",
+    "extreme",
+    "unreal",
+    "sick",
+    "hard af"
+   ],
+   "intents": [
+    "fuller",
+    "wider"
+   ],
+   "boost": 1,
+   "inst": {
+    "detune": 0.2,
+    "drive": 0.15,
+    "resonance": 0.1,
+    "phaser": 0.15,
+    "reverb": 0.15
+   },
+   "eq": [
+    {
+     "hz": 100,
+     "gain_db": 2.5,
+     "type": "Peaking",
+     "q": 0.9
+    },
+    {
+     "hz": 8000,
+     "gain_db": 3,
+     "type": "High shelf"
+    }
+   ],
+   "fx": [
+    {
+     "plugin": "Soundgoodizer",
+     "controls": {
+      "mode": "C",
+      "amount_pct": 45
+     },
+     "scale": [
+      "amount_pct"
+     ],
+     "alt": {
+      "plugin": "Fruity Limiter",
+      "controls": {
+       "limit_saturation": 55,
+       "limit_gain_db": 4
+      },
+      "scale": [
+       "limit_saturation"
+      ]
+     }
+    },
+    {
+     "plugin": "Fruity Stereo Enhancer",
+     "controls": {
+      "stereo_separation": -45
+     },
+     "scale": [
+      "stereo_separation"
+     ]
+    },
+    {
+     "plugin": "Fruity Reeverb 2",
+     "controls": {
+      "wet_pct": 20,
+      "decay_s": 3.5,
+      "predelay_ms": 30,
+      "low_cut_hz": 300
+     },
+     "scale": [
+      "wet_pct"
+     ]
+    },
+    {
+     "plugin": "Fruity Delay 3",
+     "controls": {
+      "wet_pct": 14,
+      "feedback_pct": 40
+     },
+     "scale": [
+      "wet_pct"
+     ]
+    }
+   ]
+  }
+ },
+ "keep_with": [
+  "cutoff",
+  "attack",
+  "release",
+  "detune",
+  "drive",
+  "resonance",
+  "decay",
+  "sustain",
+  "mix",
+  "wet"
+ ],
+ "single_letter_need": [
+  "env",
+  "envelope",
+  "amp",
+  "adsr",
+  "vca"
+ ]
+}

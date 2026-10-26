@@ -1,0 +1,149 @@
+{
+ "format": "flh-template/1",
+ "genre": "boombap",
+ "name": "boombap starter",
+ "about": "Boom bap: dusty punchy SP/MPC-style drums, cracking snare, deep round bass, soul rhodes/piano, horn or vibes stabs.",
+ "tempo": null,
+ "key": null,
+ "kit": "dusty",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "dusty punchy"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "crack room"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "crunchy",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "tambourine shaker",
+   "sample": "shaker",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "character": {
+    "query": "electric fingered warm round",
+    "avoid": [
+     "synth bass"
+    ]
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Keys",
+   "family": "keys",
+   "character": {
+    "query": "dusty vintage soul rhodes",
+    "avoid": [
+     "bright",
+     "supersaw",
+     "electric grand"
+    ]
+   },
+   "choices": [
+    {
+     "labs": "piano",
+     "query": "soft felt electric"
+    },
+    {
+     "flex": "keys"
+    },
+    {
+     "flex": "organ",
+     "query": "soul jazz vintage b3 hammond",
+     "avoid": [
+      "church",
+      "reed",
+      "buzz",
+      "electronic",
+      "farfisa"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*rhodes*",
+      "*e*piano*",
+      "*organ*",
+      "*keys*"
+     ]
+    },
+    {
+     "plugin": "FL Keys",
+     "presets": [
+      "*rhodes*",
+      "*piano*"
+     ]
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ]
+  },
+  {
+   "role": "melody",
+   "name": "Horns",
+   "family": "brass",
+   "choices": [
+    {
+     "labs": "brass"
+    },
+    {
+     "flex": "brass"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*brass*",
+      "*horn*",
+      "*vibe*"
+     ]
+    },
+    {
+     "labs": "bells"
+    },
+    {
+     "fl_instrument": "brass"
+    },
+    {
+     "plugin": "Fruity DX10"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "soul section warm funk stab",
+    "avoid": [
+     "synth brass"
+    ]
+   }
+  },
+  {
+   "role": "texture",
+   "name": "Vinyl",
+   "sample": "texture",
+   "query": "vinyl crackle",
+   "notes": "a noise bed: place it under the song (no notes are written for it)"
+  }
+ ]
+}

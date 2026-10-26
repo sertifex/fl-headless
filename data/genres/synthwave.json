@@ -1,0 +1,102 @@
+{
+ "format": "flh-genre/1",
+ "name": "synthwave",
+ "aliases": ["synth wave", "retrowave", "outrun", "darksynth", "80s synth", "retro synth"],
+ "about": "Synthwave: 80-118 BPM, 80s drum machine with kick on 1 and 3, a huge gated-reverb snare on 2 and 4, straight 8th or 16th hats, the octave-pulse bass (root and octave on straight 8ths), minor loops (i-VI-III-VII, i-VI-VII) with lush pads and arpeggios, a soaring analog lead in long notes.",
+ "tempo": {"min": 80, "max": 118, "default": 100, "feel": "straight"},
+ "guess_weight": 0.5,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 0, "vel": 2},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 5, "dorian": 1, "major": 2}, "roots": ["C", "C#", "D", "E", "F", "F#", "G", "A", "B"], "default": "A minor"},
+ "drums": {
+  "vel": {"X": 116, "x": 104, "o": 80, "g": 46},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X.......X.......", "w": 3}, {"steps": "X.......X.x.....", "w": 2}, {"steps": "X...X...X...X...", "w": 1}]},
+   "snare": {"patterns": [{"steps": "....X.......X...", "w": 1}]},
+   "hat": {"patterns": [{"steps": "x.o.x.o.x.o.x.o.", "w": 2}, {"steps": "xoxoxoxoxoxoxoxo", "w": 2}, {"steps": "..x...x...x...x.", "w": 1}]},
+   "openhat": {"patterns": [{"steps": "................", "w": 3}, {"steps": "..............o.", "w": 1}]},
+   "tom": {"patterns": [{"steps": "................", "w": 1}]},
+   "crash": {"patterns": [{"steps": "X...............................", "w": 1}]}
+  },
+  "fill": {"every": 8, "parts": {"tom": "________x.x.xxxx", "snare": "____________....", "hat": "________........"}},
+  "variation": {"alt_pattern_chance": 0.2, "kick_maybe_scale": 0.0}
+ },
+ "bass": {
+  "type": "bass",
+  "register": [28, 45],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "x-x-x-x-x-x-x-x-", "w": 3},
+   {"steps": "xxxxxxxxxxxxxxxx", "w": 1},
+   {"steps": "x-x-x-x-x-x-x-xx", "w": 1}
+  ],
+  "follow": "octave",
+  "length": "as_written",
+  "gap_steps": 0.3,
+  "vel": [92, 108],
+  "octave_jump": 0.0,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i", "VI", "III", "VII"], "mode": "minor", "bars": 1, "w": 3},
+   {"rn": ["i", "VI", "VII", "i"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["VI", "VII", "i", "i"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i", "iv", "VI", "V"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["i", "VII", "VI", "VII"], "mode": "minor", "bars": 2, "w": 1},
+   {"rn": ["I", "V", "vi", "IV"], "mode": "major", "bars": 1, "w": 1},
+   {"rn": ["IV", "V", "iii", "vi"], "mode": "major", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "seventh", "register": [52, 76], "extensions": {"7": 0.3, "9": 0.4}},
+  "rhythm": {"patterns": [{"steps": "x---------------", "w": 3}, {"steps": "x-------x-------", "w": 1}]},
+  "vel": [70, 86]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "S", "B", "C"], "answer": "same", "breath": 3, "shapes": {"arch": 3, "rise": 2}, "leap": 0.6},
+  "scale": "key",
+  "range": [64, 86],
+  "rhythms": [
+   {"steps": "x-------x---x---", "w": 2},
+   {"steps": "x-----x-----x---", "w": 2},
+   {"steps": "x---x---x-------", "w": 1},
+   {"steps": "x-------........", "w": 1}
+  ],
+  "motif_bars": 2,
+  "form": ["A", "A'", "B", "A'"],
+  "chord_tone_strong": 0.85,
+  "step_prob": 0.7,
+  "max_leap": 7,
+  "repeat_note": 0.1,
+  "vel": [88, 106],
+  "length": "as_written",
+  "max_len_steps": 12
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.35},
+ "form": {"default": [["Intro", 8], ["Verse", 16], ["Hook", 16], ["Verse", 16], ["Hook", 16], ["Bridge", 8], ["Hook", 16], ["Outro", 8]]},
+ "sections": {
+  "Intro": {"energy": 0.4, "layers": ["chords", "bass"], "drums": "none"},
+  "Verse": {"energy": 0.65, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Hook": {"energy": 0.95, "layers": ["drums", "bass", "chords", "melody", "counter"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.5, "layers": ["chords", "melody"], "drums": "half"},
+  "Outro": {"energy": 0.35, "layers": ["chords", "melody"], "drums": "none"}
+ },
+ "transitions": {"into": {"Hook": ["fill", "reverse_crash"], "Verse": ["fill"], "Bridge": ["stop"], "Outro": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "outro"]},
+ "roles": {
+  "kick": {"hint": "80s drum machine kick (LinnDrum / 808 style)", "family": "drums"},
+  "snare": {"hint": "big gated-reverb 80s snare", "family": "drums"},
+  "hat": {"hint": "drum machine closed hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "tom": {"hint": "electronic tom (Simmons style)", "family": "drums"},
+  "crash": {"hint": "80s crash", "family": "drums"},
+  "bass": {"hint": "analog saw/square bass (octave pulse)", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "lush analog polysynth (Juno / Jupiter style)", "family": "keys"},
+  "melody": {"hint": "soaring analog saw lead with delay", "family": "lead"},
+  "counter": {"hint": "arpeggiated pluck", "family": "lead"},
+  "pad": {"hint": "wide chorus pad", "family": "pad"},
+  "arp": {"hint": "16th arpeggio synth", "family": "lead"}
+ },
+ "mix": {"loudness_lufs": -10, "notes": ["gated reverb on the snare", "chorus and long delay on lead and pads", "warm, slightly dark top end"], "sidechain": {"trigger": "kick", "target": "pad", "depth_db": 3}}
+}

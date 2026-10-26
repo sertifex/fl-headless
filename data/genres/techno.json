@@ -1,0 +1,97 @@
+{
+ "format": "flh-genre/1",
+ "name": "techno",
+ "aliases": ["techno music", "minimal techno", "berlin techno", "peak time techno", "industrial techno", "hard techno"],
+ "about": "Techno: 125-140 BPM, relentless four-on-the-floor kick, offbeat open hat and driving 16th closed hats, sparse clap/snare on 2 and 4, a rolling offbeat 16th bass (rumble) on one root, minimal harmony (one chord or a two-chord minor/phrygian vamp) as stabs, hypnotic repeating 1-bar motifs, long builds and breakdowns.",
+ "tempo": {"min": 125, "max": 140, "default": 132, "feel": "four-on-the-floor"},
+ "guess_weight": 0.5,
+ "meter": 4,
+ "swing": 0.5,
+ "humanize": {"timing_ms": 1, "vel": 3},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 4, "phrygian": 2, "dorian": 1}, "roots": ["C", "D", "E", "F", "F#", "G", "A"], "default": "F minor"},
+ "drums": {
+  "vel": {"X": 120, "x": 104, "o": 80, "g": 50},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X...X...X...X...", "w": 1}]},
+   "clap": {"patterns": [{"steps": "....x.......x...", "w": 2}, {"steps": "................", "w": 1}]},
+   "snare": {"patterns": [{"steps": "................", "w": 3}, {"steps": "............o...", "w": 1}]},
+   "hat": {"patterns": [{"steps": "xoxoxoxoxoxoxoxo", "w": 2}, {"steps": "oooxoooxoooxooox", "w": 1}],
+    "bar_alts": [{"chance": 0.15, "steps": "xoxoxoxoxoxoxxxo", "not_first": true}, {"chance": 0.08, "steps": "xoxoxoxo........", "not_first": true}]},
+   "openhat": {"patterns": [{"steps": "..x...x...x...x.", "w": 1}]},
+   "perc": {"patterns": [{"steps": "...o..o....o..o.", "w": 2}, {"steps": ".o....o..o....o.", "w": 1}, {"steps": "o..o..o...o..o..", "w": 1}], "maybe": "..1........2...2"}
+  },
+  "fill": {"every": 16, "parts": {"kick": "____________....", "clap": "____________xxxx"}},
+  "variation": {"alt_pattern_chance": 0.15, "kick_maybe_scale": 0.0}
+ },
+ "bass": {
+  "lock": "offbeat",
+  "type": "bass",
+  "register": [28, 45],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": ".xxx.xxx.xxx.xxx", "w": 2},
+   {"steps": "..x-..x-..x-..x-", "w": 2},
+   {"steps": ".x.x.x.x.x.x.x.x", "w": 1}],
+  "follow": "root",
+  "length": "as_written",
+  "gap_steps": 0.25,
+  "vel": [90, 108],
+  "octave_jump": 0.1,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i7"], "mode": "minor", "bars": 4, "w": 3},
+   {"rn": ["i", "bII"], "mode": "minor", "bars": 2, "w": 2},
+   {"rn": ["i", "VII"], "mode": "minor", "bars": 2, "w": 1},
+   {"rn": ["i7", "iv7"], "mode": "minor", "bars": 2, "w": 1}
+  ],
+  "voicing": {"style": "seventh", "register": [52, 72], "extensions": {"7": 0.6, "9": 0.2}},
+  "rhythm": {"patterns": [{"steps": "...x.......x..x.", "w": 2}, {"steps": "..x.....x.....x.", "w": 2}, {"steps": "x---------------", "w": 1}]},
+  "vel": [80, 100]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "A", "A", "C"], "answer": "same", "breath": 0, "land": [], "shapes": {"hold": 3, "wave": 2}, "leap": 0.3},
+  "scale": "key",
+  "range": [52, 76],
+  "rhythms": [
+   {"steps": "x.xx.x.xx.x.xx.x", "w": 2},
+   {"steps": "x..x..x..x..x.x.", "w": 2},
+   {"steps": "xxx.xx.xxx.xx.x.", "w": 1}],
+  "motif_bars": 1,
+  "form": ["A", "A", "A", "A'"],
+  "chord_tone_strong": 0.6,
+  "step_prob": 0.5,
+  "max_leap": 12,
+  "repeat_note": 0.45,
+  "vel": [84, 110],
+  "length": "short",
+  "max_len_steps": 1
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.4},
+ "form": {"default": [["Intro", 16], ["Build", 16], ["Drop", 32], ["Breakdown", 16], ["Build", 8], ["Drop", 32], ["Outro", 16]]},
+ "sections": {
+  "Intro": {"energy": 0.5, "layers": ["drums"], "drums": "light"},
+  "Build": {"energy": 0.75, "layers": ["drums", "bass", "melody"], "drums": "build"},
+  "Drop": {"energy": 1.0, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Hook": {"energy": 1.0, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Breakdown": {"energy": 0.3, "layers": ["chords", "melody"], "drums": "none"},
+  "Outro": {"energy": 0.45, "layers": ["drums", "bass"], "drums": "light"}
+ },
+ "transitions": {"into": {"Drop": ["stop", "riser:16", "noise_sweep", "impact"], "Breakdown": ["fill", "downlifter:8"], "Build": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "build", "outro"], "build_beats": 16},
+ "roles": {
+  "kick": {"hint": "hard punchy techno kick with rumble", "family": "drums"},
+  "clap": {"hint": "industrial clap", "family": "drums"},
+  "snare": {"hint": "snare for builds", "family": "drums"},
+  "hat": {"hint": "metallic closed hat", "family": "drums"},
+  "openhat": {"hint": "open hat / ride", "family": "drums"},
+  "perc": {"hint": "metallic perc / rim / tom", "family": "drums"},
+  "bass": {"hint": "rolling rumble bass / acid 303", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "dub chord stab with delay", "family": "keys"},
+  "melody": {"hint": "acid line or hypnotic synth sequence", "family": "lead"},
+  "pad": {"hint": "dark atmosphere drone", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -7.5, "notes": ["kick owns the sub; rumble bass high-passed under it and sidechained", "long reverb/delay sends on stabs"], "sidechain": {"trigger": "kick", "target": "bass", "depth_db": 6}}
+}

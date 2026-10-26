@@ -1,0 +1,48 @@
+{
+ "plugin": "Fruity Love Philter",
+ "aliases": [],
+ "edition": "fruity",
+ "roles": [
+  "filter"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "filter1_cutoff_hz": {
+   "index": null,
+   "fl_name": "Filter 1 - Filter cutoff - LFO speed (phase)",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 10,
+   "max": 22000,
+   "confidence": "low"
+  },
+  "filter1_resonance": {
+   "index": null,
+   "fl_name": "Filter 1 - Resonance / bandwidth",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "master_level": {
+   "index": null,
+   "fl_name": "Master level",
+   "unit": "display",
+   "curve": "linear",
+   "verified": false,
+   "confidence": "low: the output level, not a dry/wet mix",
+   "pc_verify": "PC-VERIFY: what 'Master level' displays (%, dB?) - name read live 2026-10-23, unit unknown"
+  }
+ },
+ "index_note": "Love Philter has a large parameter set; only a few are named here - learn it",
+ "names_seen_on_pc": "2026-10-21 (FL 2026, fl_plugin_maps_check)",
+ "not_exposed": {
+  "mix_pct": "no global dry/wet ('Mix') parameter in FL's list; 'Master level' is the output level (PC check 2026-10-23)"
+ }
+}

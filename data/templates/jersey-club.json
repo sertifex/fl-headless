@@ -1,0 +1,81 @@
+{
+ "format": "flh-template/1",
+ "genre": "jersey-club",
+ "name": "jersey-club starter",
+ "about": "Jersey club: hard punchy kick patterns, snappy claps, short hats, squeak/vocal one-shots, short 808, chopped R&B keys, vocal chops.",
+ "tempo": null,
+ "key": null,
+ "kit": "808",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "hard punchy"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "snappy"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "short",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "vocal shot",
+   "sample": "vocal",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "808",
+   "family": "808",
+   "sample": "808",
+   "query": "short punchy"
+  },
+  {
+   "role": "chords",
+   "name": "Keys",
+   "family": "keys",
+   "character": {
+    "query": "bright"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Vocal Chop",
+   "family": "lead",
+   "choices": [
+    {
+     "sample": "vocal",
+     "query": "chop"
+    },
+    {
+     "flex": "lead"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "sample": "vocal"
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "wide"
+   }
+  }
+ ]
+}

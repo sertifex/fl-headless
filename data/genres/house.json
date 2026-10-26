@@ -1,0 +1,104 @@
+{
+ "format": "flh-genre/1",
+ "name": "house",
+ "aliases": ["deep house", "house music", "tech house", "piano house", "garage house", "dance", "electro house"],
+ "about": "House: 118-128 BPM four-on-the-floor kick, clap on 2 and 4, open hat on every offbeat 8th, shuffled 16th closed hats (slight swing), offbeat or syncopated bass, minor-7th/organ stabs or piano chords on the offbeats, 16/32-bar phrasing with builds, breakdowns and drops.",
+ "tempo": {"min": 118, "max": 128, "default": 124, "feel": "four-on-the-floor"},
+ "guess_weight": 0.8,
+ "meter": 4,
+ "swing": 0.54,
+ "humanize": {"timing_ms": 2, "vel": 4},
+ "loop_bars": 8,
+ "keys": {"modes": {"minor": 4, "dorian": 2, "major": 2}, "roots": ["C", "D", "E", "F", "F#", "G", "A", "Bb"], "default": "A minor"},
+ "drums": {
+  "vel": {"X": 118, "x": 100, "o": 76, "g": 44},
+  "parts": {
+   "kick": {"patterns": [{"steps": "X...X...X...X...", "w": 1}]},
+   "clap": {"patterns": [{"steps": "....X.......X...", "w": 1}]},
+   "snare": {"patterns": [{"steps": "................", "w": 3}, {"steps": "...............o", "w": 1}]},
+   "hat": {"patterns": [
+     {"steps": "o.x.o.x.o.x.o.x.", "w": 1},
+     {"steps": "oox.oox.oox.oox.", "w": 2},
+     {"steps": "ooxoooxoooxoooxo", "w": 2}],
+    "bar_alts": [{"chance": 0.12, "steps": "oox.oox.oox.ooxx", "not_first": true}]},
+   "openhat": {"patterns": [{"steps": "..x...x...x...x.", "w": 1}]},
+   "perc": {"patterns": [{"steps": "...o......o..o..", "w": 2}, {"steps": "......o.......o.", "w": 1}, {"steps": "..o..o..o...o...", "w": 1}], "maybe": "...2......2..2.."}
+  },
+  "fill": {"every": 8, "parts": {"clap": "____________oxox", "openhat": "______________.."}},
+  "variation": {"alt_pattern_chance": 0.2, "kick_maybe_scale": 0.0}
+ },
+ "bass": {
+  "lock": "offbeat",
+  "type": "bass",
+  "register": [33, 50],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "..x-..x-..x-..x-", "w": 3},
+   {"steps": "..x...x-..x..xx-", "w": 2},
+   {"steps": "x-.x..x-..x-.x..", "w": 1}],
+  "follow": "octave",
+  "length": "as_written",
+  "gap_steps": 0.25,
+  "vel": [96, 110],
+  "octave_jump": 0.2,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["i7", "iv7"], "mode": "minor", "bars": 2, "w": 3},
+   {"rn": ["i7", "VImaj7", "III", "VII"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i7", "VII", "VI", "VII"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["i9", "i9", "iv9", "iv9"], "mode": "minor", "bars": 1, "w": 1},
+   {"rn": ["vi", "IV", "I", "V"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["IVmaj7", "V", "iii7", "vi7"], "mode": "major", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "seventh", "register": [55, 75], "extensions": {"7": 0.8, "9": 0.3}},
+  "rhythm": {"patterns": [{"steps": "..x...x...x...x.", "w": 2}, {"steps": "..x..x....x..x..", "w": 2}, {"steps": "x--x--x---x--x--", "w": 1}]},
+  "vel": [80, 98]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "A", "S", "C"], "answer": "same", "breath": 0, "land": [], "shapes": {"wave": 2, "hold": 2, "arch": 1}, "leap": 0.4},
+  "scale": "key",
+  "range": [64, 86],
+  "rhythms": [
+   {"steps": "x.x.x...x.x.x...", "w": 2},
+   {"steps": "..x..x..x.x..x..", "w": 2},
+   {"steps": "x--x--x-x--x--x-", "w": 1}],
+  "motif_bars": 1,
+  "form": ["A", "A", "A'", "B"],
+  "chord_tone_strong": 0.8,
+  "step_prob": 0.6,
+  "max_leap": 7,
+  "repeat_note": 0.35,
+  "vel": [86, 106],
+  "length": "short",
+  "max_len_steps": 2
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.5},
+ "form": {"default": [["Intro", 16], ["Build", 8], ["Drop", 16], ["Breakdown", 16], ["Build", 8], ["Drop", 16], ["Outro", 16]]},
+ "sections": {
+  "Intro": {"energy": 0.4, "layers": ["drums", "bass"], "drums": "light"},
+  "Build": {"energy": 0.7, "layers": ["drums", "chords", "melody"], "drums": "build"},
+  "Drop": {"energy": 1.0, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Hook": {"energy": 1.0, "layers": ["drums", "bass", "chords", "melody"], "drums": "full"},
+  "Breakdown": {"energy": 0.35, "layers": ["chords", "melody"], "drums": "none"},
+  "Verse": {"energy": 0.6, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Outro": {"energy": 0.4, "layers": ["drums", "bass"], "drums": "light"}
+ },
+ "transitions": {"into": {"Drop": ["stop", "riser:16", "noise_sweep", "impact", "snare_build:8"], "Build": ["fill"], "Breakdown": ["fill", "downlifter:8"], "Outro": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "build", "outro"], "build_beats": 16},
+ "roles": {
+  "kick": {"hint": "round four-on-the-floor house kick", "family": "drums"},
+  "clap": {"hint": "roomy house clap", "family": "drums"},
+  "snare": {"hint": "snare for fills", "family": "drums"},
+  "hat": {"hint": "shuffled closed hat", "family": "drums"},
+  "openhat": {"hint": "offbeat open hat", "family": "drums"},
+  "perc": {"hint": "conga / shaker / perc loop", "family": "drums"},
+  "bass": {"hint": "deep house bass (sub or organ bass)", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "minor 7th stab, organ or house piano", "family": "keys"},
+  "melody": {"hint": "plucky lead or vocal chop", "family": "lead"},
+  "counter": {"hint": "bell or arp", "family": "lead"},
+  "pad": {"hint": "lush filtered pad", "family": "pad"}
+ },
+ "mix": {"loudness_lufs": -8, "notes": ["kick and bass never on the same 16th (offbeat bass)", "sidechain chords/pads to the kick for pump", "hats bright and wide"], "sidechain": {"trigger": "kick", "target": "chords", "depth_db": 5}}
+}

@@ -1,0 +1,156 @@
+{
+ "plugin": "Fruity Reeverb 2",
+ "aliases": [],
+ "edition": "fruity",
+ "roles": [
+  "reverb"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "low_cut_hz": {
+   "index": 0,
+   "fl_name": "Low cut",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 20,
+   "max": 1000,
+   "confidence": "low"
+  },
+  "high_cut_hz": {
+   "index": 1,
+   "fl_name": "High cut",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 1000,
+   "max": 20000,
+   "confidence": "low"
+  },
+  "predelay_ms": {
+   "index": 2,
+   "fl_name": "Predelay",
+   "unit": "ms",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 300,
+   "confidence": "low"
+  },
+  "room_size": {
+   "index": 3,
+   "fl_name": "Room size",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "diffusion": {
+   "index": 4,
+   "fl_name": "Diffusion",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "decay_s": {
+   "index": 5,
+   "fl_name": "Decay time",
+   "unit": "s",
+   "curve": "pow",
+   "verified": false,
+   "min": 0.1,
+   "max": 20,
+   "exp": 2,
+   "confidence": "low"
+  },
+  "high_damping_hz": {
+   "index": 6,
+   "fl_name": "High damping",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 1000,
+   "max": 20000,
+   "confidence": "low"
+  },
+  "bass_multiplier": {
+   "index": 7,
+   "fl_name": "Bass multiplier",
+   "unit": "x",
+   "curve": "linear",
+   "verified": false,
+   "min": 0.25,
+   "max": 4,
+   "confidence": "low"
+  },
+  "crossover_hz": {
+   "index": 8,
+   "fl_name": "Crossover",
+   "unit": "Hz",
+   "curve": "log",
+   "verified": false,
+   "min": 50,
+   "max": 1000,
+   "confidence": "low"
+  },
+  "stereo_separation": {
+   "index": 9,
+   "fl_name": "Stereo separation",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 200,
+   "confidence": "low"
+  },
+  "dry_pct": {
+   "index": 10,
+   "fl_name": "Dry level",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "early_pct": {
+   "index": 11,
+   "fl_name": "Early reflection level",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "wet_pct": {
+   "index": 12,
+   "fl_name": "Wet level",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "mod_depth_pct": {
+   "index": 14,
+   "fl_name": "Mod Depth",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "medium"
+  }
+ },
+ "names_seen_on_pc": "2026-10-21 (FL 2026): parameter names and indexes read live; curves still unverified"
+}

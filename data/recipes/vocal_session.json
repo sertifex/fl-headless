@@ -1,0 +1,14 @@
+{
+ "name": "vocal_session",
+ "description": "Set up a vocal track for recording (armed, named) and check the input level before you record.",
+ "params": {
+  "project": {"description": "the .flp open in FL", "required": false},
+  "track_name": {"description": "name of the vocal track", "required": false, "default": "Vocal"},
+  "track": {"description": "mixer track to use (default: a free one)", "required": false}
+ },
+ "steps": [
+  {"tool": "fl_vocal_setup", "args": {"project": "${project}", "name": "${track_name}", "track": "${track}"}},
+  {"tool": "fl_vocal_level_check", "args": {"project": "${project}", "track": "$prev.track"},
+   "note": "sing your loudest part while it listens"}
+ ]
+}

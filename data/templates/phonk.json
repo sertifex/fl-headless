@@ -1,0 +1,122 @@
+{
+ "format": "flh-template/1",
+ "genre": "phonk",
+ "name": "phonk starter",
+ "about": "Phonk: hard distorted kick, crunchy clap, Memphis snare, rattling hats, distorted sliding 808, dark Memphis keys, the phonk cowbell.",
+ "tempo": null,
+ "key": null,
+ "kit": "dark",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "hard distorted"
+  },
+  {
+   "role": "clap",
+   "name": "Clap",
+   "query": "crunchy"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "lofi"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "bright",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "memphis vocal",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "808",
+   "family": "808",
+   "sample": "808",
+   "query": "distorted"
+  },
+  {
+   "role": "chords",
+   "name": "Keys",
+   "family": "keys",
+   "choices": [
+    {
+     "labs": "piano"
+    },
+    {
+     "flex": "keys"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*dark*",
+      "*pad*"
+     ]
+    },
+    {
+     "plugin": "FL Keys"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "dark memphis",
+    "avoid": [
+     "bright"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Cowbell",
+   "family": "bell",
+   "choices": [
+    {
+     "sample": "perc",
+     "query": "cowbell 808"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*cowbell*",
+      "*bell*"
+     ]
+    },
+    {
+     "flex": "bells"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "sample": "perc",
+   "character": {
+    "query": "cowbell 808"
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Pad",
+   "family": "pad",
+   "character": {
+    "query": "dark",
+    "avoid": [
+     "bright"
+    ]
+   }
+  }
+ ]
+}

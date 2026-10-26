@@ -1,0 +1,47 @@
+{
+ "plugin": "Emphasizer",
+ "aliases": [],
+ "edition": "producer",
+ "roles": [
+  "maximizer",
+  "eq"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "input_gain_db": {
+   "index": null,
+   "fl_name": "Input gain",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -24,
+   "max": 24,
+   "confidence": "medium"
+  },
+  "emphasis_pct": {
+   "index": null,
+   "fl_name": "Emphasis",
+   "unit": "%",
+   "curve": "linear",
+   "verified": false,
+   "min": 0,
+   "max": 100,
+   "confidence": "low"
+  },
+  "output_gain_db": {
+   "index": null,
+   "fl_name": "Output gain",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -24,
+   "max": 24,
+   "confidence": "medium"
+  }
+ },
+ "index_note": "control names are a guess: learn the map before relying on it",
+ "names_seen_on_pc": "2026-10-21 (FL 2026): live names Input gain, Emphasis, Clipping, Level matching, Bypass, Output gain"
+}

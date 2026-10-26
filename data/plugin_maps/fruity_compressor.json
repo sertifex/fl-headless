@@ -1,0 +1,82 @@
+{
+ "plugin": "Fruity Compressor",
+ "aliases": [],
+ "edition": "fruity",
+ "roles": [
+  "compressor"
+ ],
+ "source": "shipped",
+ "as_of": "2026-10",
+ "verified": false,
+ "note": "Shipped from memory, NOT verified on a PC: parameter indices, FL names, ranges and curves may be wrong or differ by FL version. fl-headless always resolves controls by the live FL parameter name first and checks the display text after setting; run fl_plugin_map_learn(track, slot) once on your PC to replace this with a measured map (stored in the fl-headless state folder, overrides this file).",
+ "controls": {
+  "threshold_db": {
+   "index": 0,
+   "fl_name": "Threshold",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -60,
+   "max": 0,
+   "confidence": "low"
+  },
+  "ratio": {
+   "index": 1,
+   "fl_name": "Ratio",
+   "unit": "ratio",
+   "curve": "ratio_inv",
+   "verified": false,
+   "min": 1,
+   "max": "inf",
+   "confidence": "low"
+  },
+  "gain_db": {
+   "index": 2,
+   "fl_name": "Gain",
+   "unit": "dB",
+   "curve": "linear",
+   "verified": false,
+   "min": -30,
+   "max": 30,
+   "confidence": "low"
+  },
+  "attack_ms": {
+   "index": 3,
+   "fl_name": "Attack",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 0,
+   "max": 1000,
+   "exp": 2.5,
+   "confidence": "low"
+  },
+  "release_ms": {
+   "index": 4,
+   "fl_name": "Release",
+   "unit": "ms",
+   "curve": "pow",
+   "verified": false,
+   "min": 1,
+   "max": 1000,
+   "exp": 2.5,
+   "confidence": "low"
+  },
+  "type": {
+   "index": 5,
+   "fl_name": "Type",
+   "unit": "enum",
+   "curve": "enum",
+   "verified": false,
+   "options": [
+    "Hard",
+    "Medium",
+    "Soft",
+    "Vintage hard",
+    "Vintage medium",
+    "Vintage soft"
+   ],
+   "confidence": "low"
+  }
+ }
+}

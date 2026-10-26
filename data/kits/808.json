@@ -1,0 +1,18 @@
+{
+ "format": "flh-kit/1",
+ "name": "808",
+ "about": "Electronic 808-style kit: short punchy kick, crisp snares/claps, tight hats, long 808: trap, drill, R&B.",
+ "roles": {
+  "kick": "punchy short electronic",
+  "snare": "crisp",
+  "clap": "layered crisp",
+  "hat": "tight electronic",
+  "openhat": "short",
+  "perc": "rim",
+  "808": "long tail"
+ },
+ "avoid": [
+  "acoustic",
+  "dusty"
+ ]
+}

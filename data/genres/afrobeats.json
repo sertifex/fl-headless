@@ -1,0 +1,100 @@
+{
+ "format": "flh-genre/1",
+ "name": "afrobeats",
+ "aliases": ["afrobeat", "afro beats", "afropop", "afro pop", "amapiano-lite", "afro"],
+ "about": "Afrobeats: 98-115 BPM, a laid-back swung 16th groove, kick on the beats with syncopated pushes, the 3-3-2 rim/snare figure, busy shaker 16ths and conga/perc, a syncopated root-fifth bass, warm 7th chords on guitar/keys as offbeat stabs, a melodic pentatonic top line with call and response.",
+ "tempo": {"min": 98, "max": 115, "default": 106, "feel": "straight"},
+ "guess_weight": 0.6,
+ "meter": 4,
+ "swing": 0.56,
+ "humanize": {"timing_ms": 4, "vel": 6},
+ "loop_bars": 8,
+ "keys": {"modes": {"major": 4, "minor": 3, "dorian": 1}, "roots": ["C", "D", "Eb", "E", "F", "G", "A", "Bb"], "default": "G major"},
+ "drums": {
+  "vel": {"X": 114, "x": 98, "o": 74, "g": 42},
+  "parts": {
+   "kick": {"patterns": [
+     {"steps": "x.....x...x.....x.....x...x.....", "w": 2},
+     {"steps": "x...x...x...x...x...x...x...x...", "w": 1},
+     {"steps": "x......x..x.....x......x..x.....", "w": 1}],
+    "maybe": ".............2...............2.."},
+   "snare": {"patterns": [{"steps": "...x..x....x..x.", "w": 2}, {"steps": "...x......x.....", "w": 1}]},
+   "clap": {"patterns": [{"steps": "....x.......x...", "w": 1}, {"steps": "................", "w": 1}]},
+   "hat": {"patterns": [{"steps": "xoxoxoxoxoxoxoxo", "w": 2}, {"steps": "x.oox.oox.oox.oo", "w": 2}]},
+   "openhat": {"patterns": [{"steps": "........o.......", "w": 1}, {"steps": "......o.......o.", "w": 1}]},
+   "perc": {"patterns": [{"steps": "..o..o..o..o.o..", "w": 2}, {"steps": "o..o..o...o..o..", "w": 1}], "maybe": "..............2."}
+  },
+  "fill": {"every": 8, "parts": {"perc": "____________oooo", "snare": "____________.x.x"}},
+  "variation": {"alt_pattern_chance": 0.25, "kick_maybe_scale": 1.0}
+ },
+ "bass": {
+  "type": "bass",
+  "register": [33, 50],
+  "rhythm": "pattern",
+  "patterns": [
+   {"steps": "x-.x..x-..x-....", "w": 2},
+   {"steps": "x--..x..x-..x-..", "w": 2},
+   {"steps": "x-..x-.x..x-.x..", "w": 1}],
+  "follow": "root_fifth",
+  "length": "as_written",
+  "gap_steps": 0.25,
+  "vel": [92, 108],
+  "octave_jump": 0.15,
+  "glide": {"chance": 0.0}
+ },
+ "harmony": {
+  "progressions": [
+   {"rn": ["IVmaj7", "V", "iii7", "vi7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["ii7", "V7", "Imaj7", "vi7"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["I", "vi", "IV", "V"], "mode": "major", "bars": 1, "w": 2},
+   {"rn": ["vi7", "IVmaj7", "Imaj7", "V"], "mode": "major", "bars": 1, "w": 1},
+   {"rn": ["i7", "iv7", "VII", "III"], "mode": "minor", "bars": 1, "w": 2},
+   {"rn": ["i7", "VI", "VII", "i7"], "mode": "minor", "bars": 1, "w": 1}
+  ],
+  "voicing": {"style": "seventh", "register": [55, 76], "extensions": {"7": 0.7, "9": 0.2}},
+  "rhythm": {"patterns": [{"steps": "..x..x....x..x..", "w": 2}, {"steps": "x--..x..x--..x..", "w": 2}, {"steps": "..x...x...x...x.", "w": 1}]},
+  "vel": [72, 90]
+ },
+ "melody": {
+  "hook": {"plan": ["A", "S", "A", "C"], "answer": "same", "breath": 2, "shapes": {"wave": 2, "fall": 2, "arch": 1}, "leap": 0.4},
+  "scale": "pentatonic",
+  "range": [64, 84],
+  "rhythms": [
+   {"steps": "x..x..x.x.x.....", "w": 3},
+   {"steps": "..x..x..x.x.x...", "w": 2},
+   {"steps": "x.x..x..x.......", "w": 2}],
+  "motif_bars": 1,
+  "form": ["A", "B", "A", "B'"],
+  "chord_tone_strong": 0.75,
+  "step_prob": 0.7,
+  "max_leap": 5,
+  "repeat_note": 0.25,
+  "vel": [84, 102],
+  "length": "until_next",
+  "max_len_steps": 3
+ },
+ "counter": {"mode": "fills", "register": "above", "density": 0.5},
+ "form": {"default": [["Intro", 8], ["Verse", 16], ["Hook", 8], ["Verse", 16], ["Hook", 8], ["Bridge", 8], ["Hook", 8], ["Outro", 8]]},
+ "sections": {
+  "Intro": {"energy": 0.35, "layers": ["chords", "drums"], "drums": "sparse"},
+  "Verse": {"energy": 0.65, "layers": ["drums", "bass", "chords"], "drums": "full"},
+  "Hook": {"energy": 0.9, "layers": ["drums", "bass", "chords", "melody", "counter"], "drums": "full"},
+  "Bridge": {"harmony": "contrast", "energy": 0.5, "layers": ["drums", "chords", "melody"], "drums": "light"},
+  "Outro": {"energy": 0.3, "layers": ["drums", "chords"], "drums": "light"}
+ },
+ "transitions": {"into": {"Hook": ["fill", "reverse_crash"], "Verse": ["stop"], "Outro": ["fill"]}},
+ "ear_candy": {"amount": "normal", "filters": ["intro", "outro"]},
+ "roles": {
+  "kick": {"hint": "warm round kick", "family": "drums"},
+  "snare": {"hint": "rimshot / snappy snare", "family": "drums"},
+  "clap": {"hint": "soft clap", "family": "drums"},
+  "hat": {"hint": "shaker / soft hat", "family": "drums"},
+  "openhat": {"hint": "open hat", "family": "drums"},
+  "perc": {"hint": "congas, talking drum, log drum perc", "family": "drums"},
+  "bass": {"hint": "warm round bass", "family": "bass", "name": "Bass"},
+  "chords": {"hint": "highlife guitar or warm keys", "family": "keys"},
+  "melody": {"hint": "marimba, flute, pluck or kalimba", "family": "lead"},
+  "counter": {"hint": "guitar licks or bell", "family": "lead"}
+ },
+ "mix": {"loudness_lufs": -9, "notes": ["percussion panned wide, kick and bass warm not boomy", "space for vocals in the 1-4 kHz range"], "sidechain": null}
+}

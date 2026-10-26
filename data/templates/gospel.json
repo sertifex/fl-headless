@@ -1,0 +1,135 @@
+{
+ "format": "flh-template/1",
+ "genre": "gospel",
+ "name": "gospel starter",
+ "about": "Gospel: warm live drums with ghost notes, ride and toms, fingered electric bass, grand piano / Hammond organ, choir pad.",
+ "tempo": null,
+ "key": null,
+ "kit": "acoustic",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "warm live"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "crisp live"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "live",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "ride",
+   "name": "Ride",
+   "query": "",
+   "group": "Cymbals"
+  },
+  {
+   "role": "crash",
+   "name": "Crash",
+   "query": "",
+   "group": "Cymbals"
+  },
+  {
+   "role": "tom",
+   "name": "Tom",
+   "query": "live"
+  },
+  {
+   "role": "bass",
+   "name": "Bass",
+   "family": "bass",
+   "character": {
+    "query": "electric fingered warm round",
+    "avoid": [
+     "synth bass"
+    ]
+   }
+  },
+  {
+   "role": "chords",
+   "name": "Piano",
+   "family": "keys",
+   "choices": [
+    {
+     "labs": "piano"
+    },
+    {
+     "flex": "keys"
+    },
+    {
+     "plugin": "FL Keys",
+     "presets": [
+      "*rhodes*",
+      "*grand*",
+      "*piano*"
+     ]
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*rhodes*",
+      "*piano*"
+     ]
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "rhodes grand gospel warm",
+    "avoid": [
+     "honky",
+     "toy"
+    ]
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Organ",
+   "family": "organ",
+   "character": {
+    "query": "b3 hammond drawbar tonewheel gospel leslie rotary soul church",
+    "avoid": [
+     "buzz",
+     "electronic",
+     "farfisa",
+     "transistor",
+     "reed",
+     "accordion",
+     "harmonium",
+     "synth",
+     "organ 1",
+     "organ 2",
+     "haunted",
+     "eerie",
+     "phantom",
+     "horror",
+     "space"
+    ]
+   }
+  },
+  {
+   "role": "pad",
+   "name": "Choir",
+   "family": "choir",
+   "character": {
+    "query": "gospel choir lush warm",
+    "avoid": [
+     "synth voice"
+    ]
+   }
+  }
+ ]
+}

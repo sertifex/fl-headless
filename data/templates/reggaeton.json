@@ -1,0 +1,83 @@
+{
+ "format": "flh-template/1",
+ "genre": "reggaeton",
+ "name": "reggaeton starter",
+ "about": "Reggaeton: deep boomy kick, dembow snare/rim, timbal/bongo perc, round short 808 sub, stabs or guitar, pluck lead.",
+ "tempo": null,
+ "key": null,
+ "kit": "808",
+ "channels": [
+  {
+   "role": "kick",
+   "name": "Kick",
+   "query": "deep boomy"
+  },
+  {
+   "role": "snare",
+   "name": "Snare",
+   "query": "dembow rim"
+  },
+  {
+   "role": "hat",
+   "name": "Hat",
+   "query": "",
+   "group": "Hats"
+  },
+  {
+   "role": "openhat",
+   "name": "Open Hat",
+   "query": "open",
+   "group": "Hats"
+  },
+  {
+   "role": "perc",
+   "name": "Perc",
+   "query": "timbal bongo",
+   "group": "Perc"
+  },
+  {
+   "role": "bass",
+   "name": "808",
+   "family": "808",
+   "sample": "808",
+   "query": "round short sub"
+  },
+  {
+   "role": "chords",
+   "name": "Keys",
+   "family": "keys",
+   "choices": [
+    {
+     "labs": "guitar"
+    },
+    {
+     "flex": "piano"
+    },
+    {
+     "plugin": "Sytrus",
+     "presets": [
+      "*stab*",
+      "*piano*"
+     ]
+    },
+    {
+     "plugin": "FL Keys"
+    },
+    {
+     "plugin": "3x Osc"
+    }
+   ],
+   "character": {
+    "query": "bright stab"
+   }
+  },
+  {
+   "role": "melody",
+   "name": "Pluck",
+   "family": "pluck",
+   "character": {
+    "query": "pluck"
+   }
+  }
+ ]
+}
