@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.1.3 - 2026-10-26
+Speed: building a song in FL.
+- **One reload per burst of edits on big projects.** Edits of a song that takes long to load (Splice INSTRUMENT,
+  orchestral libraries: 14-52 s per reload measured) now wait about as long as one reload costs (up to a minute) for
+  the next edit, so a build's edits share ONE reload instead of one each. Anything that needs FL to hold them - a
+  render, play, open - still applies them at once.
+- **Live settings never hit a half-loaded song.** Mixer, channel, pattern and plugin settings wait while FL is still
+  loading, and one that targets something only a queued edit makes (a channel just added) gets that edit in first
+  instead of failing with "no channel N".
+- **The mix engineer measures from one export.** Every used mixer track is measured from one export with FL's
+  "Split mixer tracks" (kept in the render cache, so later previews and fader changes are mixed from it without
+  exporting) instead of hearing the passage once per track in real time (48 s for a 10-track song). When FL can't
+  split its export it listens as before; the result says which (`measured`).
+- **The render cache keeps to its size.** Old renders were never removed on Windows (the Recycle Bin refused
+  fl-headless's own folder), so the cache grew past its 2 GB cap (5.3 GB seen). They're now deleted - they're
+  fl-headless's own renders, made again on demand, and recycling them would keep the disk just as full - and
+  leftover folders the cache doesn't list are cleaned up.
+
 ## 2.1.2 - 2026-10-26
 - **No renders nobody asked for.** New songs (`flh_new_song`, `fl_beat_from_reference`) no longer export stems in
   the background to balance their levels, and `fl_sound_shape` no longer renders before and after each change.

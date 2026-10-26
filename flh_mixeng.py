@@ -2965,6 +2965,25 @@ def propose(meas, genre="default", goal=None, bpm=120.0, masking_findings=None, 
     return out
 
 
+def _mix_listen(sa, sb, seconds):
+    """The passage heard live once (at most fl_mix_check's 8 s window), master effects bypassed like fl_mix_check:
+    the before / after of an applied mix pass."""
+    m0 = _mixer_info(0)                                           # one track: small on any project size
+    if m0 is None:
+        st0 = H["fl_state"]()
+        m0 = next((m for m in st0["mixer"] if m["index"] == 0), {})
+    master_fx = bool(m0.get("effects"))
+    if master_fx:
+        _bridge("mixer_set", track=0, effects_enabled=False)
+    try:
+        secs = None if sb is not None else float(seconds or 20)
+        est = H["_est_listen_s"](sa, sb, secs) or 20
+        return H["_listen_measure"](sa, None, 8.0) if est > 8 else H["_listen_measure"](sa, sb, secs)
+    finally:
+        if master_fx:
+            _bridge("mixer_set", track=0, effects_enabled=True)
+
+
 def _live_meas(section, tracks, start_bar, end_bar, seconds, project):
     # PC-VERIFY: fl_mix_check's track names map back to mixer indices (duplicate names -> first match)
     if section and project and start_bar is None:
@@ -2983,6 +3002,70 @@ def _live_meas(section, tracks, start_bar, end_bar, seconds, project):
     mix = r.get("mix") or {}
     return {"tracks": rows, "mix": {"lufs": mix.get("lufs"), "true_peak": mix.get("true_peak_dbfs"),
                                     "bands_db": mix.get("bands_db")}}, (start_bar, end_bar)
+
+
+def _one_export_meas(project, section=None, start_bar=None, end_bar=None, tracks=None):
+    """Every used mixer track measured from ONE export with FL's 'Split mixer tracks' (cached: a later preview or
+    fader change is mixed from it without exporting) instead of hearing the passage once per track in real time
+    (PC 2026-10-26: 48 s of solo passes for a 10-track song). -> ((meas, (start_bar, end_bar)), None) or
+    (None, why) when one-pass stems aren't available here (the caller listens instead)."""
+    if not (project and H.get("_stems_set") and H.get("_rc")):
+        return None, "no stems route"
+    import numpy as np
+    if section and start_bar is None:
+        S = sys.modules.get("flh_store")
+        if S:
+            start_bar, end_bar = S.section_range(S.journal_get(project), section)
+    ent, fp, info = H["_stems_set"](project)
+    if ent is None:
+        return None, info.get("why") or "no stems"
+    RC = H["_rc"](); meta = ent.get("meta") or {}
+    _tick_s, bar_s, _P, _m = RC.timeline(H["_read_flp_bytes"](project))
+    a = bar_s(float(start_bar)) if start_bar else 0.0
+    b = bar_s(float(end_bar)) if end_bar else None
+    used = {int(t) for t in (meta.get("chan_insert") or {}).values() if int(t) > 0}
+    want = {int(t) for t in tracks} if tracks else used
+    try:
+        live = {m_["index"]: m_ for m_ in (H["fl_state"]().get("mixer") or [])}
+    except Exception:                                             # noqa: BLE001
+        live = {}
+    rows, total, fs0 = [], None, None
+    for t_, tm in sorted((meta.get("tracks") or {}).items(), key=lambda kv: int(kv[0])):
+        t = int(t_)
+        f = RC.file_named(ent, f"t{t}")
+        if t == 0 or f is None:
+            continue
+        x, fs = RC.load(f)
+        old = (tm.get("level") or [None])[0]
+        new = ((fp or {}).get("levels", {}).get(t) or [old])[0]
+        x = x * (RC.fader_lin(new) / max(RC.fader_lin(old), 1e-12))
+        seg = x[int(a * fs):(int(b * fs) if b else None)]
+        if not len(seg):
+            continue
+        if 0 in (tm.get("routes") or [0]):                        # what reaches the master straight: the mix sum
+            fs0 = fs0 or fs
+            total = seg.copy() if total is None else (lambda k: total[:k] + seg[:k])(min(len(total), len(seg)))
+        if t not in want or float(np.abs(seg).max()) < 10 ** (-70 / 20):
+            continue
+        lm = live.get(t) or {}
+        rows.append(dict(features(seg, fs), name=lm.get("name") or tm.get("name") or f"Insert {t}", track=t,
+                         pan=lm.get("pan", 0.0)))
+    if not rows:
+        return None, "the stems hold no sound in that range"
+    mix = {}
+    full = RC.get(RC.mix_key(fp, formats="wav")) if fp else None
+    if full and full.get("files"):                                # the master render (its chain included)
+        y, fsm = RC.load(full["files"][0])
+        y = y[int(a * fsm):(int(b * fsm) if b else None)]
+        if len(y):
+            mf = features(y, fsm); mix = {"lufs": mf.get("lufs"), "true_peak": mf.get("true_peak"),
+                                          "bands_db": mf.get("bands_db")}
+    if not mix and total is not None and len(total):
+        mf = features(total, fs0)
+        mix = {"lufs": mf.get("lufs"), "true_peak": mf.get("true_peak"), "bands_db": mf.get("bands_db"),
+               "approximate": True}
+    how = info.get("reused") or "one export with FL's 'Split mixer tracks'"
+    return ({"tracks": rows, "mix": mix, "how": how}, (start_bar, end_bar)), None
 
 
 def _stems_meas(stems, section, project):
@@ -3035,13 +3118,19 @@ def mix_engineer(goal=None, section=None, tracks=None, apply=False, genre=None, 
         if len(items) >= 2:
             findings = masking_from_stems(items, secs, lead=lead, top=6)
     else:
-        try:
-            meas, window = _live_meas(section, tracks, start_bar, end_bar, seconds, project)
-        except FLGone:
-            raise
-        except Exception:                                         # a timeout because FL went away: say THAT
-            _fl_gone_check("while the tracks were measured")
-            raise
+        got, one_why = (_one_export_meas(project, section, start_bar, end_bar, tracks) if not seconds else
+                        (None, "a seconds window is heard live"))
+        if got:
+            meas, window = got
+        else:
+            try:
+                meas, window = _live_meas(section, tracks, start_bar, end_bar, seconds, project)
+            except FLGone:
+                raise
+            except Exception:                                     # a timeout because FL went away: say THAT
+                _fl_gone_check("while the tracks were measured")
+                raise
+            meas = dict(meas, how=f"each track heard alone ({one_why})")
     mark("measure")
     lead_src = "given" if lead else None
     if not lead and project:
@@ -3054,6 +3143,7 @@ def mix_engineer(goal=None, section=None, tracks=None, apply=False, genre=None, 
         t["imp"] = 4.0 if lead and _norm_name(lead) == _norm_name(t["name"]) else importance(t["role"])
     L_ = pick_lead(tr_)
     res = {"genre": g, "bpm": bpm_v, "bpm_source": bpm_src, "goal": goal,
+           **({"measured": meas["how"]} if isinstance(meas, dict) and meas.get("how") else {}),
            "lead": ({"track": L_["name"], "from": lead_src or "the loudest melodic part (lead='<track>' to choose)"}
                     if L_ else None),
            "goal_intents": intents_from_text(goal) if goal else [],
@@ -3073,6 +3163,13 @@ def mix_engineer(goal=None, section=None, tracks=None, apply=False, genre=None, 
     ops = [o for p in chosen for o in p["ops"] if o.get("track") is not None]
     unmapped = [o["why"] for p in chosen for o in p["ops"] if o.get("track") is None]
     before_mix = meas.get("mix") if isinstance(meas, dict) else None
+    one_export = live and isinstance(meas, dict) and str(meas.get("how") or "").startswith(("one export", "stems from"))
+    if one_export and H["fl_running"]():                          # the after-check is a short live listen: the
+        try:                                                      # before must be the same kind of measurement
+            before_mix = _mix_listen(*(window or (start_bar, end_bar)), seconds)
+        except Exception:                                         # noqa: BLE001
+            before_mix = None
+        mark("measure_before")
     res["applied"] = apply_ops(ops, label="mix engineer" + (f": {goal}" if goal else ""), project=project)
     if unmapped:
         res["applied"]["not_applied"] = {"moves": unmapped[:10], "why": "no mixer track known for these stems (open "
@@ -3082,23 +3179,7 @@ def mix_engineer(goal=None, section=None, tracks=None, apply=False, genre=None, 
                                                          if t in ("less_muddy", "less_harsh", "clearer")))[:3]
     if live and before_mix and H["fl_running"]():
         sa, sb = window or (start_bar, end_bar)
-        m0 = _mixer_info(0)                                       # one track: small on any project size
-        if m0 is None:
-            st0 = H["fl_state"]()
-            m0 = next((m for m in st0["mixer"] if m["index"] == 0), {})
-        master_fx = bool(m0.get("effects"))
-        if master_fx:
-            _bridge("mixer_set", track=0, effects_enabled=False)      # measured like fl_mix_check did
-        try:
-            secs = None if sb is not None else float(seconds or 20)
-            est = H["_est_listen_s"](sa, sb, secs) or 20
-            if est > 8:                                               # fl_mix_check's default 8 s window
-                after = H["_listen_measure"](sa, None, 8.0)
-            else:
-                after = H["_listen_measure"](sa, sb, secs)
-        finally:
-            if master_fx:
-                _bridge("mixer_set", track=0, effects_enabled=True)
+        after = _mix_listen(sa, sb, seconds)
         mark("measure_after")
         if after:
             res["verify"] = intent_verify(before_mix, after, intents) if intents else None

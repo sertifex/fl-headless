@@ -483,4 +483,41 @@ for call_, fl_free in ((lambda: X.fl_masking(stems=tmp, background=True), True),
     assert ("FL tools stay free" in j["note"]) is fl_free, j
 X.masking, X.reference_match, X.mix_engineer = saved_fns
 print("file-only jobs ok")
+
+# ---------------------------------------------------------------- one export instead of a solo pass per track
+# (2.1.2): every used mixer track measured from ONE split export (cached), nobody listens track by track
+import shutil, fl_capture as FC  # noqa: E402,F811
+RC = m._rc()
+proj1 = os.path.join(tmp, "One.flp"); shutil.copy(os.path.join(HERE, "corpus", "base.flp"), proj1)
+t_ = np.arange(fs * 4) / fs
+kick = np.stack([0.5 * np.sin(2 * np.pi * 55 * t_) * (np.mod(t_, 0.5) < 0.1)] * 2, 1)
+keys = np.stack([0.3 * np.sin(2 * np.pi * 440 * t_)] * 2, 1)
+files = []
+for t, x in ((1, kick), (2, keys)):
+    f = os.path.join(tmp, f"stem{t}.wav"); FC.write_wav(f, fs, x)
+    files.append({"src": f, "name": f"t{t}", "mode": "copy"})
+lvl = {1: [12800], 2: [12800]}
+fp1 = {"sound": "s1", "levels": lvl}
+ent = RC.put(RC.stems_key(fp1), "stems", files, meta={"tracks": {"1": {"level": [12800], "routes": [0], "name": "Kick"},
+                                                                  "2": {"level": [12800], "routes": [0], "name": "Keys"}},
+                                                        "chan_insert": {"0": 1, "1": 2}, "fs": fs})
+assert ent, "stems entry not stored"
+heard = []
+saved_fns = (ns.get("_stems_set"), m.fl_mix_check, ns.get("fl_state"), ns.get("_read_flp_bytes"))
+ns["_stems_set"] = lambda project, timeout_s=900, render=True: (RC.get(RC.stems_key(fp1)), fp1, {"renders": 1})
+m.fl_mix_check = ns["fl_mix_check"] = lambda **k: heard.append(k) or {"heard": False}
+ns["fl_state"] = lambda: {"mixer": [{"index": 1, "name": "Kick", "pan": 0.0}, {"index": 2, "name": "Keys", "pan": 0.1}],
+                          "channels": []}
+one, why = X._one_export_meas(proj1)
+assert one and not why, why
+meas1, window1 = one
+assert {r["name"] for r in meas1["tracks"]} == {"Kick", "Keys"} and meas1["how"].startswith("one export"), meas1
+assert meas1["mix"]["lufs"] is not None and meas1["mix"].get("approximate") and not heard
+pv = X.mix_engineer(project=proj1, bpm=120)
+assert pv["measured"].startswith("one export") and not heard, (pv.get("measured"), heard)
+ns["_stems_set"] = lambda project, timeout_s=900, render=True: (None, None, {"why": "Split mixer tracks is off"})
+assert X._one_export_meas(proj1) == (None, "Split mixer tracks is off")
+ns["_stems_set"], m.fl_mix_check = saved_fns[0], saved_fns[1]; ns["fl_mix_check"] = saved_fns[1]
+ns["fl_state"] = saved_fns[2]
+print("one export ok")
 print("ok")

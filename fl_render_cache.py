@@ -488,21 +488,56 @@ def _evict(idx, keep=None):
 
 
 def _drop_dirs(dirs):
-    """Our own cache folders away: the Recycle Bin through the server's helper (Windows); elsewhere (no Recycle Bin,
-    no FL - a development box) they're removed. Only folders inside the cache folder are ever touched."""
+    """Our own cache folders away - deleted, not recycled: they're fl-headless's own renders in its own state folder,
+    made again on demand, and a Recycle Bin full of them keeps the disk just as full (PC 2026-10-26: the cache stood at
+    5.3 GB against a 2 GB cap: recycling was refused outside the song folders, so nothing was ever evicted). Only
+    folders inside the cache folder are ever touched; the user's files never go this way."""
     root = os.path.normcase(os.path.abspath(cache_dir()))
     dirs = [x for x in dirs if os.path.normcase(os.path.abspath(x)).startswith(root + os.sep) and os.path.isdir(x)]
-    if not dirs:
-        return True
-    if H.get("IS_WINDOWS"):
-        try:
-            H["files_recycle"](dirs)
-            return True
-        except Exception:                                         # noqa: BLE001
-            return False
+    ok = True
     for x in dirs:
         shutil.rmtree(x, ignore_errors=True)
-    return True
+        ok = ok and not os.path.isdir(x)
+    return ok
+
+
+ORPHAN_AGE_S = 3600.0            # a folder the index doesn't know (a put that lost the index lock) goes after this
+
+
+def trim():
+    """Bring the cache within its cap (oldest-used first) and remove folders the index doesn't list (older than an
+    hour). -> {"freed_mb", "entries_gone", "orphans_gone"}. Cheap when there's nothing to do."""
+    held = _try_locked()
+    if held is None:
+        return {"freed_mb": 0.0, "entries_gone": 0, "orphans_gone": 0, "note": "cache busy"}
+    with held:
+        idx = _read_index()
+        before = sum(int(e.get("bytes") or 0) for e in idx["entries"].values())
+        gone = _evict(idx)
+        if gone:
+            _write_index(idx)
+        known = {os.path.normcase(os.path.dirname(f["path"])) for e in idx["entries"].values()
+                 for f in e.get("files") or [] if f.get("own")}
+        orphans, freed_o = [], 0
+        try:
+            names = os.listdir(cache_dir())
+        except OSError:
+            names = []
+        for nm in names:
+            full = os.path.join(cache_dir(), nm)
+            if not os.path.isdir(full) or os.path.normcase(full) in known:
+                continue
+            try:
+                if time.time() - os.path.getmtime(full) < ORPHAN_AGE_S:
+                    continue
+                freed_o += sum(os.path.getsize(os.path.join(a, f)) for a, _, fs in os.walk(full) for f in fs)
+            except OSError:
+                continue
+            orphans.append(full)
+        if orphans:
+            _drop_dirs(orphans)
+        after = sum(int(e.get("bytes") or 0) for e in idx["entries"].values())
+    return {"freed_mb": round((before - after + freed_o) / 1e6, 1), "entries_gone": len(gone), "orphans_gone": len(orphans)}
 
 
 def _drop_dir(folder):
@@ -517,6 +552,10 @@ def _quiet_remove(path):
 
 
 def status():
+    try:
+        trim()                                                    # over the cap (an older version never evicted)
+    except Exception:                                             # noqa: BLE001 - a status never fails on it
+        pass
     idx = _read_index(); ents = idx["entries"]
     by = {}
     for e in ents.values():

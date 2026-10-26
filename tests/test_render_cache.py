@@ -326,13 +326,13 @@ try:
     assert tm["exports"] >= 10 and tm["reused"] >= 5 and tm["offline"] >= 1 and tm["by_route"].get("in_fl"), tm
     st = m.fl_render_cache()
     assert st["used_mb"] > 0 and "render" in st["by_kind"] and "stems" in st["by_kind"], st
-    recycled = []                                                     # 'Windows': evicted folders go to the bin
-
-    def fake_recycle(paths):
-        for p_ in paths:
-            recycled.append(p_); shutil.rmtree(p_)
-        return {"recycled": list(paths)}
+    recycled = []                                 # evicted folders are deleted, never recycled: on the PC the
+                                                  # recycler refused the state folder and nothing was ever evicted
+    def fake_recycle(paths):                      # (the cache stood at 5.3 GB against a 2 GB cap)
+        recycled.append(paths)
+        raise PermissionError("outside FLH_ROOTS")
     m.files_recycle = fake_recycle
+    was_win = m.IS_WINDOWS; m.IS_WINDOWS = True
     os.environ["FLH_RENDER_CACHE_GB"] = str(4e5 / (1 << 30))         # ~400 KB: the oldest entries go
     small = []
     for i in range(3):
@@ -340,7 +340,15 @@ try:
         small.append(RC.put(f"blob{i}", "render", [{"src": f, "name": "b.wav", "mode": "copy"}]))
         time.sleep(0.01)
     assert RC.get("blob2") and RC.get("blob1") and not RC.get("blob0"), RC.status()
-    assert not os.path.exists(small[0]["files"][0]["path"]) and len(recycled) >= 5, recycled   # through the recycler
+    assert not os.path.exists(small[0]["files"][0]["path"]) and not recycled, recycled   # deleted, bin untouched
+    orphan = os.path.join(RC.cache_dir(), "orphan0123"); os.makedirs(orphan)                # a put that lost the
+    open(os.path.join(orphan, "x.wav"), "wb").write(b"0" * 1000)                           # index lock long ago
+    os.utime(orphan, (time.time() - 7200, time.time() - 7200))
+    young = os.path.join(RC.cache_dir(), "young0123"); os.makedirs(young)
+    tr = RC.trim()
+    assert tr["orphans_gone"] == 1 and not os.path.exists(orphan) and os.path.isdir(young), tr
+    shutil.rmtree(young)
+    m.IS_WINDOWS = was_win
     os.environ["FLH_RENDER_CACHE_GB"] = "0"                           # off: nothing reused
     assert RC.get("blob2") is None and not RC.enabled()
     os.environ.pop("FLH_RENDER_CACHE_GB")

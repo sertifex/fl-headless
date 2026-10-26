@@ -71,7 +71,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fl_music  # noqa: E402
 from fl_music import note_name, parse_note  # noqa: E402
 
-SERVER = {"name": "fl-headless", "version": "2.1.2"}
+SERVER = {"name": "fl-headless", "version": "2.1.3"}
 
 # Sent to the AI client on connect, so every session starts knowing how FL behaves and how the user wants it run.
 INSTRUCTIONS = """fl-headless drives FL Studio (Windows) and reads/writes .flp projects.
@@ -10061,6 +10061,31 @@ def _lock_free(name, kw):
         return False
 
 
+# live tools that act on the open project's channels, mixer, patterns or plugins: they wait while FL is still loading,
+# and one that targets what only a queued edit makes gets the queue in first (PC 2026-10-26: fl_channel_set right
+# after an edit hit FL mid-reload: 'no channel 8')
+LIVE_ORDERED_TOOLS = {"fl_state", "fl_channel_set", "fl_mixer_set", "fl_playlist_track_set", "fl_pattern_set",
+                      "fl_pattern_new", "fl_steps", "fl_batch", "fl_organize", "fl_mixer_info", "fl_plugin_params",
+                      "fl_plugin_set", "fl_plugin_set_value", "fl_plugin_preset", "fl_plugin_presets", "fl_plugin_info",
+                      "fl_plugin_preset_find", "fl_plugin_probe", "fl_plugin_map_learn", "fl_plugin_set_named"}
+
+
+_LIVE_MISSING_RE = re.compile(r"(?i)\bno (channel|mixer track|track|insert|pattern|plugin|effect)\b")
+
+
+def _live_ready(name):
+    """Before a live tool: wait (bounded) while FL is still loading a project. Queued edits are NOT forced in (a
+    build's edits keep sharing one reload; FL's own save keeps the live change when they go in) - unless the tool
+    targets something only a queued edit makes (then: in once, and the tool again)."""
+    if getattr(_SYNC_LOCAL, "busy", False):
+        return
+    try:
+        if IS_WINDOWS and _fl_load_busy(False):
+            _wait_load_out(_open_project_guess()[0])
+    except Exception:                                             # noqa: BLE001
+        pass
+
+
 def _fl_locked(name, fn):
     """TOOLS wrapper for a tool that drives FL: holds the FL lock while it runs (re-entrant). A background job
     holding FL refuses the call at once with 'busy'; a background check of the last edit steps aside. Read-only /
@@ -10078,6 +10103,16 @@ def _fl_locked(name, fn):
         if not _fl_acquire():
             raise RuntimeError(f"FL is busy ({_fl_busy_with()}), so {name} did nothing; try again when that's done")
         try:
+            if name in LIVE_ORDERED_TOOLS:
+                _live_ready(name)
+                try:
+                    return fn(*a, **kw)
+                except (ValueError, RuntimeError) as e:            # it targets what a queued edit makes: the
+                    if not (_LIVE_MISSING_RE.search(str(e)) and _pending_all()):   # queue goes in, once
+                        raise
+                    _sync_before(name)
+                    _live_ready(name)
+                    return fn(*a, **kw)
             return fn(*a, **kw)
         finally:
             _FL_LOCK.release()
@@ -16907,7 +16942,12 @@ def _reload_mode(project):
 
 # ---- speed: merged edits (one reload for a burst of edits) and live routes (no reload at all) ----------------------
 COALESCE_S = 2.5                 # quiet time after the last edit before FL gets the merged edits (one save+reload)
-COALESCE_BIG_S = 8.0             # ... for a project that takes long to load (several edits are likelier to merge)
+COALESCE_BIG_S = 8.0             # ... at least this for a project that takes long to load
+COALESCE_MAX_S = 60.0            # ... and up to its own load time (capped here): while Claude builds a song, the next
+                                 # edit usually comes within that, so a burst shares ONE reload instead of one each
+                                 # (PC 2026-10-26: a song with Splice INSTRUMENT sounds took 14-52 s per reload).
+                                 # Anything that needs FL to hold the edits (a render, a live setting, play, open)
+                                 # applies them at once.
 FAST_FORCE = None                # tests: True/False forces the fast paths on/off (default: on on Windows)
 
 
@@ -16931,7 +16971,9 @@ def _coalesce_s(project):
     if v <= 0:
         return 0.0
     c = project_load_cost(project).get("seconds") if project else None
-    return max(v, COALESCE_BIG_S) if c and c > LAZY_THRESHOLD_S else v
+    if c and c > LAZY_THRESHOLD_S:
+        return max(v, COALESCE_BIG_S, min(float(c), COALESCE_MAX_S))
+    return v
 
 
 def _autosync_wanted(project):
@@ -20116,7 +20158,7 @@ SHORT_DESC = {                               # hand-written listing text (<= 250
                  "role/register/rhythm, sections + energy. section=, part=, bars=, piano_roll=.",
     "flp_clashes": "Wrong / clashing notes between layers: rubs, non-chord melody notes, bass vs chord, muddy voicings, "
                    "out-of-range notes. Ranked with bar, parts, why and the fixing call; tolerance follows the genre.",
-    "fl_mix_engineer": "Mix engineer: measures the mix (live solo passes, stems or numbers) and proposes genre-aware "
+    "fl_mix_engineer": "Mix engineer: measures the mix (one cached export of every mixer track where FL allows, else live solo passes; stems or numbers) and proposes genre-aware "
                        "moves (gain, EQ, unmasking, compression, space, width, master). apply=true; revert_last=true.",
     "fl_listen": "Hear the song in the open FL (plays bars, records the speakers): loudness, peaks, tone, width per "
                  "section. Use it for checks, not renders.",
