@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.1.2 - 2026-10-26
+- **No renders nobody asked for.** New songs (`flh_new_song`, `fl_beat_from_reference`) no longer export stems in
+  the background to balance their levels, and `fl_sound_shape` no longer renders before and after each change.
+  Levels start from each sound's known loudness instead. A render runs when you ask for one (`fl_preview`,
+  `fl_listen`, `flp_balance`, the mix and finalize tools), or turn automatic renders back on with
+  `flh_auto_renders(enable=true)` (or `balance=true` / `check=true` per call).
+- **A silent render no longer blames the sound when there was nothing to play.** A channel with no notes in the
+  rendered range is reported as "no notes playing"; its INSTRUMENT pack is not marked silent (an empty channel had
+  marked LABS Strings as a pack that doesn't play). `silent_sounds` now lists and forgets those packs too.
+- New icon: just the fruit.
+
 ## 2.1.1 - 2026-10-26
 Fixes found making songs with 2.1.0.
 - **808s in the right octave.** FLEX's 808 presets play two octaves below the note you write (measured: Core 808s

@@ -15,6 +15,7 @@ for k in ("FLH_PLUGIN_DB", "FLH_FL_EDITION"):
     os.environ.pop(k, None)
 import numpy as np  # noqa: E402
 
+os.environ["FLH_AUTO_RENDERS"] = "1"                 # these parts test the automatic renders
 import fl_headless_mcp as m  # noqa: E402
 import flh_store, flh_catalog as C, flh_compose, flh_newsong as N  # noqa: E402
 ns = vars(m)
@@ -848,6 +849,20 @@ d = m._load(r["project"]); ev = m._events(d)
 k8 = [n[4] for p in m._patterns(d, ev).values() for n in p["notes"] if n[2] == c8]
 assert k8 and min(k8) >= 24 + 12, sorted(set(k8))                    # written up, heard at 808 depth
 flh_store.profile_set("Songs", {"prefer_flex": False})
+
+# automatic renders are off by default (2.1.2): a new song then balances nothing in the background - levels start
+# from each sound's known loudness - unless asked (balance=true) or turned on (flh_auto_renders)
+os.environ.pop("FLH_AUTO_RENDERS")
+assert m.auto_renders() is False and m.flh_auto_renders()["auto_renders"] is False
+r = N.flh_new_song("lofi", name="No Render", open=False)
+assert not flh_store.journal_get(r["project"]).get("balance_pending") and "levels" not in r, r.get("levels")
+r = N.flh_new_song("lofi", name="Asked Render", open=False, balance=True)
+assert isinstance(flh_store.journal_get(r["project"]).get("balance_pending"), dict), r.get("levels")
+assert m.flh_auto_renders(enable=True)["auto_renders"] is True and m.auto_renders() is True
+r = N.flh_new_song("lofi", name="Auto Render", open=False)
+assert isinstance(flh_store.journal_get(r["project"]).get("balance_pending"), dict)
+m.flh_auto_renders(enable=False)
+os.environ["FLH_AUTO_RENDERS"] = "1"
 
 # only the General MIDI Library left: a real stock preset still wins; GM only where nothing else fits
 for pk in GOOD:

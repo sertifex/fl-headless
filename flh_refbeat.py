@@ -936,9 +936,11 @@ COPY_NOTE = ("feel only: tempo, key, the chord loop's harmony, drum density and 
              "(a 'type beat')")
 
 
-def fl_beat_from_reference(reference, name=None, genre=None, sections=None, copy="feel", balance=True, open=True,
+def fl_beat_from_reference(reference, name=None, genre=None, sections=None, copy="feel", balance=None, open=True,
                            dry_run=False):
     T0 = time.time(); steps = {}
+    if balance is None:                                   # a render nobody asked for: only when turned on
+        balance = bool(H["auto_renders"]()) if H.get("auto_renders") else False
     mark = lambda s, t=[T0]: (steps.__setitem__(s, round(time.time() - t[0], 3)), t.__setitem__(0, time.time()))
     copy = str(copy or "feel").strip().lower()
     if copy not in ("feel", "tempo"):
@@ -1129,7 +1131,7 @@ def register(ns):
           sections=P("array", "the reference's sections [{name, start_s, end_s}] (default: found by loudness)", True,
                      items={"type": "object"}),
           copy=STR("feel (default: tempo, key, chord loop, density, tone) | tempo (tempo + key only)", True),
-          balance=BOOL("balance the levels once after opening (default true)", True),
+          balance=BOOL("balance the levels with one export after opening (default: only when flh_auto_renders is on)", True),
           open=BOOL("open the song in FL (default true)", True),
           dry_run=BOOL("measure + plan only, nothing built", True)))
     ns.setdefault("CROSS_PLATFORM", set()).add("fl_beat_from_reference")   # analysis + build anywhere; open is Windows

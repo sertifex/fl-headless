@@ -24,6 +24,7 @@ for k in ("FLH_PLUGIN_DB", "FLH_FL_EDITION", "FLH_TOOLSET"):
     os.environ.pop(k, None)
 import numpy as np  # noqa: E402
 
+os.environ["FLH_AUTO_RENDERS"] = "1"                 # these parts test the automatic renders
 import fl_headless_mcp as m  # noqa: E402
 import flh_store, flh_catalog, flh_compose, flh_newsong, flh_transcribe, flh_refbeat as R  # noqa: E402
 ns = vars(m)

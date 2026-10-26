@@ -71,7 +71,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fl_music  # noqa: E402
 from fl_music import note_name, parse_note  # noqa: E402
 
-SERVER = {"name": "fl-headless", "version": "2.1.1"}
+SERVER = {"name": "fl-headless", "version": "2.1.2"}
 
 # Sent to the AI client on connect, so every session starts knowing how FL behaves and how the user wants it run.
 INSTRUCTIONS = """fl-headless drives FL Studio (Windows) and reads/writes .flp projects.
@@ -6021,9 +6021,36 @@ SILENT_HINT = ("renders silent: the sound probably didn't load, or it has no not
                "installed plugin doesn't support, a patch with no keys there) - pick another sound")
 
 
-def _silent_channel_hint(project, d, chans):
+def _channel_plays(d, ch, start_bar=None, end_bar=None):
+    """True when the song plays at least one note of channel `ch` (unmuted pattern clips) between start_bar and
+    end_bar (None = the song's start / end); None when the file can't say."""
+    try:
+        ev = _events(d); P = _ppq(d); meters = _meter_map(d, ev); pats = _patterns(d, ev)
+        t0 = _bar_to_tick(start_bar, meters, P) if start_bar else 0
+        t1 = _bar_to_tick(end_bar, meters, P) if end_bar else None
+        for _, _, r in _clips(d, ev):
+            item = struct.unpack("<H", r[6:8])[0]
+            if item < PATTERN_BASE or struct.unpack("<H", r[18:20])[0] & CLIP_MUTE:
+                continue
+            pat = pats.get(item - PATTERN_BASE)
+            if not pat:
+                continue
+            pos = struct.unpack("<I", r[0:4])[0]; ln = struct.unpack("<I", r[8:12])[0]; s0 = _clip_offsets(r)[0]
+            for n in pat["notes"]:
+                if n[2] != ch or not (s0 <= n[0] < s0 + ln):
+                    continue
+                st = pos + n[0] - s0; en = st + max(1, n[3])
+                if en > t0 and (t1 is None or st < t1):
+                    return True
+        return False
+    except Exception:                                             # noqa: BLE001
+        return None
+
+
+def _silent_channel_hint(project, d, chans, rng=None):
     """Hints for channels that rendered silent alone; a LABS / INSTRUMENT pack among them is noted (silent_packs) so
-    the sound catalog and new songs rank it down."""
+    the sound catalog and new songs rank it down - only when the channel has notes in what was rendered (a channel
+    with nothing to play is silent for that reason, not because its sound failed)."""
     try:
         names = _structure(d)[1] if d is not None else {}
     except Exception:                                             # noqa: BLE001
@@ -6031,6 +6058,11 @@ def _silent_channel_hint(project, d, chans):
     out = []
     for c in sorted(chans):
         nm = (names.get(c) or {}).get("name") or f"channel {c}"
+        plays = _channel_plays(d, c, (rng or {}).get("start_bar"), (rng or {}).get("end_bar")) if d is not None else None
+        if plays is False:
+            out.append(f"channel {c} '{nm}' has no notes playing " + ("in this range" if rng else "in the song") +
+                       ": nothing to hear (its sound wasn't tested)")
+            continue
         pack = _note_silent_pack(project, c) if len(chans) == 1 else None
         out.append(f"channel {c} '{nm}' {SILENT_HINT}" + (f" (its pack '{pack}' is noted: the catalog and new songs "
                                                            "rank it down)" if pack else ""))
@@ -6350,12 +6382,13 @@ def fl_preview(channels=None, measure=True, keep=None, rules=None, timeout_s=900
         steps["measure"] = round(time.time() - T, 2)
     if res.get("silent"):                                         # nothing to hear: say why, plainly
         if sel is not None:
-            res["silent_hint"] = _silent_channel_hint(cur, d, sel)
+            res["silent_hint"] = _silent_channel_hint(cur, d, sel, rng)
         else:
             res["silent_hint"] = ("the whole song renders silent: no channel made a sound in FL's export (master "
                                   "muted / turned down, every channel muted, or the sounds didn't load) - check FL "
                                   "before trusting anything measured")
-    elif sel is not None and len(sel) == 1 and res.get("lufs") is not None:   # it plays: a pack noted silent before
+    elif sel is not None and len(sel) == 1 and res.get("lufs") is not None and \
+            _channel_plays(d, list(sel)[0], (rng or {}).get("start_bar"), (rng or {}).get("end_bar")):   # it plays: a pack noted silent before
         _clear_silent_pack(cur, list(sel)[0])                                 # (e.g. switched badly) is cleared
     if rules is not None:
         if rng is not None:
@@ -8239,6 +8272,32 @@ def _release_update(force=False):
     except Exception:                                              # noqa: BLE001 - a notice must never break a tool
         return None
     return None
+
+
+def auto_renders():
+    """Renders nobody asked for - the level balance after a new song, a sound tool's before/after check - run only
+    when turned on (flh_auto_renders(enable=true), or FLH_AUTO_RENDERS=1 in the server's env). Off by default: each
+    one holds FL for seconds to a minute, and a listen the user asks for (fl_preview, fl_listen, the mix tools) is
+    never affected."""
+    env = os.environ.get("FLH_AUTO_RENDERS")
+    if env is not None and env.strip() != "":
+        return env.strip().lower() not in ("0", "false", "no", "off")
+    return bool((_state() or {}).get("auto_renders", False))
+
+
+def flh_auto_renders(enable=None):
+    """Automatic renders on or off (default off): the level balance after flh_new_song / fl_beat_from_reference
+    and fl_sound_shape's before/after measuring. Renders you ask for (fl_preview, fl_listen, fl_mix_engineer,
+    fl_finalize ...) always run."""
+    if enable is not None:
+        _state({"auto_renders": bool(enable)})
+    on = auto_renders()
+    return {"auto_renders": on,
+            "means": ("new songs balance their levels with one export, sound tools measure before/after" if on else
+                      "no render unless one is asked for: levels start from each sound's known loudness; "
+                      "flp_balance(project) evens them with one export when you want"),
+            **({"note": "FLH_AUTO_RENDERS in the server's env decides"} if os.environ.get("FLH_AUTO_RENDERS", "").strip()
+               else {})}
 
 
 def flh_updates(enable=None, check_now=False):
@@ -16089,6 +16148,10 @@ TOOLS = {
                         _schema(query=_STR("Text to match, e.g. 'FLEX' or 'Limiter'"), limit=_INT("", True))),
     "fl_status": (fl_status, "Whether FL Studio is running, how many copies, its window title, open popups, the bridge "
                              "transport, and (once after each FL update) whether every project still reads.", _schema()),
+    "flh_auto_renders": (flh_auto_renders, "Automatic renders on/off (default off): the level balance after a new "
+                                           "song and fl_sound_shape's before/after measuring. Renders you ask for "
+                                           "(fl_preview, fl_listen, mix / finalize tools) always run.",
+                         _schema(enable=_BOOL("true: render automatically; false: only when asked", True))),
     "flh_updates": (flh_updates, "Is a newer fl-headless out? Looks at this project's GitHub releases page at most once a "
                                  "week (nothing about you is sent; fl_status / flh_welcome mention a new version on "
                                  "their own). enable=false turns that weekly look off, check_now=true looks right away.",

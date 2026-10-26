@@ -7,6 +7,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local"); os.environ["FLH_NO_WARM"] = "1"
+os.environ["FLH_AUTO_RENDERS"] = "1"                 # these parts test the automatic renders
 import fl_headless_mcp as m  # noqa: E402
 ns = vars(m)
 for mod in ("flh_store", "flh_catalog", "flh_mixeng", "flh_sounddesign"):

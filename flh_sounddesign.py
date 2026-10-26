@@ -754,10 +754,12 @@ def _sampler_moves(inst):
     return mv
 
 
-def fl_sound_shape(channel, words=None, amount="medium", check=True, undo=False, dry_run=False, knobs=None,
+def fl_sound_shape(channel, words=None, amount="medium", check=None, undo=False, dry_run=False, knobs=None,
                    plugin=None, variations=0, pick=None, layer=None, sound=None):
     """See the module doc; knobs / variations / layer are the other modes."""
     channel = int(channel)
+    if check is None:                                     # the before/after renders: only when asked or turned on
+        check = bool(H["auto_renders"]()) if H.get("auto_renders") else False
     if undo:
         return _undo(channel, _project())
     if layer:
@@ -992,7 +994,8 @@ def register(ns):
         "'=0.5' raw knob; out of range stops at the nearest end (said).",
         S(channel=INT("channel number"), words=STR("what it should sound like", True),
           amount=STR("subtle | medium | heavy | insane (default medium)", True),
-          check=BOOL("measure before/after + level match (default true, ~18 s)", True),
+          check=BOOL("measure before/after with two renders + level match (~18 s; default: only when flh_auto_renders is "
+                     "on)", True),
           undo=BOOL("put this channel back as it was", True), dry_run=BOOL("only the plan", True),
           knobs=ns["_p"](["string", "object"], "'list', or {knob: '-36 dB' sets, '+3 dB' '-1 oct' 'x0.5' move}", True),
           plugin=STR("knobs: 'instrument' (default), an effect's name or 'slot N'", True),

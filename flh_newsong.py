@@ -712,11 +712,12 @@ def silent_unmark(keys):
 def silent_sounds(action="list", key=None):
     """List the sounds remembered as silent on this PC, or forget them (action='clear': all, or key= one/several)."""
     act = str(action or "list").lower()
+    packs = H["_state"]().get("silent_packs") or {}
     if act == "list":
         cur = H["_state"]().get(SILENT_STATE) or {}
-        return {"silent_sounds": cur, "count": len(cur),
+        return {"silent_sounds": cur, "count": len(cur), **({"silent_packs": packs} if packs else {}),
                 "note": "skipped by flh_new_song / flp_balance swaps / FLEX search; silent_sounds(action='clear') "
-                        "forgets them (e.g. after reinstalling a pack)" if cur else "none remembered"}
+                        "forgets them (e.g. after reinstalling a pack)" if (cur or packs) else "none remembered"}
     if act not in ("clear", "forget", "remove"):
         raise ValueError("action: 'list' or 'clear' (key= to forget only some)")
     keys = [key] if isinstance(key, str) else list(key or [])
@@ -730,7 +731,11 @@ def silent_sounds(action="list", key=None):
             cur.pop(k)
         return len(gone)
     n = _silent_edit(drop)
-    return {"forgotten": n, "left": len(H["_state"]().get(SILENT_STATE) or {})}
+    if packs:                                              # INSTRUMENT packs a render found silent: same rule
+        sp = dict(packs); n += drop(sp)
+        H["_state"]({"silent_packs": sp})
+    return {"forgotten": n, "left": len(H["_state"]().get(SILENT_STATE) or {}) +
+            len(H["_state"]().get("silent_packs") or {})}
 
 
 def _result_key(r):
@@ -1970,9 +1975,12 @@ def start_balance(project, genre=None, wait_s=90, pending=False):
 
 
 def flh_new_song(genre=None, bpm=None, key=None, name=None, folder=None, vibe=None, kit=None, template=None,
-                 starter=True, variations=0, open=True, arrange=True, seed=None, balance=True, ear_candy=True,
+                 starter=True, variations=0, open=True, arrange=True, seed=None, balance=None, ear_candy=True,
                  collection=None):
     T0 = time.time(); steps = {}; notes = []
+    balance_asked = balance is not None
+    if balance is None:                                   # a render nobody asked for: only when turned on
+        balance = bool(H["auto_renders"]()) if H.get("auto_renders") else False
     coll = _new_song_collection(collection)               # a new song joins a collection only when asked
     mark = lambda s, t=[T0]: (steps.__setitem__(s, round(time.time() - t[0], 3)), t.__setitem__(0, time.time()))
     cm = _mod("flh_compose")
@@ -2463,6 +2471,9 @@ def _build(L):
         notes.append(f"channels kept from FL's template: {left}")
     out["file_s"] = round(time.time() - L["T0"], 2)
     want_balance = L.get("balance", True) and BALANCE_ON
+    if not want_balance and not L.get("balance_asked") and L.get("open", True):
+        out["levels"] = ("start levels from each sound's known loudness - no render (flp_balance(project) evens them "
+                         "with one export when you want; flh_auto_renders(enable=true) does it after every new song)")
     if want_balance and not (L.get("open", True) and H.get("IS_WINDOWS")):
         _balance_pending(dest, gname)                      # runs once when the song is opened with fl_open
         out["levels"] = "balance pending: runs in the background the first time fl_open opens this song"
@@ -2792,7 +2803,8 @@ def register(ns):
           variations=INT("extra beat variations to audition (0-5, default 0)", True),
           open=BOOL("open it in FL (default true)", True), arrange=BOOL("lay the beat out in the genre's form "
                                                                        "(default true)", True),
-          seed=INT("", True), balance=BOOL("balance the levels after opening (default true, ~40 s, background)", True),
+          seed=INT("", True), balance=BOOL("balance the levels with one export after opening (~40 s, background; "
+                                            "default: only when flh_auto_renders is on)", True),
           ear_candy=ns["_p"](["boolean", "string"], "off | organic | subtle | normal | lots | synthetic: the "
                              "arrangement's ear candy (organic = real-instrument moves on the song's own channels; "
                              "default: the collection's choice when the song joins one, else organic for piano-led / "

@@ -453,6 +453,16 @@ assert "Glass Piano" in (m._state().get("silent_packs") or {})
 assert "Glass Piano" in flh_catalog._silent_packs()                # the catalog ranks it down from now on
 r = m.fl_preview(exact=True)
 assert "whole song renders silent" in str(r.get("silent_hint")), r
+# a channel with no notes playing is silent for that reason: said so, and its pack is NOT noted (PC 2026-10-26: an
+# empty Pad channel got 'LABS - Strings' marked as a silent pack)
+d_ = m._load(proj); ev_ = m._events(d_)
+empty = next((c for c in sorted(m._channel_types(d_, ev_)) if m._channel_plays(d_, c) is False), None)
+if empty is not None:
+    flh_store.journal_update(proj, set={"channels": {str(empty): {"sound": "LABS - Strings / X", "plugin": "INSTRUMENT"}}})
+    r = m.fl_preview(channels=[empty], exact=True)
+    assert "has no notes playing" in r["silent_hint"][0], r["silent_hint"]
+    assert "LABS - Strings" not in (m._state().get("silent_packs") or {}), m._state().get("silent_packs")
+assert m._channel_plays(d_, 1) is True
 restore()
 print("K4 silent sounds said and noted ok")
 

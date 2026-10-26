@@ -126,5 +126,12 @@ NOTES.pop(2); del asked[:]
 r = NS.balance_song(song, "gospel")
 assert [2] not in asked and on_ch2()[1] == "Haunted Church Organ" and "no notes yet" in " ".join(r["notes"]), r
 assert not NS.silent_sounds()["silent_sounds"]
+# INSTRUMENT packs a render found silent are listed and forgotten the same way
+m._state({"silent_packs": {"LABS - Strings": {"seen": "2026-10-26"}, "LABS - Glass Piano": {"seen": "2026-10-24"}}})
+assert set(NS.silent_sounds()["silent_packs"]) == {"LABS - Strings", "LABS - Glass Piano"}
+assert NS.silent_sounds(action="clear", key="LABS - Strings")["forgotten"] == 1
+assert set(m._state()["silent_packs"]) == {"LABS - Glass Piano"}
+NS.silent_sounds(action="clear")
+assert not m._state().get("silent_packs") and "silent_packs" not in NS.silent_sounds()
 shutil.rmtree(tmp, True)
 print("balance silent ok")
