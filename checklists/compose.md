@@ -87,3 +87,10 @@ start on it, one sampler channel per kind, one FX insert, one save. Only FL + ea
 | EC8 | After the outro closed the filter, press play at bar 1 | The song starts open (or muffled where the intro clip says so), not stuck closed: songs without an intro get a short "Filter reset" clip at bar 1. `# PC-VERIFY` FL holds the last automation value. |
 | EC9 | `flp_arrange_song(song, ear_candy=false)` | No FX channels / files / filter clips; fills, drop-outs and stops as before. |
 | EC10 | Timing | First arrangement with FX: `steps_s.fx` well under 1 s on the PC (cached WAVs on later runs, ~0 s); still ONE save + reload. |
+
+## compose_write place_mode (2026-10-27, PC-VERIFY)
+| # | Do | Expect |
+|---|---|---|
+| PM1 | `flp_compose_write(song, pattern=<a section already in the playlist>, place=[[<its bar>, 8]])` | ONE clip of it in FL's playlist, now 8 bars long (it isn't heard twice); `clips_moved: 1`. |
+| PM2 | Same with `place_mode='add'` at another bar | A second clip of it there (a repeat), on a free track as before. |
+| PM3 | `flp_compose` / `flp_arrange_song` / extend on a song (they pass place_mode='add' for repeats) | Choruses repeat as before: every occurrence has its clip, nothing moved away from an earlier occurrence. |

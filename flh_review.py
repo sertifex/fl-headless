@@ -20,7 +20,7 @@ import flh_store as S
 H = {}
 
 SEV = {"high": 0, "med": 1, "low": 2}
-KIND_ORDER = ["silent_instrument", "muted_track", "master_muted", "trial_plugin", "arc_peak_not_loudest",
+KIND_ORDER = ["silent_instrument", "content_missing", "silent_knob", "muted_track", "master_muted", "trial_plugin", "arc_peak_not_loudest",
               "arc_quiet_section_loud", "correlation", "clipping", "true_peak", "loudness_target", "missing_sample",
               "vst_missing", "automation_target", "out_of_range", "abrupt_entrance", "clash", "arc_no_build", "arc_flat", "arc_wide", "arc_early_peak",
               "silent_section", "master_widener", "muted_with_notes", "route_missing", "balance", "mud", "harsh",
@@ -398,10 +398,200 @@ def _ownership(label, prof, is_vst):
     return None
 
 
-def fl_doctor(project):
+# ============================================================================= practically silent channels
+LEVEL_DEFAULT = {"level_words": ["volume", "vol", "gain", "level", "output", "master", "amp", "amplitude", "dynamics",
+                                 "dynamic", "expression", "expr", "loudness"],
+                 "weak_words": ["velocity amount", "vel amount", "velocity sensitivity", "velocity sens"],
+                 "not_level_words": ["send", "reverb", "verb", "delay", "echo", "chorus", "lfo", "mod", "env",
+                                     "envelope", "attack", "decay", "sustain", "release", "hold", "filter", "cutoff",
+                                     "resonance", "drive", "pan", "width", "noise", "fx", "eq", "comp", "mix", "sub",
+                                     "pitch", "tune", "fine", "semi", "boost", "saturation", "threshold", "sidechain",
+                                     "duck", "glide", "porta", "osc", "voice", "unison", "detune"],
+                 "midi_cc": {"7": "volume (CC7)", "11": "expression (CC11)"},
+                 "zero_value": 0.001, "silent_db": -60.0, "max_params_live": 400}
+_LEVEL = {}
+
+
+def level_rules():
+    """Which plugin parameters set how loud an instrument plays (data/doctor/level_params.json, merged with the
+    user's <state folder>/doctor/level_params.json: lists add up, dicts / numbers override). Words are matched
+    against the plugin's OWN parameter names (any plugin), never a vendor list."""
+    if _LEVEL:
+        return _LEVEL
+    cfg = {k: (list(v) if isinstance(v, list) else dict(v) if isinstance(v, dict) else v) for k, v in
+           LEVEL_DEFAULT.items()}
+    paths = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "doctor", "level_params.json")]
+    try:
+        paths.append(os.path.join(os.path.dirname(H["STATE"]), "doctor", "level_params.json"))
+    except Exception:
+        pass
+    import json
+    for i, p in enumerate(paths):
+        try:
+            with open(p, encoding="utf-8") as f:
+                u = json.load(f)
+        except (OSError, ValueError):
+            continue
+        for k, v in u.items():
+            if k.startswith("_"):
+                continue
+            if i == 0:                                             # the shipped table: replaces the built-in copy
+                cfg[k] = list(v) if isinstance(v, list) else dict(v) if isinstance(v, dict) else v
+            elif isinstance(v, list) and isinstance(cfg.get(k), list):   # the user's: adds to it
+                cfg[k] = cfg[k] + [x for x in v if x not in cfg[k]]
+            elif isinstance(v, dict) and isinstance(cfg.get(k), dict):
+                cfg[k].update(v)
+            else:
+                cfg[k] = v
+    _LEVEL.update(cfg)
+    return _LEVEL
+
+
+def _words_of(name):
+    """'outputGain' / 'Out_Level 2' -> ['output', 'gain'] / ['out', 'level', '2'] (camelCase and separators)."""
+    s = re.sub(r"([a-z])([A-Z])", r"\1 \2", str(name or ""))
+    return [w for w in re.split(r"[^a-z0-9]+", s.lower()) if w]
+
+
+def level_kind(name, cfg=None):
+    """'level' when a parameter name says it sets the instrument's level (volume / gain / dynamics / expression ...),
+    'weak' for velocity-amount style names (0 = no velocity response on some plugins, silent on others), else None."""
+    cfg = cfg or level_rules(); ws = _words_of(name)
+    if not ws or set(ws) & set(cfg["not_level_words"]):
+        return None
+    if set(ws) & set(cfg["level_words"]):
+        return "level"
+    flat = " ".join(ws)
+    if any(w in flat for w in cfg["weak_words"]):
+        return "weak"
+    return None
+
+
+def _shows_silent(value, text, cfg):
+    """A level knob that sits at silence by FL's display text (-inf / <= silent_db dB / 0 % / 0 / Off), else by its
+    0..1 value when the text says nothing."""
+    t = str(text or "").strip().lower()
+    if t:
+        if "inf" in t or "∞" in t or t in ("off", "mute", "muted", "silent", "none"):
+            return True
+        m = re.search(r"-?\d+(?:[.,]\d+)?", t)
+        if m:
+            v = float(m.group(0).replace(",", "."))
+            if "db" in t:
+                return v <= float(cfg["silent_db"])
+            return v <= 0.0
+    try:
+        return float(value) <= float(cfg["zero_value"])
+    except (TypeError, ValueError):
+        return False
+
+
+def quiet_knobs_static(state, cfg=None):
+    """Level-type parameters at 0 in a saved plugin state that FL can't show us (no FL): JUCE-style XML <PARAM>s
+    whose values are 0..1 (they carry a MIDI mapping ccFrom/ccTo - a gain stored in dB, where 0 = unity, is never
+    read as silent). By the param's own id words, or its MIDI CC (7 = volume, 11 = expression, the MIDI standard).
+    -> [{param, name, value, why}]
+    PC-VERIFY: a LABS / INSTRUMENT channel saved with Dynamics + Expression at 0 is flagged; one at normal levels
+    isn't (checklists/review.md R1)."""
+    cfg = cfg or level_rules()
+    xml = _juce_xml(state or b"")
+    if not xml:
+        return []
+    out = []
+    for tag in re.findall(r"<PARAM\s[^>]*>", xml):
+        a = dict(re.findall(r'([A-Za-z_:]+)="([^"]*)"', tag))
+        if "ccFrom" not in a and "ccTo" not in a:                    # units unknown: can't tell 0 from unity
+            continue
+        try:
+            v = float(a.get("value", "1"))
+        except ValueError:
+            continue
+        if v > float(cfg["zero_value"]):
+            continue
+        pid = a.get("id", "")
+        cc = str(a.get("cc", "-1")).split(".")[0]
+        kind = level_kind(pid, cfg)
+        why = cfg["midi_cc"].get(cc) if cc in cfg["midi_cc"] else (pid if kind else None)
+        if why:
+            out.append({"param": pid, "name": why, "value": v, "kind": kind or "level"})
+    return out
+
+
+def quiet_knobs_live(index, cfg=None):
+    """Level-type parameters at silence on a channel's instrument in the open FL, by the plugin's own parameter names
+    and FL's display text. -> ({plugin, params: [{param, name, value, text, kind}]}) or raises (bridge errors).
+    PC-VERIFY: fl_doctor(live=true) on a song with a synth whose Volume / Output knob is at 0 names that knob; no
+    false flags on a normal song with a few VSTs and FL natives (checklists/review.md R3)."""
+    cfg = cfg or level_rules()
+    r = H["fl_plugin_params"](index=int(index), slot=-1)
+    out = []
+    for p in (r or {}).get("params") or []:
+        kind = level_kind(p.get("name"), cfg)
+        if kind and _shows_silent(p.get("value"), p.get("text"), cfg):
+            out.append({"param": p.get("param"), "name": p.get("name"), "value": p.get("value"), "text": p.get("text"),
+                        "kind": kind})
+    return {"plugin": (r or {}).get("plugin"), "params": out}
+
+
+def _quiet_issues(project, d, ev, chans, played, cname, live, notes):
+    """practically silent channels: content the state points at isn't on this PC (CONTENT_CHECKS), or a level knob
+    (volume / gain / dynamics / expression ... by the plugin's own names) at 0 on a channel that plays notes."""
+    issues = []; cfg = level_rules(); pay = H["_payload"]
+    status = H.get("plugin_content_status")
+    for i, c in sorted(chans.items()):
+        if c.get("type") not in (None, 2) or "state" not in c:
+            continue
+        n = played.get(i, 0); st = pay(d, ev[c["state"]]); label = _plugin_label(d, ev, c)
+        cs = status(label, st) if callable(status) else None
+        if cs and cs.get("problem"):
+            issues.append(_iss(("med" if cs.get("soft") else "high") if n else "low", "content_missing", cname(i),
+                               f"{cs.get('family')} '{cs.get('sound')}'" + (f" ({n} notes)" if n else "") + ": "
+                               + cs["problem"], cs.get("fix") or "switch the channel to a sound you have"))
+        if not n:
+            continue
+        for q in quiet_knobs_static(st, cfg):
+            issues.append(_iss("high" if q["kind"] == "level" else "low", "silent_knob", cname(i),
+                               f"{label}: its {q['name']} is at {q['value']:g} in the saved state - the channel plays "
+                               f"{n} notes practically silent",
+                               _call("flp_plugin_settings", {"project": C.Raw("project"), "output": C.Raw("output"),
+                                                             "channel": i, "params": {q["param"]: 1.0}}) +
+                               " (or turn it up in the plugin; live: fl_plugin_params index=" + str(i) + ")"))
+    if live:
+        try:
+            path, _ = H["_open_project_guess"]()
+        except Exception:
+            path = None
+        same = path and os.path.normcase(os.path.abspath(path)) == os.path.normcase(os.path.abspath(project))
+        if not same:
+            notes.append("live knob check skipped: FL doesn't have this project open")
+        else:
+            for i, c in sorted(chans.items()):
+                if c.get("type") not in (None, 2) or not c.get("plugin") or not played.get(i):
+                    continue
+                try:
+                    r = quiet_knobs_live(i, cfg)
+                except Exception as e:                             # noqa: BLE001 - one channel never stops the check
+                    notes.append(f"live knob check of channel {i} failed: {str(e)[:80]}")
+                    continue
+                for q in r["params"]:
+                    issues.append(_iss("high" if q["kind"] == "level" else "low", "silent_knob", cname(i),
+                                       f"{r.get('plugin') or _plugin_label(d, ev, c)}: '{q['name']}' (param "
+                                       f"{q['param']}) shows '{q.get('text')}' in FL - the channel plays "
+                                       f"{played[i]} notes practically silent" +
+                                       ("" if q["kind"] == "level" else " (if 0 means 'no velocity' here, ignore)"),
+                                       _call("fl_plugin_set_value", {"index": i, "param": q["param"],
+                                                                     "target": C.Raw("a normal level")}) +
+                                       " or " + _call("fl_plugin_set", {"index": i, "param": q["param"],
+                                                                        "value": 0.8}) + ", then fl_save"))
+    return issues
+
+
+def fl_doctor(project, live=False):
     """Static check of a .flp (no FL needed): trial / not-owned plugins, Spitfire instruments listening on one MIDI
-    channel (silent), unused or muted channels, routing to missing / muted mixer tracks, automation targets,
-    empty patterns on the playlist, missing samples, master stereo widening, long dead tail."""
+    channel (silent), practically silent channels (content not on this PC, a level knob at 0 - live=true also asks
+    FL for every playing channel's knobs by their own names), unused or muted channels, routing to missing / muted
+    mixer tracks, automation targets, empty patterns on the playlist, missing samples, master stereo widening, long
+    dead tail."""
     t0 = time.time()
     d = H["_load"](project); ev, blocks, fx = H["_structure"](d); P = H["_ppq"](d); pay = H["_payload"]
     try:
@@ -503,6 +693,12 @@ def fl_doctor(project):
                                _call("flp_remove_effect", {"project": C.Raw("project"), "output": C.Raw("output"),
                                                            "track": 0, "slot": sl}) +
                                ", or widen single layers instead; confirm with fl_review (corr > 0.3)"))
+    # ---- practically silent: content not on this PC, level knobs at 0 (by the plugin's own names)
+    doc_notes = []
+    try:
+        issues += _quiet_issues(project, d, ev, chans, played, cname, live, doc_notes)
+    except Exception as e:                                         # never let this check break the doctor
+        doc_notes.append(f"silent-channel check failed: {str(e)[:100]}")
     # ---- channels: unused, muted, routing
     for i, c in sorted(chans.items()):
         typ = c.get("type"); n_pl = played.get(i, 0); n_mu = muted_only.get(i, 0)
@@ -627,6 +823,7 @@ def fl_doctor(project):
                         "automation": autos[:20], "song_bars": round(song_end / bar_t, 2),
                         "last_sound_bar": round(1 + last_sound / bar_t, 2),
                         **({"notes_check": score} if score else {})},
+            **({"notes": doc_notes} if doc_notes else {}),
             "took_s": round(time.time() - t0, 2)}
 
 
@@ -1439,18 +1636,23 @@ def _tone_norm(usable):
 def _issues(rows, whole, role, prof, final, project, jr, live):
     import numpy as np
     out = list(arc_check(rows, role, arc_style(jr, prof)))
-    widener = None
+    widener = None; quiet = []
     if project:
         try:
-            dr = fl_doctor(project)
+            dr = fl_doctor(project, live=live)
             widener = next((i for i in dr["issues"] if i["kind"] == "master_widener"), None)
+            quiet = [i for i in dr["issues"] if i["kind"] in ("silent_knob", "content_missing") and
+                     i["severity"] in ("high", "med")]
         except Exception:
             pass
+    out += quiet                                  # a channel that can't be heard: say which and why (fl_doctor's find)
     for r in rows:
         w = _sec_where(r)
         if r.get("lufs") is None or r["lufs"] < -50:
             out.append(_iss("med", "silent_section", w, f"{r['name']} is nearly silent ({r.get('lufs')} LUFS)",
-                            "check for a silent instrument / muted track there: fl_doctor"))
+                            ("practically silent channel(s): " + "; ".join(f"{q['where']}: {q['what'][:80]}"
+                                                                          for q in quiet[:2]) if quiet else
+                             "check for a silent instrument / muted track there: fl_doctor")))
             continue
         if r["corr"] < 0.05:                    # wide reverbs / pads sit ~0.1-0.4; below 0 is phase trouble (always high)
             fix = (f"{widener['what'].split(':')[0]} - {widener['fix']}" if widener else
@@ -1616,7 +1818,11 @@ def _review_live(project, sections, prof, balance):
 
 
 # ============================================================================= abrupt entrances
-AB_DEFAULT = {"jump_lu": 8.0, "hold_lu": 5.0, "band_db": 12.0, "band_hold_db": 9.0, "section_guard_s": 0.6}  # PC-VERIFY: no noise on drum-heavy renders
+AB_DEFAULT = {"jump_lu": 8.0, "hold_lu": 5.0, "band_db": 12.0, "band_hold_db": 9.0, "section_guard_s": 0.6,  # PC-VERIFY: no noise on drum-heavy renders
+              # a struck / plucked attack (piano, harp, mallets, guitar...) out of a dying tail jumps by nature: not
+              # flagged when the level falls >= struck_decay_db from the attack's peak within ~1.3 s, never swells
+              # back over it, and the second before it fell >= tail_fall_db from its loudest to its end
+              "struck_decay_db": 4.0, "tail_fall_db": 2.0}
 AB_BANDS = [("low", 20, 250), ("mid", 250, 2000), ("high", 2000, 8000)]
 
 
@@ -1629,12 +1835,35 @@ def _ab_cfg():
     return cfg
 
 
-def abrupt_events(x, fs, p100, starts_s, song_lufs, cfg=None):
+def struck_entry(p100, t, cfg=None):
+    """Is the jump at t s a struck / plucked attack out of a decaying tail (a piano chord after the last one died
+    away, a rolled chord in a prelude) rather than a layer slamming in? From the level alone (any instrument): after
+    the attack's peak (first 0.4 s) the level falls >= struck_decay_db by 0.8-1.3 s and never swells back over the
+    peak, and the second before it fell >= tail_fall_db from its loudest to its last 0.3 s (or was near-silent).
+    PC-VERIFY: a slow solo-piano prelude render (rolled chords after quiet single lines) gives no abrupt_entrance;
+    strings / a pad slamming in mid-section still does (checklists/review.md R4)."""
+    import numpy as np
+    cfg = cfg or _ab_cfg()
+    p = np.asarray(p100, float); b = int(round(t / 0.1))
+    if b < 3 or b + 13 > len(p):
+        return False
+    dB = lambda v: 10 * np.log10(max(float(v), 1e-20))
+    peak = float(p[b:b + 4].max())
+    late = float(p[b + 8:b + 13].mean())
+    after = p[b + 4:b + 13]
+    decays = dB(late) <= dB(peak) - float(cfg["struck_decay_db"]) and float(after.max()) <= peak * 10 ** 0.1
+    pre = p[max(0, b - 10):b]
+    tail = dB(pre.max()) - dB(pre[-3:].mean()) >= float(cfg["tail_fall_db"]) or dB(pre.mean()) <= dB(peak) - 30
+    return bool(decays and tail)
+
+
+def abrupt_events(x, fs, p100, starts_s, song_lufs, cfg=None, skipped=None):
     """Sudden sustained level jumps in a render: [(t_s, jump_dB, 'loudness' | band name, held_dB)].
     Loudness: the next 0.3 s is >= jump_lu above the 0.5 s before and the next 1 s stays >= hold_lu above it.
     Bands (low / mid / high, 100 ms FFT blocks): the same with band_db / band_hold_db, when that band is a real
     part of the sound afterwards (within 15 dB of the total). Not within section_guard_s of a section start (an
-    entrance is expected there), not in the first second, not out of near-silence (a stop / restart)."""
+    entrance is expected there), not in the first second, not out of near-silence (a stop / restart), not a struck
+    attack out of a decaying tail (struck_entry: those go to `skipped`, a list the caller may pass)."""
     import numpy as np
     cfg = cfg or _ab_cfg()
     p = np.asarray(p100, float); nb = len(p)
@@ -1685,7 +1914,14 @@ def abrupt_events(x, fs, p100, starts_s, song_lufs, cfg=None):
                 out[-1] = (min(t, out[-1][0]), j, kind, h)
             continue
         out.append((t, j, kind, h))
-    return out
+    keep = []
+    for e in out:
+        if struck_entry(p, e[0], cfg):                              # a struck chord out of a dying tail: by nature
+            if skipped is not None:
+                skipped.append(e)
+            continue
+        keep.append(e)
+    return keep
 
 
 def _bar_at(tf, t, hi_bar):
@@ -1709,12 +1945,22 @@ def abrupt_issues(x, fs, p100, starts_s, song_lufs, project, tf, shift, notes):
             ent = fn(project, all=True)
         except Exception as e:
             notes.append(f"symbolic entrance check skipped: {str(e)[:100]}")
-    ev = abrupt_events(x, fs, p100, starts_s, song_lufs) if p100 is not None else []
+    struck = []
+    ev = abrupt_events(x, fs, p100, starts_s, song_lufs, skipped=struck) if p100 is not None else []
     out, used = [], set()
     bar_of = None
     if tf and ent:
         hi_bar = max(e["bar"] for e in ent) + 64
         bar_of = lambda t: _bar_at(tf, t + shift, hi_bar)
+    if struck:                                                     # the notes' entrance at a struck attack: not
+        if tf and ent:                                             # an abrupt layer either
+            for t, *_ in struck:
+                for k, e in enumerate(ent):
+                    if abs(tf(e["bar"]) - shift - t) <= 0.4:
+                        used.add(k)
+        notes.append(f"{len(struck)} jump(s) not flagged: struck attacks out of a decaying tail (a piano / plucked "
+                     "chord is meant to jump) - at " + ", ".join(f"{int(t // 60)}:{t % 60:04.1f}" for t, *_ in
+                                                                 struck[:6]))
     for t, j, kind, h in ev[:8]:
         who = []
         if bar_of:
@@ -1805,10 +2051,13 @@ def register(ns):
         pass
     ns["TOOLS"]["fl_doctor"] = (
         fl_doctor, "Static check of a .flp in under a second, no FL needed: trial / not-owned plugins, Spitfire/BBC/"
-        "LABS instruments listening on one MIDI channel (silent), unused / muted channels, routing to missing or muted "
+        "LABS instruments listening on one MIDI channel (silent), practically silent channels (the sound's content "
+        "isn't on this PC, or a volume / gain / dynamics / expression knob at 0 - by the plugin's own parameter "
+        "names; live=true also reads them from the open FL), unused / muted channels, routing to missing or muted "
         "mixer tracks, automation targets, empty patterns on the playlist, missing samples, master stereo widener, "
         "dead tail. Ranked issues with the tool to fix each. Run it before every render.",
-        Sch(project=ns["_FLP"]))
+        Sch(project=ns["_FLP"], live=ns["_BOOL"]("also read every playing channel's level knobs from the open FL "
+                                                 "(one bridge call per channel; default false)", True)))
     ns["TOOLS"]["fl_review"] = (
         fl_review, "Review a song per section: loudness (LUFS, max short-term), true peak, L/R correlation, tone "
         "balance, crest; ranked issues: loudness arc (peak sections - journal peak:true, else chorus / drop / climax "

@@ -11,3 +11,7 @@
 5. First FLEX index on a slow disk (delete `%LOCALAPPDATA%\fl-headless\flex_index.json`): `flh_call('flex_list')`
    while another call builds it shows `index_note` 'building the FLEX preset index (n%...)' with a partial total;
    afterwards no note and the full total, and a second server start reads every pack from the cache.
+6. PC-VERIFY (2.2.0) `flp_flex_preset(song, preset='<a preset>')` with no channel: the new FLEX channel plays through
+   its own free mixer insert named after it (the result's `insert`), never the insert of the channel it was copied
+   from (e.g. the Bass insert); `insert='same'` keeps the old behaviour. `preset='<name in other case / with _>'`
+   finds the preset; an unclear name ('BRS') is refused listing the closest ones.

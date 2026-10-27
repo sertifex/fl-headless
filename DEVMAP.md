@@ -119,7 +119,7 @@ Also: `flh_run()` (batched steps), `flp_edit()` (batched file edits), `fl_render
 | area | tests |
 |---|---|
 | .flp format, parse, robustness | test_flp_format, test_corpus, test_fuzz, test_bughunt, test_core_*, test_release_fixes, test_markers_fl26 (markers / track names in FL 2026's layout) |
-| editing, playlist, batches | test_edit_batch, test_playlist*, test_aliases, test_audio_clip, test_sample_vars |
+| editing, playlist, batches | test_edit_batch, test_playlist*, test_aliases, test_audio_clip, test_sample_vars, test_note_writers (replace_part into / hidden, compose_write place_mode, write_notes clear_song + MIDI meter, `flp_meter()`, `flp_new_from()`, `flp_patterns_set()`) |
 | open / save / reload / lazy | test_bughunt_release_live (guarded saves `_save_guard_why()`, same-title twins `_open_project_identify()`, solo renders load first), test_open_*, test_reload* (test_reload_settle / test_open_safety: reload proven by content or the marker; FL keeping its old copy blocks saves), test_focus (FL to the front), test_fresh_read (composer reads after FL saves), test_save_prompt, test_verify_snapshot, test_job_autosync, test_core_lazy, test_core_live_notes, test_live_slide |
 | render / listen / preview | test_core_render_in_fl, test_render_cache, test_listen, test_preview*, test_stem_groups, test_slow_pc, test_soft_deadline, test_preview_range (format='mp3' / flac, section / bar ranges cut from the whole-song render, MP3 frame cuts `_mp3_cut()`) |
 | compose / new song / perform | test_compose*, test_newsong, test_perform*, test_realism, test_refbeat, test_flip, test_rise, test_fx, test_shape, test_ending_sim |

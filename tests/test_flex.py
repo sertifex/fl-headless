@@ -88,6 +88,30 @@ a, z = m._channel_block(d, ev, r["new_channel"])
 blob = b"".join(m._payload(d, e) for e in ev[a:z + 1] if e["id"] == m.EV_PLUGIN_STATE)
 assert b"Core Brass" in blob and b"BRS Trumpets Staccato" in blob and b"Warm Haze" not in blob, r2
 assert "flp_flex_preset" in m.TOOLS and "flex_list" in m.TOOLS
+# a new FLEX channel gets its own free mixer insert, named after it (PC 2026-10-27: it landed on the Bass insert)
+d = m._load(song); ev = m._events(d); ins = m._channel_inserts(d, ev)
+assert r.get("insert") and ins[r["new_channel"]] == r["insert"], (r, ins)
+assert list(ins.values()).count(r["insert"]) == 1 and r["insert"] not in (3, 4, 5, 6), (r, ins)   # base.flp: 3-6 used
+assert m._mixer_names(d, ev).get(r["insert"]) == "Warm Haze", m._mixer_names(d, ev)
+rs = F.flp_flex_preset(song, song, "Glass Choir", insert="same", name="Choir Pad")
+d = m._load(song); ev = m._events(d)
+assert m._channel_inserts(d, ev)[rs["new_channel"]] == 3 and rs.get("insert") == 3, rs   # copied channel 0's insert
+assert any(c.get("name") == "Choir Pad" for c in m.flp_list(song)["channels"] if c["index"] == rs["new_channel"]), \
+    m.flp_list(song)["channels"]
+# names as shown vs as stored: spelling / case / separators match; unclear names are refused with the closest
+assert F.find("warm_haze")["preset"] == "Warm Haze" and F.find("BRS horns-sustain")["preset"] == "BRS Horns Sustain"
+assert F.find("Horns Sustain")["preset"] == "BRS Horns Sustain"           # every word asked, one preset
+try:
+    F.flex_fst("BRS", "Core Brass"); raise SystemExit("an unclear name must be refused")
+except ValueError as e:
+    assert "several match" in str(e) and "BRS Epic Brass" in str(e) and "nothing was changed" in str(e), e
+# fl_doctor's content check for FLEX: the pack a channel's state names isn't installed
+st_ok = m._payload(open(F.flex_fst("Warm Haze")[0], "rb").read(), F._state_span(open(F.flex_fst("Warm Haze")[0], "rb").read()))
+assert F.content_check("FLEX", st_ok)["problem"] is None
+st_gone = F.patch_state(st_ok, "Vanished Pack", "Gone Preset")
+cc = m.plugin_content_status("FLEX", st_gone)
+assert cc and cc["family"] == "FLEX" and "isn't installed" in cc["problem"] and "flp_flex_preset" in cc["fix"], cc
+assert F.content_check("Fruity Wrapper", st_gone) is None
 
 # FLEX 808 presets sound two octaves below the written note (PC 2026-10-26: Heavy Atom, Sub Below, 808 Clean all
 # played a written C2 at C0): the offset goes in the journal like a pitched sampler's, and a swap moves the notes

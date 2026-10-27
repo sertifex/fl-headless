@@ -97,7 +97,8 @@ m.time.sleep = lambda s: real_sleep(min(s, 0.01))
 m.BRIDGE.call = lambda *a, **k: {}
 m._save_in_fl_and_wait = lambda project, wait_s=8.0, stop=None: True        # FL saved what it holds = the edit
 r = m._verify_loaded(p, written, want, False, pre, None)
-assert r["verified"] is True and r["checked"] == ["tempo"] and r["not_checked"], r
+assert r["verified"] is True and r["checked"][0] == "tempo" and r["not_checked"], r   # (+ tempo_lane: the
+# fixture's pattern holds a recorded tempo event at bar 1, which flp_set_tempo moves too)
 m.time.sleep = real_sleep
 print("verify ok")
 

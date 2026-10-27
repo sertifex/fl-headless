@@ -259,7 +259,7 @@ def oirf(p, on_save="no", discard_ok=None):
     return len([e for e in EV if e == "ctrl+o"]) > 1               # the first: no dialog within the wait (FL busy)
 
 
-def busy(bridge_up=False):
+def busy(bridge_up=False, **k):
     BUSY["n"] -= 1
     if BUSY["n"] < 0 and not LATE["up"] and "esc 44" not in EV:
         LATE["up"] = True                                         # the load is over: the queued Ctrl+O's Open shows
@@ -288,7 +288,7 @@ print("busy FL: no second Ctrl+O on top ok")
 import struct  # noqa: E402
 BLANK7 = copy("Empty Template.flp")
 m._reload_in_fl = REAL_RELOAD
-m._fl_load_busy = lambda bridge_up=False: False
+m._fl_load_busy = lambda bridge_up=False, **k: False
 m.fl_dialogs = lambda: []
 m._blank_project = lambda: BLANK7
 m.MARKER_GRACE_S = 0.1; m.BLANK_LEAVE_S = 0.5; m.BLANK_LOAD_S = 0.5; m.RELOAD_SETTLE_S = 2.0

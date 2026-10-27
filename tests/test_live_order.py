@@ -34,8 +34,11 @@ def load_busy(bridge_up=False):
     return busy["n"] >= 0
 
 
-m._fl_load_busy = load_busy
-m._wait_load_out = lambda project, wait_s=None, bridge_up=False: calls.append(("wait", project)) or 0.0
+m._fl_load_busy = lambda bridge_up=False, **k: True        # CPU busy forever: never a reason to wait
+m._fl_loading_now = load_busy
+m._load_cost_guess = lambda project: (1.0, "test")
+_sleep = m.time.sleep
+m.time.sleep = lambda s: calls.append(("wait", s))
 m._open_project_guess = lambda: (song, "Song")
 m.IS_WINDOWS = True
 live = m._fl_locked("fl_channel_set", lambda **k: calls.append(("ran", k)) or {"ok": True})
@@ -67,4 +70,5 @@ m._fl_locked("fl_transport", lambda **k: calls.append(("ran", k)) or 1)(action="
 assert [c[0] for c in calls] == ["ran"], calls                             # transport: not a live-ordered tool
 assert m.LIVE_ORDERED_TOOLS <= set(m.TOOLS) | {"fl_organize", "fl_steps", "fl_batch"}, \
     sorted(m.LIVE_ORDERED_TOOLS - set(m.TOOLS))
+m.time.sleep = _sleep
 print("ok")

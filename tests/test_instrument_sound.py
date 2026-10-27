@@ -59,4 +59,46 @@ assert m._instrument_saved_state("Strings", "LABS_STRINGS_LONG") is None
 # clears it again
 assert m._note_silent_pack(out, ch) == "LABS - Choir" and "LABS - Choir" in m._state()["silent_packs"]
 assert m._clear_silent_pack(out, ch) == "LABS - Choir" and "LABS - Choir" not in (m._state().get("silent_packs") or {})
+
+# PC 2026-10-27: an unmatched preset / patch OVERWROTE a working state (FL: 'Content Not Found', silent), and 'Glass
+# Grand Soft' loaded the pack's first preset. Now: matched across spellings, else refused with the real names.
+for f in os.listdir(m.SOUNDS):
+    os.remove(os.path.join(m.SOUNDS, f))                     # no saved sounds: the state is edited
+gp = os.path.join(lib, "LABS - Glass Piano")
+for sub, names, ext in (("Presets", ["Anthem", "Glass_Grand_Soft", "Glass Grand Hard"], ".zpreset"),
+                        ("Patches", ["LABS_Glass_Grand_Soft", "LABS_Glass_Grand_Hard", "LABS_Anthem"], ".zmulti")):
+    os.makedirs(os.path.join(gp, sub, "v1.2.0"))
+    for n in names:
+        open(os.path.join(gp, sub, "v1.2.0", n + ext), "wb").write(b"x")
+open(os.path.join(gp, "Samples.bin"), "wb").write(b"\0" * 1_100_000)
+assert m._match_name("Glass Grand Soft", ["Anthem", "Glass_Grand_Soft", "Glass Grand Hard"])[:2] == \
+    ("Glass_Grand_Soft", "same name, other spelling")
+assert m._match_name("grand hard", ["Anthem", "Glass_Grand_Soft", "Glass Grand Hard"])[0] == "Glass Grand Hard"
+nm, how, close = m._match_name("Glass", ["Anthem", "Glass_Grand_Soft", "Glass Grand Hard"])
+assert nm is None and how == "several match" and set(close) == {"Glass_Grand_Soft", "Glass Grand Hard"}, (nm, how, close)
+g = m.flp_instrument_sound(src, out, ch, "Glass Piano", preset="Glass Grand Soft")
+assert g["sound"] == "LABS - Glass Piano / Glass_Grand_Soft" and "Glass_Grand_Soft" in g["preset_matched"], g
+d = m._load(out); ev = m._events(d); _, ks = m._channel_block(d, ev, ch)
+assert b'id="a_name" value="LABS_Glass_Grand_Soft"' in m._payload(d, ev[ks]), g
+before = open(out, "rb").read()
+for bad, words in (("Fingered", ["no preset like 'Fingered'", "Anthem", "Glass_Grand_Soft"]),
+                   ("Glass", ["no preset like 'Glass'", "several match"])):
+    try:
+        m.flp_instrument_sound(out, out, ch, "Glass Piano", preset=bad); raise SystemExit(f"{bad}: must be refused")
+    except ValueError as e:
+        assert all(w in str(e) for w in words + ["NOT changed"]), e
+assert open(out, "rb").read() == before                      # the working state is untouched
+# a preset whose patch can't be found (the pack's patches are known): refused, the old sound named; force writes
+open(os.path.join(gp, "Presets", "v1.2.0", "Felt Dream.zpreset"), "wb").write(b"x")
+try:
+    m.flp_instrument_sound(out, out, ch, "Glass Piano", preset="Felt Dream"); raise SystemExit("no patch: refuse")
+except ValueError as e:
+    assert "NOT changed" in str(e) and "Glass Piano (LABS_Glass_Grand_Soft)" in str(e) and "LABS_Anthem" in str(e) and \
+        "force=true" in str(e), e
+assert open(out, "rb").read() == before
+fz = m.flp_instrument_sound(out, os.path.join(tmp, "f.flp"), ch, "Glass Piano", preset="Felt Dream", force=True)
+assert fz.get("forced") and fz.get("may_be_silent"), fz
+nd = m.flp_instrument_sound(src, os.path.join(tmp, "g.flp"), ch, "Glass Piano")      # no preset: the first, said
+assert "preset_default" in nd and "Anthem" in nd["preset_default"], nd
+assert "force" in m.TOOLS["flp_instrument_sound"][2]["properties"]
 print("ok", r["sound"], r["was"])

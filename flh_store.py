@@ -459,7 +459,27 @@ def flh_journal(project, set=None, add=None, seed=False, full=False):
     j = journal_get(project)
     if seed and not j.get("sections"):
         set = dict(set or {}); set["sections"] = sections_from_project(project)
-    taste = None
+    taste = None; as_note = None
+    if isinstance(add, str):                      # add='the choir is too loud' - a plain note (PC 2026-10-27: this
+        t = add.strip()                           # was an error); a JSON object written as text is that object
+        if t[:1] == "{":
+            try:
+                add = json.loads(t)
+            except ValueError:
+                add = {"notes": t}; as_note = "the text was stored as a note (add={notes: ...})"
+        else:
+            add = {"notes": t} if t else None
+            as_note = "the text was stored as a note (add={notes: ...})" if t else None
+    elif isinstance(add, list):                   # a list of plain texts: notes too
+        if all(isinstance(x, str) for x in add):
+            add = {"notes": [x.strip() for x in add if x.strip()]} or None
+            as_note = "the texts were stored as notes"
+        else:
+            raise ValueError("add: {likes|dislikes|notes|versions|sound_likes|sound_dislikes: items}, or a plain "
+                             "text (stored as a note)")
+    if add is not None and not isinstance(add, dict):
+        raise ValueError("add: {likes|dislikes|notes|versions|sound_likes|sound_dislikes: items}, or a plain text "
+                         "(stored as a note)")
     if isinstance(add, dict) and ("sound_likes" in add or "sound_dislikes" in add):
         add = dict(add); taste = _sound_taste(j, add.pop("sound_likes", None), add.pop("sound_dislikes", None))
     if set or add:
@@ -468,6 +488,8 @@ def flh_journal(project, set=None, add=None, seed=False, full=False):
     out = j if full else _compact(j)
     if taste is not None:
         out["sound_taste"] = taste
+    if as_note:
+        out["added"] = as_note
     return out
 
 
@@ -615,6 +637,7 @@ def register(ns):
         "performance settings, versions, final. READ IT before working on a song; add what the user liked or "
         "disliked (add={dislikes: '...'}) so no session has to re-learn it.",
         S(project=ns["_FLP"], set=P("object", "fields to merge in (None deletes)", True),
-          add=P("object", "{likes|dislikes|notes|versions|sound_likes|sound_dislikes: items}", True),
+          add=P(["object", "string", "array"], "{likes|dislikes|notes|versions|sound_likes|sound_dislikes: items}; "
+                "a plain text (or a list of texts) is stored as a note", True, items={"type": "string"}),
           seed=ns["_BOOL"]("fill sections from the playlist if empty", True),
           full=ns["_BOOL"]("include the full review table and performance spec", True)))

@@ -69,6 +69,30 @@ Use a COPY of a song, open in FL and saved.
 6. Queue an edit, then `fl_open(other)` -> no reload of big; afterwards `flp_info(big)` shows the edit in the file.
 7. `flh_sync(mode="immediate")` -> edits reload at once again; `flh_sync(mode="auto")` to go back.
 
+### 3b. Live changes + queued edits, tempo lanes, snapshots (2.2.0, PC-VERIFY)
+1. Live change kept by a queued edit: on a big song in lazy mode, `fl_plugin_set` a mixer effect knob (e.g. a master
+   reverb's wet), `fl_channel_set(index=..., volume_db=...)`, then `flp_edit(project, ops=[{tool: flp_replace_part,
+   ...}])` (queued) and `flh_sync()`. In FL afterwards: the new notes AND the knob / channel volume as set live.
+2. The same after a reload that couldn't be proven (`steps_s.content_check: "can't tell"` or a WARNING 'isn't
+   proven'): `fl_plugin_set` again, queue an edit, `flh_sync()`. Expect either the edit in FL with the knob kept
+   (`steps_s.live_probe` says the live changes were kept) or a clear refusal naming the live tools, with the file
+   unchanged and the edit still queued (`fl_status().pending_ops`); never a silent loss of the knob.
+3. FL's 'changed' flag after a live `fl_plugin_set`: does FL show the project as modified (title '*')? (fl-headless
+   no longer relies on it: it logs live changes itself.)
+4. Tempo lane: a song with `flp_tempo_write` points (bar 1 on), stop playback mid-song, queue a replace_part,
+   `flh_sync()`, then another edit: no 'an earlier edit didn't stick ... tempo' alert and no 'changed by hand' note.
+   Then stop the playhead somewhere else and repeat: still no alert. FL's master tempo in the file follows the
+   playhead (that is expected and ignored).
+5. `flp_edit` with `flp_tempo_write` + several `flp_replace_part` ops, `flh_sync()`: `flp_tempo_map(project)` and
+   FL's tempo display at a few bars show the NEW map; `fl_job(verify_job)` -> verified.
+6. A song that has a tempo AUTOMATION clip (drawn in FL): `flp_tempo_write` returns a WARNING naming the bars the
+   automation covers.
+7. `flp_remove_channels(project, channels=[...])` and `flp_write_arrangement(template, output=<open song>, ...)` in
+   lazy mode: `queued: true`, FL untouched until `flh_sync()` (one reload), then both in FL; the song's journal
+   channel roles renumbered once.
+8. `fl_snapshot(region=[0, 0, 0.5, 0.3])` right after a `flh_sync()` reload: a picture (or `note: ... taken again`),
+   not 'came back blank'. A region over a black part of FL still returns the picture.
+
 ## 4. Bug report
 `flh_bug_report()` -> a zip path in `%LOCALAPPDATA%\fl-headless\bug_reports`. Open it: no user name, no audio, no
 project contents; errors.json has the last errors with tracebacks.
@@ -528,3 +552,47 @@ sidechain duck or a filter sweep), saved inside FLH_ROOTS.
    keys in the notes' range) and `fl_preview(channels=[<it>])` -> `silent_hint` "channel N '<name>' renders silent
    ... pick another sound", and `fl_sound_catalog` ranks that pack down afterwards. A whole song that renders silent
    says "the whole song renders silent".
+
+## Note / playlist writers 2.2: meter, new song from a project, pattern names, replace_part (PC-VERIFY)
+1. **flp_meter**: on a copy of a 4/4 song (FL closed or the song open), `flp_meter(song, num='3/4')` then
+   `flp_meter(song, num=6, den=8, at_bar=5)`. FL (after the reload) shows 3/4 in Song settings and a 6/8 marker on the
+   playlist ruler at bar 5; bars after it follow 6/8; FL's own save keeps both (`flp_info` after an fl_save:
+   `time_signature` 3/4, `time_signature_changes` [{bar 5, 6/8}]). `remove=true at_bar=5` takes the marker out in FL.
+   On a project saved without a time signature (events 17/18 missing): `flp_meter` adds them and FL shows it.
+2. **flp_new_from**: `flp_new_from(<arranged song>, 'Second Song')`, then `fl_open('Second Song')`: same channels,
+   plugins (sound the same on a test note), mixer inserts and FX; the playlist is empty (no clips, no markers, no
+   Tempo lane), FL's window shows the title 'Second Song', the pattern picker has only 'Pattern 1'; no FL error popup.
+   The source song is unchanged (open it: same clips). `flp_meter(<new>, num=3, den=4, at_bar=3)` on it (its
+   arrangement had no playlist event: one is added) shows the marker in FL.
+3. **flp_patterns_set**: rename + recolor a pattern of the open song; after the reload FL's pattern picker and its
+   playlist clips show the new name and color.
+4. **flp_write_notes on an arranged song**: refused without clear_song; with `clear_song=true` the output has the
+   template's channels/mixer and only the new notes (one clip at bar 1). A MIDI file with 3/4 + a 6/8 change and a
+   tempo map: FL shows 3/4, the 6/8 marker where the MIDI changes, and plays the tempo changes (fresh section songs:
+   a Tempo lane on its own track with every point).
+5. **sections on one track**: `flp_write_arrangement` / `flp_write_notes` into a fresh song: every section clip on
+   playlist track 1; a clip stretched over a ringing last note overlaps the next section's clip on that track and
+   FL plays BOTH (the tail is heard, the next section starts on time).
+6. **flp_replace_part into='covering_clip'**: on a song with one pattern per section, write a part for a channel no
+   section holds yet (no placeholder notes): the notes land in each section's pattern and play; a tempo lane clip
+   over the song never gets notes. Humanized notes a few ticks before a section start play with that section (no
+   'moved_to_clip_start' in the result); a short grace note before a downbeat stays audible before it.
+
+## Sounds, plugin knobs and argument names (2.2.0, PC-VERIFY)
+1. **instrument sound refusals**: `flp_instrument_sound(song, channel=<INSTRUMENT ch>, pack='<a LABS pack>',
+   preset='<its display name with spaces>')` loads that preset (`preset_matched` says how), not the pack's first.
+   A preset the pack doesn't have (or one without a matching patch) is refused with the pack's preset names, and
+   after `flh_sync` FL's channel still plays the sound it had (no 'Content Not Found'). `force=true` writes it.
+2. **plugin set_value units**: Fruity Reeverb 2 (or any reverb with a low cut that shows 'Off' at 0):
+   `fl_plugin_set_value(track=<t>, slot=<s>, param=<low cut>, target='Off')` and `target=0` land on Off; from Off
+   `target=120` reaches ~120 Hz. A stepped pre-delay asked `30` reports `nearest_step` with what it shows (e.g.
+   '31ms'), held=true. A decay / release knob that shows '194ms' ... '2.00s': `target='1.2 s'` and `target=1200`
+   both end at '1.20s'. Plugins that update their display later (Splice INSTRUMENT): the result's text matches
+   the knob in the plugin window.
+3. **plugin not ready**: right after `fl_open` / a reload, `fl_plugin_params(index=<ch>)` waits (`ready_after_s`)
+   instead of "TypeError: 'NoneType' object cannot be interpreted as an integer"; a slot with no plugin fails at once.
+4. **track / index**: `fl_plugin_params(track=<t>, slot=0)` = `fl_plugin_params(index=<t>, slot=0)`;
+   `fl_plugin_params(track=<t>)` without slot is refused (never channel t's instrument); `fl_mixer_set(index=<t>,
+   volume_db=-3)` sets mixer track t. `fl_plugin_params(index=<t>, slot=0, filter='attack|release')` lists both.
+5. **new channel insert**: `flp_add_channel(song, clone_from=<ch>, insert='new', name='Celeste')` -> in FL the new
+   channel plays through a free insert named 'Celeste' (not the cloned channel's insert or its effects).

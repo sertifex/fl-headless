@@ -287,7 +287,8 @@ with_velocity(S, S, 45); NEW = read(S); m._FL_HOLDS.clear(); m._HOLDS_DISK["load
 fl.opened.clear()
 steps = m._reload_in_fl(S, discard=True)
 assert fl.content() == NEW and fl.opened == ["Score v5.flp", "Empty.flp", "Score v5.flp"], fl.opened
-assert steps["content_check"] == "can't tell" and steps["proof"] == "marker" and "fast_load" in steps, steps
+assert steps["content_check"] in ("can't tell", "old copy") and steps["proof"] == "marker" and "fast_load" in steps, steps
+assert steps.get("fast_marker", "").startswith("not seen"), steps       # the up-front marker: FL didn't show it
 assert "load" not in steps and m._fl_held(S) == m._crc(NEW) and not m._stale_get(S), steps
 # ... and the same with FL bringing its old copy back after the template: an error, FL stale, the record unmoved
 fl.load(S); fl.held = OLD; m._note_fl_holds(S, OLD); fl.restore_old = True
@@ -321,11 +322,21 @@ assert "marker" in r["proof"], r
 fl.load(S); fl.reopen_ignored = False; fl.opened.clear()
 m.flp_set_tempo(S, 133); m._FL_HOLDS.clear()
 steps = m._reload_in_fl(S, discard=True)
-assert steps.get("proof") == "content" and fl.opened == ["Score v5.flp"] and fl.vis["tempo"] == 133.0, steps
+assert steps.get("proof") in ("content", "marker") and fl.opened == ["Score v5.flp"] and fl.vis["tempo"] == 133.0, steps
 fl.reopen_ignored = True; fl.opened.clear(); m.flp_set_tempo(S, 141)
 steps = m._reload_in_fl(S, discard=True)
 assert steps["content_check"] == "old copy" and steps["proof"] == "marker", steps
 assert fl.vis["tempo"] == 141.0 and fl.opened == ["Score v5.flp", "Empty.flp", "Score v5.flp"], fl.opened
+# 4e') a fast reload whose change the bridge can't read (velocities only), FL really reading the file: proven on the
+#      spot by the marker stamped before the reopen - no second load through the empty template (PC 2026-10-26: +40 s
+#      on every reload of a note / plugin edit); the file and FL's track name are put back
+fl.load(S); fl.reopen_ignored = False; fl.opened.clear()
+with_velocity(S, S, 71); NEW = read(S); m._FL_HOLDS.clear()
+steps = m._reload_in_fl(S, discard=True)
+assert steps.get("proof") == "marker" and steps.get("fast_marker") == "seen" and fl.opened == ["Score v5.flp"], \
+    (steps, fl.opened)
+assert read(S) == NEW and not any(str(v).startswith("flh-") for v in m._mixer_names(fl.content(),
+                                  m._events(fl.content())).values()) and m._fl_held(S) == m._crc(NEW), steps
 
 # 4f) no empty template on the PC: the file is reopened directly, still proven by the marker - FL 'reloading' from
 #     memory fails honestly (pointing at FLH_BLANK), FL really reading the file passes

@@ -696,7 +696,8 @@ except ValueError:
 f7 = os.path.join(tmp, "f7.flp"); shutil.copy(FIX, f7)
 m.flp_edit_notes(f7, [{"op": "delete"}], pattern=1)
 m.flp_playlist(f7, "remove", clips=[c["id"] for c in m.flp_playlist(f7)["clips"]])
-m.flp_edit(f7, [{"tool": "flp_compose_write", "pattern": nm, "notes": [[0, 0, 1, 60, 100, 0]], "place": pl, "track": tr}
+m.flp_edit(f7, [{"tool": "flp_compose_write", "pattern": nm, "notes": [[0, 0, 1, 60, 100, 0]], "place": pl, "track": tr,
+                 "place_mode": "add"}                              # the 2nd Verse is a repeat (default: moved)
                 for nm, pl, tr in (("Pattern 7", [[1, 4]], 1), ("Intro", [[1, 4]], 2), ("Verse", [[5, 8]], 1),
                                    ("Hook", [[13, 8]], 3), ("Hook Pad", [[13, 8]], 4), ("Verse", [[21, 8]], 1))])
 secs7 = flh_store_.sections_from_project(f7)

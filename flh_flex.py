@@ -566,12 +566,27 @@ def flex_search(query=None, kind=None, genre=None, limit=10, exclude=(), prefer=
     return out
 
 
-def find(preset, pack=None):
+def find(preset, pack=None, why=None):
+    """The installed FLEX preset meant by `preset` (pack optional): exact, then the same name spelled otherwise
+    (case, '_' / '-' / spaces), then one clear fuzzy match (the server's _match_name) - several equally good or none
+    -> None, with the closest names in why['close'] (a dict the caller passes) for the error."""
     p, k = str(preset).strip().lower(), str(pack or "").strip().lower()
-    rows = [r for r in index() if r["preset"].lower() == p and (not k or r["pack"].lower() == k)]
-    if not rows:
-        rows = [r for r in index() if p in r["preset"].lower() and (not k or k in r["pack"].lower())]
-    return rows[0] if rows else None
+    rows = index()
+    rows_k = [r for r in rows if not k or r["pack"].lower() == k] or [r for r in rows if k in r["pack"].lower()]
+    hit = [r for r in rows_k if r["preset"].lower() == p]
+    if hit:
+        return hit[0]
+    match = H.get("_match_name") if H else None
+    if callable(match):
+        names = sorted({r["preset"] for r in rows_k})
+        nm, how, close = match(preset, names)
+        if nm:
+            return next(r for r in rows_k if r["preset"] == nm)
+        if why is not None:
+            why.update(close=close[:8], how=how, pack_presets=names[:30] if k else None)
+        return None
+    hit = [r for r in rows_k if p in r["preset"].lower()]
+    return hit[0] if hit else None
 
 
 def _template():
@@ -635,10 +650,14 @@ def patch_state(state, pack, preset):
 
 def flex_fst(preset, pack=None):
     """Path of a .fst that loads FLEX on this preset (made once, kept in the state folder)."""
-    hit = find(preset, pack)
+    why = {}
+    hit = find(preset, pack, why)
     if not hit:
         raise ValueError(f"no FLEX preset '{preset}'" + (f" in '{pack}'" if pack else "") +
-                         " among the installed packs (flex_search lists them)")
+                         " among the installed packs" +
+                         (f" ({why['how']}: {why['close']})" if why.get("close") else "") +
+                         (f"; that pack's presets: {why['pack_presets']}" if why.get("pack_presets") else "") +
+                         " - flex_search lists them; nothing was changed")
     out_dir = os.path.join(os.path.dirname(H["STATE"]), "flex_presets")
     os.makedirs(out_dir, exist_ok=True)
     safe = re.sub(r'[<>:"/\\|?*]+', " ", f"{hit['pack']} - {hit['preset']}").strip()
@@ -676,9 +695,39 @@ def _fix_len(b):
     return b[:at + 4] + struct.pack("<I", len(b) - at - 8) + b[at + 8:]
 
 
-def flp_flex_preset(project, output=None, preset=None, pack=None, channel=None, name=None):
+def content_check(label, state):
+    """fl_doctor's content check for a FLEX channel (the server's CONTENT_CHECKS): the pack its state names isn't
+    installed / not fully downloaded / made no sound here -> {family, sound, pack, problem, fix}; None when it isn't
+    FLEX or no FLEX pack index exists on this PC yet (no scan is started for it: fl_doctor stays fast)."""
+    if not str(label or "").upper().startswith("FLEX"):
+        return None
+    nm = state_names(state)
+    if not nm or not nm[0]:
+        return None
+    if not _MEMO.get("idx") and not os.path.isfile(_cache_path()):
+        return None
+    rows = index()
+    if not rows:
+        return None
+    pack, preset = nm
+    out = {"family": "FLEX", "sound": f"{pack} / {preset}", "pack": pack, "problem": None}
+    why = pack_flags(rows).get(pack) or next((w for p_, w in pack_flags(rows).items() if p_.lower() == pack.lower()),
+                                             None)
+    if why:
+        out["problem"] = f"its pack '{pack}' {why}"
+    elif not any(r["pack"].lower() == pack.lower() for r in rows):
+        out["problem"] = f"its pack '{pack}' isn't installed in FLEX on this PC: the channel loads empty / silent"
+    if out["problem"]:
+        out["fix"] = "install the pack in FLEX's browser, or put another preset on the channel (flp_flex_preset)"
+    return out
+
+
+def flp_flex_preset(project, output=None, preset=None, pack=None, channel=None, name=None, insert=None):
     """FLEX on a channel with one of the installed presets. channel=None: a new channel (a copy of a plugin channel
-    the song has, routed like it) - else that channel becomes FLEX on the preset (its notes stay)."""
+    the song has) on its OWN free mixer insert, named after it (insert='new', the default for a new channel;
+    insert='same' keeps the copied channel's insert, a number picks one) - PC 2026-10-27 a new FLEX channel landed
+    on the Bass channel's EQ'd insert. channel=N: that channel becomes FLEX on the preset (its notes and routing
+    stay)."""
     if not preset:
         raise ValueError("give preset (flex_search / fl_sound_catalog(kind=...) lists them)")
     output = output or project
@@ -704,10 +753,20 @@ def flp_flex_preset(project, output=None, preset=None, pack=None, channel=None, 
             src = next((c for c, t in sorted(types.items()) if t == 2), None)
             if src is None:
                 src = min(types) if types else 0
-            ch = H["flp_add_channel"](project, output, src)["new_channel"]
+            ins = "new" if insert in (None, "") else insert
+            ra = H["flp_add_channel"](project, output, src, insert=ins, name=name or hit["preset"])
+            ch = ra["new_channel"]
             res["new_channel"] = ch
+            for k in ("insert", "insert_note"):
+                if ra.get(k) is not None:
+                    res[k] = ra[k]
         H["flp_load_plugin"](output if channel is None else project, output, fst, channel=int(ch))
         res["channel"] = int(ch)
+        if name and H.get("flp_style_channels"):          # the .fst names the channel after its preset
+            try:
+                H["flp_style_channels"](output, output, [{"channel": int(ch), "name": str(name)}])
+            except Exception as e:                        # noqa: BLE001 - the sound is in; said, not hidden
+                res["name_note"] = f"channel not renamed ({str(e)[:60]})"
         if channel is not None and new_off != old_off and NS:   # notes written for the old offset: moved to the new
             d = H["_load"](output)
             d, moved = NS._transpose_channel(d, int(ch), new_off - old_off)
@@ -763,10 +822,17 @@ def register(ns):
     S, STR, INT = ns["_schema"], ns["_STR"], ns["_INT"]
     ns["TOOLS"]["flp_flex_preset"] = (
         flp_flex_preset, "FLEX with any installed preset on a channel, by name - every pack (Core, free, store): "
-        "preset='BRS Horns Sustain' (pack optional). channel omitted = a new channel. fl_sound_catalog(kind=...) or "
-        "flh_call('flex_list') finds presets.",
+        "preset='BRS Horns Sustain' (pack optional; spelling / case are matched, an unclear name is refused with the "
+        "closest ones). channel omitted = a new channel on its own free mixer insert named after it (insert="
+        "'same' keeps the copied channel's insert). fl_sound_catalog(kind=...) or flh_call('flex_list') finds presets.",
         S(project=ns["_FLP"], output=ns["_OUT"], preset=STR("FLEX preset name"), pack=STR("its pack (if names repeat)", True),
-          channel=INT("channel to turn into FLEX (default: a new one)", True), name=STR("channel name", True)))
+          channel=INT("channel to turn into FLEX (default: a new one)", True), name=STR("channel name", True),
+          insert=ns["_p"](["string", "integer"], "new channel's mixer insert: 'new' (default: a free one, named after "
+                          "the channel) | 'same' (the copied channel's) | a track number", True)))
+    try:
+        ns["CONTENT_CHECKS"]["flex"] = content_check
+    except (KeyError, TypeError):
+        pass
     ns["TOOLS"]["flex_list"] = (
         _flex_list,
         "FLEX presets installed on this PC, ranked: kind (pad, strings, brass, 808, keys, lead...), words, genre, pack "

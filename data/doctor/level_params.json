@@ -1,0 +1,14 @@
+{
+  "_doc": "fl_doctor / fl_review 'silent_knob': which plugin parameters set how loud an instrument plays. Words are matched (case-insensitive, camelCase and separators split) against each plugin's OWN parameter names - no plugin or vendor list. level_words at silence = practically silent (high); weak_words at 0 = a hint (some plugins read 0 as 'no velocity response'); a name holding any not_level_words is never judged. midi_cc: MIDI-standard controllers a saved JUCE-style state maps a parameter to. Override or extend in <state folder>/doctor/level_params.json (lists add, dicts / numbers override).",
+  "level_words": ["volume", "vol", "gain", "level", "output", "master", "amp", "amplitude", "dynamics", "dynamic",
+                  "expression", "expr", "loudness"],
+  "weak_words": ["velocity amount", "vel amount", "velocity sensitivity", "velocity sens"],
+  "not_level_words": ["send", "reverb", "verb", "delay", "echo", "chorus", "lfo", "mod", "env", "envelope", "attack",
+                      "decay", "sustain", "release", "hold", "filter", "cutoff", "resonance", "drive", "pan", "width",
+                      "noise", "fx", "eq", "comp", "mix", "sub", "pitch", "tune", "fine", "semi", "boost",
+                      "saturation", "threshold", "sidechain", "duck", "glide", "porta", "osc", "voice", "unison",
+                      "detune"],
+  "midi_cc": {"7": "volume (CC7)", "11": "expression (CC11)"},
+  "zero_value": 0.001,
+  "silent_db": -60.0
+}

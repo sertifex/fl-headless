@@ -10,7 +10,7 @@ import fl_headless_mcp as m  # noqa: E402
 p = os.path.join(tmp, "Big.flp"); open(p, "wb").write(b"song")
 seq = []
 m._ping_ok = lambda *a, **k: True
-m._wait_load_out = lambda project, wait_s=None, bridge_up=False: (seq.append("wait"), 3.0)[1]
+m._wait_load_out = lambda project, wait_s=None, bridge_up=False, **k: (seq.append("wait"), 3.0)[1]
 tries = iter([(None, "no marker could be written into the file (PermissionError: [WinError 5] Access is denied)"),
               ((1, "flh-abc", "", b"stamped"), None)])
 m._reload_marker_stamp = lambda project, data: (seq.append("stamp"), next(tries))[1]
@@ -38,7 +38,7 @@ class B:
             raise TimeoutError("FL busy loading")
         return {"name": "Kick"}
 m.BRIDGE = B(); m._TAG_NOW.update(track=1, name="Kick ~flh1234")
-m._fl_load_busy = lambda bridge_up=False: True
+m._fl_load_busy = lambda bridge_up=False, **k: True
 m._fl_still_working = lambda: False
 m._scaled = lambda s, min_s=None: float(s)
 assert m._tag_gone(1, 0.3, cost=5.0) is True, "a reopen still loading was judged 'no reload'"

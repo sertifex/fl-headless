@@ -3086,12 +3086,57 @@ def _place_clip(d, pid, pos, length, track):
     return H["_splice"](d, ev, [(k, k + 1, H["_data_event"](H["EV_PLAYLIST"], b"".join(recs)))])
 
 
+PLACE_MODES = ("move", "add", "replace")
+
+
+def _place_existing(d, pid, spans, track, mode):
+    """place_mode for a pattern that's already in the playlist (current arrangement): spans [(tick, ticks)] wanted.
+    move: each span reuses one of the pattern's clips (one at that very tick first, then the nearest), moved and
+    resized (its track kept unless `track` is given); spans left over add clips; clips left over stay. replace: the
+    pattern's clips go first. -> (bytes, spans still to add, {moved, removed, kept})."""
+    ev = H["_events"](d)
+    k, size, recs = H["_playlist_at"](d, ev)
+    item = H["PATTERN_BASE"] + pid
+    mine = [r for r in recs if struct.unpack("<H", bytes(r[6:8]))[0] == item]
+    info = {}
+    if not mine or mode == "add":
+        return d, list(spans), info
+    if mode == "replace":
+        recs = [r for r in recs if struct.unpack("<H", bytes(r[6:8]))[0] != item]
+        info["removed"] = len(mine)
+        return H["_put_clips"](d, ev, recs, k, True), list(spans), info
+    free = sorted(mine, key=lambda r: struct.unpack("<I", bytes(r[0:4]))[0])
+    left, moved = [], 0
+    for a_, L_ in spans:
+        if not free:
+            left.append((a_, L_))
+            continue
+        pos_of = lambda r: struct.unpack("<I", bytes(r[0:4]))[0]
+        r = min(free, key=lambda r: (pos_of(r) != a_, abs(pos_of(r) - a_)))
+        free.remove(r)
+        s0, _ = H["_clip_offsets"](r)
+        struct.pack_into("<I", r, 0, int(a_)); struct.pack_into("<I", r, 8, int(L_))
+        struct.pack_into("<II", r, 24, int(s0), int(s0) + int(L_))
+        if track:
+            struct.pack_into("<H", r, 12, 499 - (H["_check_track"](track) - 1))
+        moved += 1
+    info["moved"] = moved
+    if free:
+        info["kept"] = len(free)
+    return H["_put_clips"](d, ev, recs, k, True), left, info
+
+
 def flp_compose_write(project, output, pattern, notes=None, place=None, track=None, clear_channels=None,
-                      transform=None, length_bars=None):
+                      transform=None, length_bars=None, place_mode="move"):
     """Write into ONE named pattern (created if missing): notes as [channel, beat, beats, pitch, velocity, flags]
     (beats from the pattern start; flags 1 = FL slide note), clear_channels first, transform = in-place ops on
-    the pattern's current notes (read at write time), place = [bar] or [[bar, length_bars], ...] on `track`."""
+    the pattern's current notes (read at write time), place = [bar] or [[bar, length_bars], ...] on `track`.
+    place_mode for a pattern already in the playlist: move (default: its clip moves / resizes to the place given,
+    never a second copy), add (another clip: a repeat), replace (its clips go, the places given are laid out)."""
     H["writable"](output)
+    place_mode = str(place_mode or "move").strip().lower()
+    if place_mode not in PLACE_MODES:
+        raise ValueError(f"place_mode: {' | '.join(PLACE_MODES)}")
     d = H["_load"](project)
     ev = H["_events"](d)
     P = H["_ppq"](d)
@@ -3140,15 +3185,33 @@ def flp_compose_write(project, output, pattern, notes=None, place=None, track=No
         allnotes = H["_patterns"](d, ev2).get(pid, {"notes": []})["notes"]
         natural = max((r[0] + r[3] for r in allnotes), default=4 * bar_t)
         dflt = float(length_bars) if length_bars else max(1, math.ceil(natural / bar_t - 1e-6))
-        tr = int(track) if track else H["_free_track"](d)
-        done = []
+        want, done = [], []
         for it in place:
             bar, ln = (list(it) + [dflt])[:2] if isinstance(it, (list, tuple)) else (it, dflt)
             a_ = tick(bar)
             L_ = float(ln) * bar_t if plain else tick(float(bar) + float(ln)) - a_
-            d = _place_clip(d, pid, int(round(a_)), int(round(L_)), tr)
-            done.append(float(bar))
-        res.update(placed_at=done, track=tr)
+            want.append((int(round(a_)), int(round(L_)))); done.append(float(bar))
+        # PC-VERIFY: compose_write place=[..] on a pattern FL already shows in the playlist moves that clip (one clip,
+        # not two playing the section twice); place_mode='add' gives a second one
+        have_tr = [499 - struct.unpack("<H", r[12:14])[0] + 1 for _, _, r in H["_clips"](d, H["_events"](d))
+                   if struct.unpack("<H", r[6:8])[0] == H["PATTERN_BASE"] + pid]
+        d, todo, pinfo = _place_existing(d, pid, want, track, place_mode)
+        if track:
+            tr = int(track)
+        else:                                             # a moved clip keeps its track; added ones go where the
+            tr = min(have_tr) if have_tr and place_mode != "add" else H["_free_track"](d)   # pattern plays (add:
+                                                                                             # a free track, as before)
+        for a_, L_ in todo:
+            d = _place_clip(d, pid, a_, L_, tr)
+        res.update(placed_at=done, track=tr, place_mode=place_mode)
+        if pinfo.get("moved"):
+            res["clips_moved"] = pinfo["moved"]
+        if pinfo.get("removed"):
+            res["clips_removed"] = pinfo["removed"]
+        if pinfo.get("kept"):
+            res["other_clips_kept"] = pinfo["kept"]
+        if todo:
+            res["clips_added"] = len(todo)
     H["_save"](d, output)
     return res
 
@@ -4461,7 +4524,7 @@ def flp_compose(project, what, genre=None, key=None, section=None, bars=None, ch
             op = {"tool": "flp_compose_write", "pattern": pname, "notes": rows, "clear_channels": clear,
                   "track": role_tracks[r], "length_bars": nb_clip}
             if place:
-                op["place"] = place
+                op["place"] = place; op["place_mode"] = "add"     # a section's further slots: repeats, by design
             ops.append(op)
             if rexpr.get((lab, r)):
                 ops += _expression_ops(project, chmap[r], rexpr[(lab, r)], pname, slots[vi], nb, tempo_rows, rinfo,
@@ -4756,7 +4819,7 @@ def _pick_variation(project, v, section, variation, dry_run, steps, T0):
     ops = [{"tool": "flp_arrange", "ops": [{"op": "delete_bars", "from": au["start_bar"], "to": au["end_bar"]}]}]
     chosen = au["variations"][lab]["patterns"]
     for r, pname in chosen.items():
-        ops.append({"tool": "flp_compose_write", "pattern": pname, "place": [[b, L] for b, L in slots],
+        ops.append({"tool": "flp_compose_write", "pattern": pname, "place": [[b, L] for b, L in slots], "place_mode": "add",
                     "track": (au.get("tracks") or {}).get(r) or None, "length_bars": au["bars"]})
     unused = [p for l, x in au["variations"].items() if l != lab for p in x["patterns"].values()]
     res = {"picked": lab, "section": au.get("section") or base, "placed_at": [b for b, _ in slots], "patterns": chosen,
@@ -5798,15 +5861,29 @@ def flp_compose_layer_inserts(project, output, channels, bus="Music"):
     return {"output": output, "tool": "flp_compose_layer_inserts", "inserts": out}
 
 
-def flp_compose_drop(project, output=None, patterns=None):
+def flp_compose_drop(project, output=None, patterns=None, unplace=False):
     """Low-level writer flp_remove_fx batches: remove the named patterns (with every note in them) that no
-    arrangement places any more; a pattern still placed somewhere is kept and said."""
-    output = output or project
+    arrangement places any more; a pattern still placed somewhere is kept and said - unless unplace=True: then its
+    clips go first (every arrangement). patterns: names, or ids (integers)."""
+    if output is None:                                    # in place: the open FL project saved/reloaded around it
+        return H["_with_open_project"](project, project, lambda: flp_compose_drop(project, project, patterns, unplace))
     H["writable"](output)
     d = H["_load"](project)
     ev = H["_events"](d)
     pats = H["_patterns"](d, ev)
-    low = {str(n).strip().lower() for n in patterns or []}
+    low = {str(n).strip().lower() for n in patterns or [] if not isinstance(n, int)}
+    ids = {int(n) for n in patterns or [] if isinstance(n, int) and not isinstance(n, bool)}
+    hit = {pid for pid, x in pats.items() if pid in ids or str(x.get("name") or "").strip().lower() in low}
+    unplaced = 0
+    if unplace and hit:                                   # their clips go first, in every arrangement
+        base = H["PATTERN_BASE"]
+        for a in H["_arrangements"](d, ev):
+            k, _, recs = H["_playlist_at"](d, ev, a["index"])
+            keep = [r for r in recs if struct.unpack("<H", bytes(r[6:8]))[0] - base not in hit]
+            if k is not None and len(keep) != len(recs):
+                unplaced += len(recs) - len(keep)
+                d = H["_splice"](d, ev, [(k, k + 1, H["_data_event"](H["EV_PLAYLIST"], b"".join(bytes(r) for r in keep)))])
+                ev = H["_events"](d)
     placed = set()
     for a in H["_arrangements"](d, ev):
         for r in H["_playlist_at"](d, ev, a["index"])[2]:
@@ -5814,7 +5891,7 @@ def flp_compose_drop(project, output=None, patterns=None):
     gone, kept = [], []
     for pid, x in sorted(pats.items()):
         nm = str(x.get("name") or "").strip()
-        if nm.lower() not in low:
+        if pid not in hit:
             continue
         if pid in placed:
             kept.append({"pattern": nm, "why": "still placed in an arrangement"})
@@ -5823,9 +5900,10 @@ def flp_compose_drop(project, output=None, patterns=None):
     edits = [(a, b, b"") for kind, pid, a, b in H["_pattern_groups"](d, ev) if pid in gone]
     if edits:
         H["_save"](H["_splice"](d, ev, edits), output)
-    elif not _same_path(project, output):
+    elif unplaced or not _same_path(project, output):
         H["_save"](d, output)
-    return {"output": output, "removed": [pats[p]["name"] for p in gone], **({"kept": kept} if kept else {})}
+    return {"output": output, "removed": [pats[p]["name"] or p for p in gone], **({"kept": kept} if kept else {}),
+            **({"clips_removed": unplaced} if unplaced else {})}
 
 
 REMOVE_KINDS = FX_AUDIO + ORGANIC_MOVES + ("snare_build", "delay_throw", "filter")
@@ -7291,7 +7369,8 @@ def flp_arrange_song(project, form=None, genre=None, mode="build", start_bar=Non
             ops.append({"tool": "flp_compose_clear", "clips": gone})
     ops += fx_ops                                         # the FX channels first: the notes below are on them
     for pn, x in by_pat.items():
-        op = {"tool": "flp_compose_write", "pattern": pn, "place": x["place"], "track": tracks.get(x["role"], tracks["fx"])}
+        op = {"tool": "flp_compose_write", "pattern": pn, "place": x["place"], "place_mode": "add",
+              "track": tracks.get(x["role"], tracks["fx"])}
         if pn in gen:
             op.update(notes=gen[pn]["rows"], clear_channels=gen[pn]["clear"])
         ops.append(op)
@@ -7479,7 +7558,8 @@ def _extend(project, v, g, ext, seed, dry_run, steps, T0):
             is_drum = str(c.get("name", "")).strip().lower() in drum_names
             if ext.get("variation", True) and is_drum and dm:
                 var_name = var_name or f"{o['name']} Drums Var"
-                ops.append({"tool": "flp_compose_write", "pattern": var_name, "place": [[b, ln]], "track": c["track"]})
+                ops.append({"tool": "flp_compose_write", "pattern": var_name, "place": [[b, ln]], "track": c["track"],
+                            "place_mode": "add"})
             else:
                 ops.append({"tool": "flp_playlist", "action": "place", "pattern": c["pattern"], "bar": b, "track": c["track"],
                             "length_bars": ln})
@@ -8628,7 +8708,7 @@ def _write_around(project, res, notes, gen, chs, g, key, bpm, swing, part, bars,
         op = {"tool": "flp_compose_write", "pattern": pname, "notes": rows, "clear_channels": clear, "track": track,
               "length_bars": bars}
         if round(at, 3) not in have:
-            op["place"] = [[round(at, 3), bars]]
+            op["place"] = [[round(at, 3), bars]]; op["place_mode"] = "add"
         ops.append(op)
         written.append({"role": role, "pattern": pname, "notes": len(rows), "channels": clear})
     offs = v["offsets"]                                    # pitched samplers: notes go in at their written pitch
@@ -8876,7 +8956,9 @@ def register(ns):
           place=P("array", "bars or [bar, length_bars]", True, items={}), track=INT("playlist track", True),
           clear_channels=P("array", "channels to clear in the pattern first", True, items={"type": "integer"}),
           transform=P("object", "{ops: [...], channels: {ch: {role, drum}}, key, tempo, seed}", True),
-          length_bars=NUM("clip length when place gives bars only", True)))
+          length_bars=NUM("clip length when place gives bars only", True),
+          place_mode=STR("pattern already placed: move (default: its clip moves/resizes, no second copy) | add "
+                         "(another clip, a repeat) | replace (its clips go first)", True)))
     ns["_OPEN_PROJECT_GUARD"]["flp_compose_write"] = ("project", "output")
     ns["TOOLS"]["flp_compose_clear"] = (
         guard(flp_compose_clear, "project", "output"),
@@ -8909,9 +8991,11 @@ def register(ns):
     ns["TOOLS"]["flp_compose_drop"] = (
         guard(flp_compose_drop, "project", "output"),
         "Low-level writer flp_remove_fx batches through flp_edit: remove the named patterns (their notes too) that no "
-        "arrangement places any more; one still placed somewhere is kept and said.",
+        "arrangement places any more; one still placed somewhere is kept and said (unplace=true: its clips go too, "
+        "in every arrangement).",
         S(project=FLP, output=STR("save as (inside FLH_ROOTS)", True),
-          patterns=P("array", "pattern names", items={"type": "string"})))
+          patterns=P("array", "pattern names (or ids)", items={"type": ["string", "integer"]}),
+          unplace=BOOL("also remove their playlist clips (default false: placed patterns are kept)", True)))
     ns["_OPEN_PROJECT_GUARD"]["flp_compose_drop"] = ("project", "output")
     ns["TOOLS"]["flp_compose_layer_inserts"] = (
         guard(flp_compose_layer_inserts, "project", "output"),

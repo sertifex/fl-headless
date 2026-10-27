@@ -7,6 +7,13 @@ check permissions (ns["writable"]) first.
 API
   parse_abc(text, ppq=960, tune=None) -> Score        first tune (or the one whose X: equals `tune`)
   parse_musicxml(src, ppq=960) -> Score                src: path (.musicxml/.xml/.mxl), XML text or bytes
+  parse_score_data(data, ppq=960, parts=None) -> Score  per-bar JSON reading (format flh-score/1, docs/sheet_music.md):
+      {"meter", "key", "tempo", "bars": {"9": {"chord", "section", "mel": [[beat, len, "Bb4"], ...], "parts": {...}}}}
+      beats 0-based quarters; overlapping notes in a part become extra ABC voices of the same name (one track / one
+      inline voice); graces (length 0) never overlap the same key; checks with the data's bar numbers;
+      .score_info = layers, sections, chords, per-line beat sums, the generated ABC
+  diff_score_data(a, b) / merge_score_data(readings, prefer=None)  two readings bar by bar per part / page-range
+      readings joined with overlap + conflict checks
   validate(score, strict=False, max_issues=40) -> [issue, ...] ranked worst first. issue = {"severity": "high" |
       "med" | "low", "kind", "bar" (printed measure number), "voice", "line" (source line), "message", "fix"}.
       strict=False leaves out "low" (info) issues.
@@ -64,7 +71,8 @@ import zipfile
 from fractions import Fraction as Fr
 from xml.parsers import expat
 
-__all__ = ["parse_abc", "parse_musicxml", "validate", "to_midi", "to_inline", "diff", "summary", "Score", "Voice",
+__all__ = ["parse_abc", "parse_musicxml", "parse_score_data", "load_score_data", "diff_score_data",
+           "merge_score_data", "parse_pitch", "validate", "to_midi", "to_inline", "diff", "summary", "Score", "Voice",
            "pitch_name", "PPQ"]
 
 PPQ = 960
@@ -2613,6 +2621,828 @@ def _supported(sc, vi, i, step, alter):
     return False
 
 
+# ============================================================================= score data (per-bar JSON readings)
+SCORE_FORMAT = "flh-score/1"
+GRID = 48                                       # positions/lengths snap to 1/48 quarter (16ths, 32nds, triplets)
+_SD_RESERVED = {"section", "chord", "chords", "roman", "text", "marks", "ties", "note", "notes", "comment", "perc",
+                "dyn", "meter", "key", "tempo", "beats", "repeat_start", "repeat_end", "ending", "parts", "rest",
+                "page", "system", "src", "lyrics", "fingering", "bar"}
+_SD_PITCH = re.compile(r"^\s*([A-Ga-g])(##|bb|x|#|b|n|♯♯|♭♭|♯|♭|♮)?(-?\d)\s*$")
+_SD_ACC = {None: 0, "": 0, "#": 1, "♯": 1, "##": 2, "x": 2, "♯♯": 2, "b": -1, "♭": -1, "bb": -2,
+           "♭♭": -2, "n": 0, "♮": 0}
+_SD_FLAGS = {"tie": "tie", "~": "tie", "-": "tie", "accent": "accent", ">": "accent", "staccato": "staccato",
+             ".": "staccato", "stacc": "staccato", "staccatissimo": "staccatissimo", "wedge": "staccatissimo",
+             "marcato": "marcato", "^": "marcato", "grace": "grace", "tenuto": None, "fermata": None, "slur": None,
+             "arp": None, "arpeggio": None, "trill": None}
+
+
+def parse_pitch(s):
+    """'Bb4' / 'C#5' / 'F##3' / 'Ebb2' / 'Bn4' -> (step 0-6, alter, octave, MIDI) (C4 = 60). ValueError if not."""
+    m = _SD_PITCH.match(str(s))
+    if not m:
+        raise ValueError(f"pitch {s!r}: use a letter, an optional # / b / ## / bb and the octave, like 'Bb4' or "
+                         "'C#5' (C4 = middle C)")
+    step = STEPS.index(m.group(1).upper())
+    alter = _SD_ACC[m.group(2)]
+    octave = int(m.group(3))
+    midi = (octave + 1) * 12 + STEP_SEMI[step] + alter
+    if not 0 <= midi <= 127:
+        raise ValueError(f"pitch {s!r} is outside MIDI 0-127")
+    return step, alter, octave, midi
+
+
+def _sd_num(x):
+    """A beat / length: number, '1/3', '1 1/2' -> Fraction (exact), or raise ValueError."""
+    if isinstance(x, bool):
+        raise ValueError("a number")
+    if isinstance(x, (int, Fr)):
+        return Fr(x)
+    if isinstance(x, float):
+        if not math.isfinite(x):
+            raise ValueError("a finite number")
+        return Fr(x)
+    s = str(x).strip()
+    m = re.fullmatch(r"(\d+)\s+(\d+)\s*/\s*(\d+)", s)
+    if m:
+        return Fr(int(m.group(1))) + Fr(int(m.group(2)), int(m.group(3)))
+    return Fr(s)
+
+
+def _snap(q):
+    """-> (snapped Fraction on the 1/GRID grid, error in quarters)."""
+    s = Fr(round(q * GRID), GRID)
+    return s, abs(float(q - s))
+
+
+def load_score_data(src):
+    """dict | JSON text | path to a .json file -> (dict, path or None)."""
+    import json
+    if isinstance(src, dict):
+        return src, None
+    if isinstance(src, (bytes, bytearray)):
+        src = src.decode("utf-8", "replace")
+    s = str(src).strip()
+    if s.startswith("{"):
+        try:
+            return json.loads(s), None
+        except ValueError as e:
+            raise ValueError(f"score data isn't valid JSON: {e}") from None
+    p = s.strip('"')
+    if "\n" in p or not os.path.isfile(p):
+        raise ValueError("score: give the score data as a dict, JSON text or the path to a .json file")
+    with open(p, encoding="utf-8-sig") as f:
+        try:
+            return json.load(f), p
+        except ValueError as e:
+            raise ValueError(f"{os.path.basename(p)} isn't valid JSON: {e}") from None
+
+
+def _sd_meter(x, where):
+    if isinstance(x, (list, tuple)) and len(x) == 2:
+        x = f"{int(x[0])}/{int(x[1])}"
+    m = _parse_meter(str(x))
+    if m is None:
+        raise ValueError(f"{where}: meter 'none' isn't supported in score data; give e.g. '4/4'")
+    return m
+
+
+def _sd_key(x):
+    """'Dm' / 'D minor' / 'F' / 'Bb major' / -1 (fifths) / '1b' / '2#' -> ABC key text."""
+    if x is None or x == "":
+        return "C"
+    if isinstance(x, int) and not isinstance(x, bool):
+        return key_name(int(x), 0).split()[0]
+    s = str(x).strip()
+    m = re.fullmatch(r"(\d)\s*([#b])", s)
+    if m:
+        return key_name(int(m.group(1)) * (1 if m.group(2) == "#" else -1), 0).split()[0]
+    if s.lower() in ("0", "none", "open"):
+        return "C"
+    s = re.sub(r"\s+major$", "", s, flags=re.I)
+    return re.sub(r"\s+minor$", "m", s, flags=re.I)
+
+
+def _sd_tempo(x):
+    if isinstance(x, dict):
+        x = x.get("bpm")
+    v = float(x)
+    if not 5 <= v <= 1000:
+        raise ValueError(f"tempo {x}: give quarter notes per minute (5-1000)")
+    return v
+
+
+def _sd_bar_parts(bar):
+    """A bar dict -> {part: entries}: the 'parts' dict plus top-level keys whose value is a list of notes."""
+    out = {}
+    for k, v in bar.items():
+        if k in _SD_RESERVED or str(k).startswith("_") or not isinstance(v, (list, tuple)):
+            continue
+        if v and all(isinstance(e, (list, tuple)) for e in v):
+            out[str(k)] = list(v)
+        elif not v:
+            out[str(k)] = []
+    pp = bar.get("parts")
+    if isinstance(pp, dict):
+        for k, v in pp.items():
+            if isinstance(v, (list, tuple)):
+                out[str(k)] = out.get(str(k), []) + list(v)
+    return out
+
+
+def _sd_chords(c, bar):
+    if c is None or c == "":
+        return []
+    if isinstance(c, str):
+        return [[bar, 0, c]]
+    out = []
+    for e in c if isinstance(c, (list, tuple)) else []:
+        if isinstance(e, (list, tuple)) and len(e) >= 2:
+            try:
+                out.append([bar, float(_sd_num(e[0])), str(e[1])])
+            except (ValueError, ZeroDivisionError):
+                pass
+    return out
+
+
+def _sd_abc_note(step, octave):
+    letter = STEPS[step]
+    if octave >= 5:
+        return letter.lower() + "'" * (octave - 5)
+    return letter + "," * (4 - octave)
+
+
+def _sd_len(q):
+    u = q * GRID
+    if u.denominator != 1:
+        raise ValueError(f"length {q} off the 1/{GRID} grid")
+    return str(int(u))
+
+
+def _sd_int(x):
+    try:
+        return int(x)
+    except (TypeError, ValueError):
+        return 1
+
+
+def _sd_show(e):
+    s = repr(list(e) if isinstance(e, tuple) else e)
+    return s if len(s) <= 40 else s[:37] + "..."
+
+
+def _sd_runs(nums):
+    out = []
+    for n in nums:
+        if out and n == out[-1][1] + 1:
+            out[-1][1] = n
+        else:
+            out.append([n, n])
+    return [tuple(r) for r in out]
+
+
+def _sd_range_txt(nums):
+    return ", ".join(f"{a}" if a == b else f"{a}-{b}" for a, b in _sd_runs(sorted(nums)))
+
+
+def _sd_cover(ivs):
+    tot, end = Fr(0), None
+    for a, b in sorted(ivs):
+        if end is None or a >= end:
+            tot += b - a
+            end = b
+        elif b > end:
+            tot += b - end
+            end = b
+    return tot
+
+
+def _sd_flags(extra, add, where, num, p):
+    flags = set()
+    for fl in extra:
+        words = re.split(r"[\s,+]+", fl.strip().lower()) if isinstance(fl, str) else [repr(fl)]
+        for w in words:
+            if not w:
+                continue
+            if w in _SD_FLAGS:
+                if _SD_FLAGS[w]:
+                    flags.add(_SD_FLAGS[w])
+            elif add is not None:
+                add("info", "flag", num, p, f"{where}: flag {fl!r} ignored (known: tie, accent, staccato, "
+                    "staccatissimo, marcato, grace)")
+    return flags
+
+
+def parse_score_data(data, ppq=PPQ, parts=None):
+    """Per-bar score data (docs/sheet_music.md) -> Score, built through generated ABC so every ABC check applies.
+    data: dict / JSON text / .json path. parts: only these part names (None = all).
+    The Score also gets .score_info = {first_bar, last_bar, bars, parts, layers, sections, chords, beat_check, fixed,
+    abc, pages, file, pickup}; problems in the data itself are parse_issues with the data's bar numbers."""
+    data, path = load_score_data(data)
+    if not isinstance(data, dict):
+        raise ValueError("score data must be a JSON object with 'bars'")
+    pre = []
+
+    def add(sev, kind, bar, part, msg, fix=""):
+        pre.append(_issue(sev, kind, bar, part, None, msg, fix))
+
+    bars = {}
+    raw_bars = data.get("bars")
+    if isinstance(raw_bars, list):
+        raw_bars = {b.get("bar", k + 1): b for k, b in enumerate(raw_bars) if isinstance(b, dict)}
+    if not isinstance(raw_bars, dict) or not raw_bars:
+        raise ValueError('score data has no "bars": give {"bars": {"1": {"mel": [[0, 1, "C5"], ...]}, ...}}')
+    for k, b in raw_bars.items():
+        try:
+            n = int(str(k).strip())
+        except ValueError:
+            add("error", "bar_number", None, None, f"bar key {k!r} isn't a whole number (skipped)",
+                'key bars by their printed number: "12"')
+            continue
+        if n < 0:
+            add("error", "bar_number", None, None, f"bar {n}: negative bar numbers aren't allowed (skipped)")
+            continue
+        bars[n] = b if isinstance(b, dict) else {}
+        if not isinstance(b, dict):
+            add("error", "bar_data", n, None, f"bar {n} isn't an object (treated as empty)",
+                'write {"mel": [[beat, length, "Pitch"], ...]}')
+    if not bars:
+        raise ValueError("score data: no usable bars")
+    try:
+        meter = _sd_meter(data.get("meter") or "4/4", "meter")
+    except ValueError as e:
+        raise ValueError(f"score data: {e}") from None
+    key_txt = _sd_key(data.get("key"))
+    try:
+        kdef, _ = _parse_key(key_txt)
+    except ValueError as e:
+        raise ValueError(f"score data key {data.get('key')!r}: {e}") from None
+    kdef = kdef or C_MAJOR
+    tempo = None
+    if data.get("tempo") not in (None, ""):
+        try:
+            tempo = _sd_tempo(data["tempo"])
+        except (TypeError, ValueError) as e:
+            add("warning", "tempo", None, None, f"tempo {data.get('tempo')!r} not understood ({e}): ignored")
+    pinfo = data.get("parts") if isinstance(data.get("parts"), dict) else {}
+    want = None if parts is None else [str(p) for p in parts]
+    first, last = min(bars), max(bars)
+    nums = list(range(first, last + 1))
+    for a, b in _sd_runs([n for n in nums if n not in bars]):
+        add("warning", "missing_bar", a, None, (f"bar {a}" if a == b else f"bars {a}-{b}") + " not in the data (filled "
+            "with rests)", "missing from the reading? an empty bar {} is a bar of rests")
+    # ------------------------------------------------------------------ per bar: lengths, notes, beat sums
+    rows = []                   # (num, length q, meter set here, key set here, tempo set here, bar dict)
+    cur_m, cur_k = meter, key_txt
+    head_m = None
+    sections, chords, pages = [], [], []
+    part_order = list(pinfo)
+    notes, graces = {}, {}      # part -> [(abs_q, bar_idx, beat, dur, step, alter, octave, midi, flags)]
+    check = {"bars": 0, "lines": 0, "full": 0, "gaps": [], "over": []}
+    abs_q = Fr(0)
+    for bi, num in enumerate(nums):
+        b = bars.get(num, {})
+        mset = kset = tset = None
+        if b.get("meter") not in (None, ""):
+            try:
+                m2 = _sd_meter(b["meter"], f"bar {num}")
+                if m2 != cur_m:
+                    mset = m2
+                cur_m = m2
+            except ValueError as e:
+                add("error", "meter", num, None, f"bar {num}: {e}")
+        if bi == 0:
+            head_m, mset = cur_m, None
+        if b.get("key") not in (None, ""):
+            try:
+                k2 = _sd_key(b["key"])
+                _parse_key(k2)
+                if k2 != cur_k:
+                    kset = k2
+                cur_k = k2
+            except ValueError as e:
+                add("error", "key", num, None, f"bar {num}: key {b.get('key')!r} not understood ({e})")
+        if b.get("tempo") not in (None, ""):
+            try:
+                tset = _sd_tempo(b["tempo"])
+            except (TypeError, ValueError) as e:
+                add("warning", "tempo", num, None, f"bar {num}: tempo {b.get('tempo')!r} not understood ({e})")
+        L = _meter_q(cur_m)
+        if b.get("beats") not in (None, ""):
+            try:
+                L2, _ = _snap(_sd_num(b["beats"]))
+                if L2 <= 0:
+                    raise ValueError("must be > 0")
+                L = L2
+            except (ValueError, ZeroDivisionError, TypeError) as e:
+                add("error", "bar_length", num, None, f"bar {num}: beats {b.get('beats')!r} not understood ({e})")
+        if b.get("section") and (not sections or sections[-1][1] != str(b["section"])):
+            sections.append([num, str(b["section"])])
+        chords += _sd_chords(b.get("chord", b.get("chords")), num)
+        if b.get("page") is not None:
+            try:
+                pages.append({"page": int(b["page"]), "system": int(b.get("system") or 1), "first_bar": num})
+            except (TypeError, ValueError):
+                pass
+        bparts = _sd_bar_parts(b)
+        for p in bparts:
+            if p not in part_order:
+                part_order.append(p)
+        if want is not None:
+            bparts = {p: v for p, v in bparts.items() if p in want}
+        check["bars"] += 1
+        for p, ents in bparts.items():
+            ivs, seen = [], {}
+            for k, e in enumerate(ents):
+                where = f"bar {num} {p}: entry {k + 1} {_sd_show(e)}"
+                if not isinstance(e, (list, tuple)) or len(e) < 3:
+                    add("error", "entry", num, p, f"{where} isn't [beat, length, 'Pitch']")
+                    continue
+                try:
+                    beat0, dur0 = _sd_num(e[0]), _sd_num(e[1])
+                except (ValueError, ZeroDivisionError, TypeError):
+                    add("error", "entry", num, p, f"{where}: beat and length must be numbers (quarter notes)")
+                    continue
+                (beat, eb), (dur, ed) = _snap(beat0), _snap(dur0)
+                if max(eb, ed) > 0.002:
+                    add("warning", "grid", num, p, f"{where}: {float(beat0):g}/{float(dur0):g} isn't on a 1/{GRID} "
+                        f"quarter grid (moved to {float(beat):g}/{float(dur):g})", "write triplets as '1/3', '2/3'")
+                flags = _sd_flags(e[3:], add, where, num, p)
+                try:
+                    step, alter, octave, midi = parse_pitch(e[2])
+                except ValueError as ex:
+                    add("error", "pitch", num, p, f"{where}: {ex}",
+                        "move words (percussion, text) to 'text', or leave the part out")
+                    continue
+                if "grace" in flags:
+                    dur = Fr(0)
+                if dur < 0:
+                    add("error", "length", num, p, f"{where}: negative length")
+                    continue
+                if beat < 0 or beat >= L:
+                    add("error", "position", num, p, f"{where}: starts at beat {float(beat):g}, outside the bar "
+                        f"(0 to {float(L):g}; beats count from 0 in quarter notes)", "wrong bar or wrong beat?")
+                    continue
+                if dur == 0:
+                    graces.setdefault(p, []).append((abs_q + beat, bi, beat, step, alter, octave, midi))
+                    continue
+                if beat + dur > L:
+                    add("error", "overflow", num, p, f"{where}: ends at beat {float(beat + dur):g} but the bar has "
+                        f"{float(L):g} (cut at the bar line)", "a wrong length - or a tie: end the note at the bar "
+                        "line with 'tie' and start the next bar with the same pitch")
+                    check["over"].append(f"{num} {p}")
+                    dur = L - beat
+                lst = notes.setdefault(p, [])
+                if (beat, midi) in seen:
+                    j = seen[(beat, midi)]
+                    old = lst[j]
+                    if dur > old[3]:
+                        lst[j] = old[:3] + (dur,) + old[4:8] + (old[8] | flags,)
+                    add("info", "shared_head", num, p, f"bar {num} {p}: {e[2]} at beat {float(beat):g} listed twice "
+                        "(kept once, the longer)")
+                    continue
+                seen[(beat, midi)] = len(lst)
+                lst.append((abs_q + beat, bi, beat, dur, step, alter, octave, midi, frozenset(flags)))
+                ivs.append((beat, beat + dur))
+            if ivs:
+                check["lines"] += 1
+                cov = _sd_cover(ivs)
+                if cov >= L:
+                    check["full"] += 1
+                else:
+                    check["gaps"].append(f"{num} {p} -{float(L - cov):g}")
+                    add("info", "gap", num, p, f"bar {num} {p}: notes cover {float(cov):g} of {float(L):g} beats "
+                        "(rests - or a note missed?)")
+        rows.append((num, L, mset, kset, tset, b))
+        abs_q += L
+    if want is not None:
+        miss = [p for p in want if p not in part_order]
+        if miss:
+            add("warning", "parts", None, None, f"parts {miss} aren't in the data (it has {part_order})")
+        part_order = [p for p in part_order if p in want]
+    part_order = [p for p in part_order if notes.get(p) or graces.get(p)]
+    if not part_order:
+        raise ValueError("score data has no notes" + (f" in the parts {want}" if want else "") +
+                         ": write [beat, length, 'Pitch'] entries")
+    # ------------------------------------------------------------------ layers (ABC voices) per part
+    abc_voices = []
+    for p in part_order:
+        evs = {}
+        for t in notes.get(p, []):
+            evs.setdefault((t[0], t[3]), []).append(t)
+        layers = []
+        for g in sorted(evs.values(), key=lambda g: (g[0][0], -max(x[7] for x in g))):
+            st, du = g[0][0], g[0][3]
+            pick = next((li for li, ly in enumerate(layers)
+                         if ly["end"] == st and ly["ties"] & {x[7] for x in g}), None)
+            if pick is None:
+                pick = next((li for li, ly in enumerate(layers) if ly["end"] <= st and not ly["ties"]), None)
+            if pick is None:
+                pick = next((li for li, ly in enumerate(layers) if ly["end"] <= st), None)
+            if pick is None:
+                layers.append({"end": Fr(0), "ties": set(), "evs": [], "graces": []})
+                pick = len(layers) - 1
+            ly = layers[pick]
+            ly["evs"].append(g)
+            ly["end"] = st + du
+            ly["ties"] = {x[7] for x in g if "tie" in x[8]}
+        if not layers:
+            layers.append({"end": Fr(0), "ties": set(), "evs": [], "graces": []})
+        for gr in sorted(graces.get(p, [])):
+            t = gr[0]
+            pick = next((li for li, ly in enumerate(layers) if any(g[0][0] == t for g in ly["evs"])), None)
+            if pick is None:
+                pick = next((li for li, ly in enumerate(layers)
+                             if not any(g[0][0] < t < g[0][0] + g[0][3] for g in ly["evs"])), None)
+            if pick is None:
+                layers.append({"end": Fr(0), "ties": set(), "evs": [], "graces": []})
+                pick = len(layers) - 1
+            layers[pick]["graces"].append(gr)
+        abc_voices += [(p, ly) for ly in layers]
+    # ------------------------------------------------------------------ ABC text (one line per voice and bar)
+    title = str(data.get("title") or "").replace("\n", " ").strip()
+    out = ["X:1", f"T:{title or 'Score'}", f"M:{head_m[0]}/{head_m[1]}", "L:1/192"]
+    if tempo:
+        out.append(f"Q:1/4={tempo:g}")
+    for vi, (p, ly) in enumerate(abc_voices):
+        info = pinfo.get(p) if isinstance(pinfo.get(p), dict) else {}
+        clef = str(info.get("clef") or "").lower()
+        if clef not in CLEF_RANGE:
+            ps = sorted(t[7] for t in notes.get(p, [])) or [60]
+            clef = "bass" if ps[len(ps) // 2] < 57 else "treble"
+        prog = info.get("program")
+        nm = re.sub(r'["\n]', "'", p)
+        out.append(f'V:v{vi + 1} name="{nm}" clef={clef}' +
+                   (f" program={int(prog)}" if isinstance(prog, int) and not isinstance(prog, bool) else ""))
+    out.append(f"K:{key_txt}")
+    line_map = {}
+    for vi, (p, ly) in enumerate(abc_voices):
+        out.append(f"V:v{vi + 1}")
+        kalt = dict(kdef["alters"])
+        by_bar, gr_bar = {}, {}
+        for g in ly["evs"]:
+            by_bar.setdefault(g[0][1], []).append(g)
+        for gr in ly["graces"]:
+            gr_bar.setdefault(gr[1], {}).setdefault(gr[2], []).append(gr)
+        prev_tied = set()
+        for bi, (num, L, mset, kset, tset, b) in enumerate(rows):
+            s = []
+            if b.get("repeat_start"):
+                s.append("|:")
+            if b.get("ending") not in (None, ""):
+                s.append(f"|[{_sd_int(b['ending'])} ")
+            if mset:
+                s.append(f"[M:{mset[0]}/{mset[1]}]")
+            if kset:
+                s.append(f"[K:{kset}]")
+                kalt = dict((_parse_key(kset)[0] or C_MAJOR)["alters"])
+            if tset and vi == 0:
+                s.append(f"[Q:1/4={tset:g}]")
+            dy = b.get("dyn")
+            dy = dy.get(p) if isinstance(dy, dict) else dy
+            if isinstance(dy, str) and dy.strip().lower() in DYN:
+                s.append(f"!{dy.strip().lower()}!")
+            state, gmap, tied_now = {}, dict(gr_bar.get(bi, {})), set()
+            cuts = sorted(gmap)
+            pos = Fr(0)
+            at_start = [True]
+
+            def acc_for(step, alter, octave):
+                cur = state.get((step, octave), kalt.get(STEPS[step], 0))
+                if alter != cur or (at_start[0] and (step, octave) in prev_tied):
+                    state[(step, octave)] = alter
+                    return {2: "^^", 1: "^", 0: "=", -1: "_", -2: "__"}[alter]
+                return ""
+
+            def graces_txt(t):
+                gs = gmap.pop(t, [])
+                return "{" + "".join(acc_for(g[3], g[4], g[5]) + _sd_abc_note(g[3], g[5]) for g in gs) + "}" \
+                    if gs else ""
+
+            def rest_to(t, pos):
+                while pos < t:
+                    nxt = min([c for c in cuts if pos < c < t] + [t])
+                    s.append(graces_txt(pos) + f"z{_sd_len(nxt - pos)} ")
+                    at_start[0] = False
+                    pos = nxt
+                return pos
+
+            for g in sorted(by_bar.get(bi, []), key=lambda g: g[0][2]):
+                beat, du = g[0][2], g[0][3]
+                pos = rest_to(beat, pos)
+                fl = set().union(*[x[8] for x in g])
+                deco = ("!accent!" if "accent" in fl else "") + ("!marcato!" if "marcato" in fl else "") + \
+                    ("!wedge!" if "staccatissimo" in fl else "." if "staccato" in fl else "")
+                pre_g = graces_txt(beat)
+                ns_ = []
+                for x in sorted(g, key=lambda x: x[7]):
+                    tie = "-" if "tie" in x[8] and len(g) > 1 else ""
+                    ns_.append(acc_for(x[4], x[5], x[6]) + _sd_abc_note(x[4], x[6]) + tie)
+                    if "tie" in x[8]:
+                        tied_now.add((x[4], x[6]))
+                one = len(ns_) == 1
+                s.append(pre_g + deco + (ns_[0] if one else "[" + "".join(ns_) + "]") + _sd_len(du) +
+                         ("-" if one and "tie" in g[0][8] else "") + " ")
+                at_start[0] = False
+                pos = beat + du
+            pos = rest_to(L, pos)
+            for t in sorted(gmap):              # cannot happen (graces sit on a free spot); keep them visible
+                s.append(graces_txt(t))
+            prev_tied = tied_now
+            end = ":|" if b.get("repeat_end") else ("|]" if bi == len(rows) - 1 else "|")
+            out.append("".join(s).rstrip() + " " + end)
+            line_map[len(out)] = (num, p)
+    abc = "\n".join(out) + "\n"
+    try:
+        sc = parse_abc(abc, ppq=ppq)
+    except ValueError as e:
+        raise ValueError(f"score data couldn't be built ({e})") from None
+    # ------------------------------------------------------------------ back to the data's bar numbers
+    renum = {}
+    for i, gm in enumerate(sc.measures):
+        new = rows[i][0] if i < len(rows) else gm["num"]
+        renum[gm["num"]] = new
+        gm["num"] = new
+    for lst in (sc.notes, getattr(sc, "_raw_notes", [])):
+        for n_ in lst:
+            n_["measure"] = renum.get(n_["measure"], n_["measure"])
+    for x in sc.parse_issues:
+        if x.get("line") in line_map:
+            x["bar"], x["voice"] = line_map[x["line"]]
+    sc.source = "score"
+    sc.title = title
+    if data.get("composer"):
+        sc.composer = str(data["composer"])
+    fixed = _sd_overlaps(sc)
+    sc.parse_issues = pre + sc.parse_issues
+    gaps = check.pop("gaps")
+    check["gaps"] = len(gaps)
+    if gaps:
+        check["gap_list"] = gaps[:12]
+    if not check["over"]:
+        check.pop("over")
+    sc.score_info = {"first_bar": first, "last_bar": last, "bars": len(rows), "parts": part_order,
+                     "layers": {p: sum(1 for q_, _ in abc_voices if q_ == p) for p in part_order},
+                     "sections": sections, "chords": chords, "beat_check": check, "fixed": fixed, "abc": abc,
+                     "pages": pages, "file": path, "part_info": pinfo,
+                     "pickup": bool(len(rows) > 1 and rows[0][1] < _meter_q(head_m))}
+    return sc
+
+
+def _sd_overlaps(sc):
+    """The same key twice at once in one part (layers, shared heads, a grace under a held note): the later note
+    cuts the earlier one where it starts; equal starts keep the longer. -> {cut, dropped} counts."""
+    out = {"cut": 0, "dropped": 0}
+    by = {}
+    for n in sc.notes:
+        by.setdefault((n["voice"], n["pitch"]), []).append(n)
+    drop = set()
+    for lst in by.values():
+        lst.sort(key=lambda n: (n["start_tick"], -n["len_ticks"]))
+        prev = None
+        for n in lst:
+            if prev is not None and n["start_tick"] < prev["start_tick"] + prev["len_ticks"]:
+                if n["start_tick"] == prev["start_tick"]:
+                    drop.add(id(n))
+                    out["dropped"] += 1
+                    continue
+                prev["len_ticks"] = n["start_tick"] - prev["start_tick"]
+                out["cut"] += 1
+            prev = n
+    if drop:
+        sc.notes = [n for n in sc.notes if id(n) not in drop]
+    return {k: v for k, v in out.items() if v}
+
+
+# ------------------------------------------------------------------ comparing / merging readings
+def _sd_bars_by_num(d):
+    raw = d.get("bars") if isinstance(d, dict) else None
+    if isinstance(raw, list):
+        raw = {b.get("bar", k + 1): b for k, b in enumerate(raw) if isinstance(b, dict)}
+    out = {}
+    for k, b in (raw or {}).items() if isinstance(raw, dict) else ():
+        try:
+            out[int(str(k).strip())] = b if isinstance(b, dict) else {}
+        except ValueError:
+            continue
+    return out
+
+
+def _sd_norm_bar(b, parts=None):
+    """A bar dict -> {part: sorted ((beat, dur, midi, tie), ...)} for comparing readings (bad entries skipped)."""
+    out = {}
+    for p, ents in _sd_bar_parts(b if isinstance(b, dict) else {}).items():
+        if parts is not None and p not in parts:
+            continue
+        lst = set()
+        for e in ents:
+            try:
+                bt, du, mi = _snap(_sd_num(e[0]))[0], _snap(_sd_num(e[1]))[0], parse_pitch(e[2])[3]
+            except (ValueError, ZeroDivisionError, TypeError, IndexError):
+                continue
+            fl = _sd_flags(e[3:], None, "", 0, p)
+            lst.add((bt, Fr(0) if "grace" in fl else du, mi, "tie" in fl))
+        out[p] = tuple(sorted(lst))
+    return out
+
+
+def _sd_q(q):
+    f = float(q)
+    return str(int(f)) if f == int(f) else f"{f:.3f}".rstrip("0").rstrip(".")
+
+
+def _sd_note_txt(n):
+    return f"{pitch_name(n[2])}@{_sd_q(n[0])}" + (f"/{_sd_q(n[1])}" if n[1] else " (grace)")
+
+
+def diff_bar_parts(a, b):
+    """Two normalized bars ({part: notes}) -> [{part, changed, only_a, only_b}] (empty list = the same)."""
+    out = []
+    for p in sorted(set(a) | set(b), key=lambda p: (p not in a, p)):
+        A, B = list(a.get(p, ())), list(b.get(p, ()))
+        if A == B:
+            continue
+        if not A or not B:
+            out.append({"part": p, ("only_b" if not A else "only_a"): f"the whole part ({len(A or B)} notes)"})
+            continue
+        ca, cb = [x for x in A if x not in B], [x for x in B if x not in A]
+        changed = []
+        for x in list(ca):
+            m = next((y for y in cb if y[0] == x[0] and y[1] == x[1] and y[2] != x[2]), None)
+            if m is not None:
+                d = m[2] - x[2]
+                changed.append(f"beat {_sd_q(x[0])}: {pitch_name(x[2])} vs {pitch_name(m[2])}" +
+                               (" (octave)" if d and d % 12 == 0 else " (accidental?)" if abs(d) == 1 else ""))
+            else:
+                m = next((y for y in cb if y[0] == x[0] and y[2] == x[2]), None)
+                if m is None:
+                    continue
+                if m[1] == x[1]:
+                    changed.append(f"beat {_sd_q(x[0])}: {pitch_name(x[2])} tie {'yes' if x[3] else 'no'} vs "
+                                   f"{'yes' if m[3] else 'no'}")
+                else:
+                    changed.append(f"beat {_sd_q(x[0])}: {pitch_name(x[2])} length {_sd_q(x[1])} vs {_sd_q(m[1])}")
+            ca.remove(x)
+            cb.remove(m)
+        e = {"part": p}
+        if changed:
+            e["changed"] = changed[:8]
+        if ca:
+            e["only_a"] = [_sd_note_txt(x) for x in ca][:8]
+        if cb:
+            e["only_b"] = [_sd_note_txt(x) for x in cb][:8]
+        out.append(e)
+    return out
+
+
+def diff_score_data(a, b, parts=None, max_bars=40):
+    """Two per-bar readings (dict / JSON / path) of the same music -> the bars where they disagree, part by part
+    (beats as in the data: 0-based quarters), header differences, and bars only one reading has."""
+    A, B = load_score_data(a)[0], load_score_data(b)[0]
+    ba, bb = _sd_bars_by_num(A), _sd_bars_by_num(B)
+    meta = [f"{k}: {A.get(k)!r} vs {B.get(k)!r}" for k in ("meter", "key", "tempo")
+            if A.get(k) is not None and B.get(k) is not None and str(A.get(k)) != str(B.get(k))]
+    both = sorted(set(ba) & set(bb))
+    bars, same = [], 0
+    for n in both:
+        hd = [f"{k} {ba[n][k]!r} vs {bb[n][k]!r}" for k in ("meter", "beats", "key")
+              if ba[n].get(k) is not None and bb[n].get(k) is not None and str(ba[n][k]) != str(bb[n][k])]
+        d = diff_bar_parts(_sd_norm_bar(ba[n], parts), _sd_norm_bar(bb[n], parts))
+        if d or hd:
+            bars.append({"bar": n, **({"header": hd} if hd else {}), **({"parts": d} if d else {})})
+        else:
+            same += 1
+    only_a, only_b = sorted(set(ba) - set(bb)), sorted(set(bb) - set(ba))
+    out = {"same": not bars and not meta and not only_a and not only_b, "bars_compared": len(both),
+           "bars_same": same, "bars_differ": len(bars), "bars": bars[:max_bars]}
+    if meta:
+        out["meta"] = meta
+    if only_a:
+        out["only_a"] = _sd_range_txt(only_a)
+    if only_b:
+        out["only_b"] = _sd_range_txt(only_b)
+    if len(bars) > max_bars:
+        out["more"] = len(bars) - max_bars
+    return out
+
+
+def _sd_copy(x):
+    if isinstance(x, dict):
+        return {k: _sd_copy(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_sd_copy(v) for v in x]
+    return x
+
+
+def _sd_put_part(bar, p, ents):
+    """Set part p of a bar where it lives (top level or under 'parts')."""
+    if isinstance(bar.get(p), list) and p not in _SD_RESERVED:
+        bar[p] = _sd_copy(ents)
+        return
+    if not isinstance(bar.get("parts"), dict):
+        bar["parts"] = {}
+    bar["parts"][p] = _sd_copy(ents)
+
+
+def merge_score_data(readings, prefer=None):
+    """Several per-bar readings (one per page range, or per instrument group) -> (merged dict, report).
+    A bar only one reading has is taken as it is. A bar several readings have: parts only one of them has are joined;
+    a part two readings both have must agree, else it's a conflict - `prefer` (the 0-based index of the reading to
+    trust, 'first' or 'last') settles conflicts; without it the first reading's version is kept and the conflict is
+    reported. Header fields (meter, key, tempo) must agree too."""
+    docs = []
+    for r in readings or []:
+        d, path = load_score_data(r)
+        if not isinstance(d, dict):
+            raise ValueError("each reading must be a score-data object")
+        docs.append(d)
+    if not docs:
+        raise ValueError("give at least one reading")
+    if prefer is None:
+        pref = None
+    elif prefer == "first":
+        pref = 0
+    elif prefer == "last":
+        pref = len(docs) - 1
+    else:
+        pref = int(prefer)
+        if not 0 <= pref < len(docs):
+            raise ValueError(f"prefer={prefer}: there are {len(docs)} readings (0-based)")
+    head, meta = {"format": SCORE_FORMAT}, []
+    for k in ("title", "composer", "meter", "key", "tempo"):
+        vals = [(i, d.get(k)) for i, d in enumerate(docs) if d.get(k) not in (None, "")]
+        if not vals:
+            continue
+        head[k] = vals[0][1]
+        other = [(i, v) for i, v in vals if str(v) != str(vals[0][1])]
+        if other and k in ("meter", "key", "tempo"):
+            meta.append(f"{k}: reading {vals[0][0]} says {vals[0][1]!r}, " +
+                        ", ".join(f"reading {i} says {v!r}" for i, v in other))
+            if pref is not None and docs[pref].get(k) not in (None, ""):
+                head[k] = docs[pref][k]
+    pinfo = {}
+    for d in docs:
+        if isinstance(d.get("parts"), dict):
+            for p, v in d["parts"].items():
+                pinfo.setdefault(p, v)
+    if pinfo:
+        head["parts"] = pinfo
+    per = [_sd_bars_by_num(d) for d in docs]
+    merged, src, conflicts, overlaps = {}, {}, [], []
+    for i, bars in enumerate(per):
+        for n, b in sorted(bars.items()):
+            if n not in merged:
+                merged[n], src[n] = _sd_copy(b), [i]
+                continue
+            overlaps.append(n)
+            cur = merged[n]
+            na, nb = _sd_norm_bar(cur), _sd_norm_bar(b)
+            clash = [p for p in sorted(set(na) & set(nb)) if na[p] != nb[p]]
+            hdr = [k for k in ("meter", "beats", "key") if cur.get(k) is not None and b.get(k) is not None and
+                   str(cur[k]) != str(b[k])]
+            if clash or hdr:
+                c = {"bar": n, "readings": [src[n][0], i]}
+                if clash:
+                    c["parts"] = diff_bar_parts({p: na[p] for p in clash}, {p: nb[p] for p in clash})
+                if hdr:
+                    c["header"] = [f"{k} {cur[k]!r} vs {b[k]!r}" for k in hdr]
+                conflicts.append(c)
+                if pref == i:
+                    bp = _sd_bar_parts(b)
+                    for p in clash:
+                        _sd_put_part(cur, p, bp[p])
+                    for k in hdr:
+                        cur[k] = b[k]
+            src[n].append(i)
+            for p, ents in _sd_bar_parts(b).items():          # parts only this reading has: joined
+                if p not in na:
+                    _sd_put_part(cur, p, ents)
+            for k, v in b.items():                           # metadata the earlier reading lacks
+                if k in _SD_RESERVED and k != "parts" and cur.get(k) in (None, "", []):
+                    cur[k] = _sd_copy(v)
+    nums = sorted(merged)
+    missing = [n for n in range(nums[0], nums[-1] + 1) if n not in merged] if nums else []
+    parts_by = [sorted({p for b in bars.values() for p in _sd_bar_parts(b)}) for bars in per]
+    out = dict(head)
+    out["bars"] = {str(n): merged[n] for n in nums}
+    rep = {"readings": len(docs), "bars": len(nums), "range": f"{nums[0]}-{nums[-1]}" if nums else None,
+           "bars_by_reading": [_sd_range_txt(b) if b else None for b in per], "conflicts": conflicts,
+           "parts": sorted({p for ps in parts_by for p in ps})}
+    if overlaps:
+        rep["overlap_bars"] = _sd_range_txt(sorted(set(overlaps)))
+    if missing:
+        rep["missing"] = _sd_range_txt(missing)
+    if meta:
+        rep["meta"] = meta
+    if len(per) > 1:
+        odd = {str(i): [p for p in ps if sum(p in x for x in parts_by) == 1] for i, ps in enumerate(parts_by)}
+        odd = {k: v for k, v in odd.items() if v}
+        if odd:
+            rep["parts_in_one_reading_only"] = odd
+    if conflicts:
+        rep["resolved_by"] = f"reading {pref}" if pref is not None else "none: the first reading's version was kept"
+    return out, rep
+
+
 # ============================================================================= summary / inline / MIDI
 def main_meter(sc):
     """The meter covering the most written time (FL projects have one)."""
@@ -2747,7 +3577,11 @@ def to_midi(sc, path=None):
     tracks = [_track(cond, sc.title or "score")]
     ch = 0
     count = 0
+    names = set()
     for v in sc.voices:
+        if v.name in names:                       # voices sharing a name (score data's layers) = one track
+            continue
+        names.add(v.name)
         if ch == 9:
             ch += 1
         c = ch % 16

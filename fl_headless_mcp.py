@@ -71,7 +71,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fl_music  # noqa: E402
 from fl_music import note_name, parse_note  # noqa: E402
 
-SERVER = {"name": "fl-headless", "version": "2.1.3"}
+SERVER = {"name": "fl-headless", "version": "2.2.0"}
 
 # Sent to the AI client on connect, so every session starts knowing how FL behaves and how the user wants it run.
 INSTRUCTIONS = """fl-headless drives FL Studio (Windows) and reads/writes .flp projects.
@@ -97,8 +97,9 @@ PLUGINS: only what the user owns (profile > FL edition > installed VSTs); 'unkno
 LISTEN, DON'T BOUNCE: fl_preview(channels=) beats real time; fl_listen plays in real time (only the bars around
   a change). To send one: fl_preview(format='mp3', section=<the changed part>) -> copy only share_path. Stems: fl_render_stems. Finals: fl_finalize (whole piece: flp_finish_piece). A {job} answer ran
   past 45 s and goes on: fl_job waits, don't poll. fl_doctor after structural edits; fl_review before 'done'.
-SHEET MUSIC: sheet_pages (one system per call, follow 'next'), write ABC (letters absolute: C = middle C whatever
-  the clef; Q:1/4=120), sheet_import checks every bar - re-read the bars it lists.
+SHEET MUSIC: sheet_pages (systems=true, then rows=/bars= crops; split=N for parallel helpers), write ABC (letters
+  absolute: C = middle C whatever the clef; Q:1/4=120) or per-bar score data (docs/sheet_music.md); sheet_import
+  checks every bar - re-read the bars it lists; sheet_merge joins helpers' page ranges.
 WORDS: 'this / here' = what's selected in FL (fl_context). 'How do I': fl_help.
 FILES: writes only inside FLH_ROOTS; every edit keeps a backup (undo: flp_versions, flp_restore); deletes go to the
   Recycle Bin; keep finals only.
@@ -1586,10 +1587,23 @@ def _sane_bpm(b):
 
 
 # ============================================================================= FLP: tools
-def flp_info(path):
+def flp_info(path, fields=None):
+    """Quick facts of a .flp. fields: only these keys (a list or 'a,b'; e.g. ['tempo_bpm', 'time_signature']) -
+    an unknown one is named with the keys there are."""
     d = _load(path)
     info = _cached("info", d, _flp_info_parse)                   # by content: a re-read of the same bytes is free
-    return {"path": path, **_jcopy(info)}                         # (a fresh copy: callers may edit theirs)
+    if fields in (None, "", []):
+        return {"path": path, **_jcopy(info)}                     # (a fresh copy: callers may edit theirs)
+    want = [f.strip() for f in (fields.split(",") if isinstance(fields, str) else fields) if str(f).strip()]
+    out = {"path": path}
+    for f in want:
+        if f in info:
+            out[f] = _jcopy(info[f]) if isinstance(info[f], (dict, list)) else info[f]
+    miss = [f for f in want if f not in info and f != "path"]
+    if miss:
+        out["unknown_fields"] = miss
+        out["fields_here"] = sorted(info)
+    return out
 
 
 def _flp_info_parse(d):
@@ -1714,17 +1728,52 @@ def flp_set_tempo(path, bpm):
     return {"path": path, "tempo_bpm": float(bpm), "pattern_tempo_events_scaled": scaled}
 
 
-def flp_write_notes(template, output, parts, song_length="auto", tail_bars=2, tempo="auto"):
+def flp_write_notes(template, output, parts, song_length="auto", tail_bars=2, tempo="auto", meter="auto",
+                    clear_song=False):
     """Replace all notes of the template's pattern with notes from MIDI files (one per channel).
     tempo: "auto" = take the tempo map of the first MIDI file that has one (FL plays it as recorded tempo
-    events, so notes can stay on the grid while the tempo moves), "keep" = leave the template's, or a number."""
+    events, so notes can stay on the grid while the tempo moves; a project with several patterns gets it as a Tempo
+    lane), "keep" = leave the template's, or a number. meter: "auto" = the first MIDI file's time signature (FF 58)
+    becomes the project's, later changes become time-signature markers; "keep"; or "3/4". A template that is an
+    arranged song (several patterns with notes) is refused unless clear_song=True: then its patterns, clips, markers
+    and tempo lane are left out of the output (channels, plugins, mixer kept - as flp_new_from) and the parts are
+    written as a new song."""
     writable(output)
     d = _load(template); ev = _events(d); P = _ppq(d)
+    held = [f"{v['name'] or pid} ({len(v['notes'])} notes)" for pid, v in sorted(_patterns(d, ev).items()) if v["notes"]]
+    if len(held) > 1 or (held and sum(1 for e in ev if e["id"] == EV_NOTES and e["len"] % 24 == 0) != 1):
+        if not clear_song:
+            raise ValueError(f"the template is an arranged song ({len(held)} patterns hold notes: {', '.join(held[:6])}). "
+                             "To write a new song with its sounds: clear_song=true (its patterns, clips and markers "
+                             "are left out of the output; channels and mixer kept) or flp_new_from first; to change "
+                             "one part of this song: flp_replace_part")
+    pre = []                                                      # what's done to the copy before the notes go in
+    if clear_song and (held or _clips(d, ev)):
+        d, info = _new_song_bytes(d, None, None)
+        pre.append(f"the template's song was left out ({info['patterns']} patterns, {info['clips']} clips, "
+                   f"{info['markers']} markers); its channels and mixer kept")
+    mt = None
+    if meter not in (None, "keep"):
+        if meter == "auto":
+            mt = next((m_ for m_ in (_midi_meters(p_["midi"], P) for p_ in parts if p_.get("midi")) if m_), None)
+        else:
+            mt = [(0,) + _parse_meter(meter)]
+        if mt:
+            if mt[0][0] > 0:                                      # MIDI's 4/4 before its first time signature
+                mt.insert(0, (0, 4, 4))
+            d, said = _meter_map_write(d, mt)
+            if said:
+                pre.append(said)
+    if pre:
+        _save(d, output); template = output; ev = _events(d)
     if sum(1 for e in ev if e["id"] == EV_PATTERN_NEW) > 2:
         npat, empty = _all_patterns_empty(d, ev)
         if empty:                                                  # flh_new_song's empty section blocks: one 'Song'
-            return _write_into_fresh_song(template, output, parts, [{"name": "Song", "bar": 1}], tempo,
-                                          tail_bars if song_length == "auto" else 0)
+            r = _write_into_fresh_song(template, output, parts, [{"name": "Song", "bar": 1}], tempo,
+                                       tail_bars if song_length == "auto" else 0)
+            if pre:
+                r["before"] = pre
+            return r
     k, old = _notes_event(d, ev)
     midi_ch = {}
     for r in old:
@@ -1759,12 +1808,20 @@ def flp_write_notes(template, output, parts, song_length="auto", tail_bars=2, te
     _save(_splice(d, ev, edits), output)
     if song_length == "auto":
         end = max(r[0] + r[3] for r in recs); dd = _load(output)    # whole bars of the song's time signature
+        if not _clips(dd, _events(dd)):                           # a pattern the playlist doesn't play (FL's
+            pid = next(iter(sorted(_patterns(dd, _events(dd)))), None)   # empty template + a new pattern): placed
+            if pid is not None:                                   # at bar 1, else nothing would sound
+                flp_playlist(output, "place", output=output, pattern=pid, bar=1, track=1)
+                res["placed"] = f"pattern {pid} put on the playlist at bar 1 (it wasn't placed)"
+                dd = _load(output)
         res.update(flp_set_song_length(output, int(_tick_to_bar(end, _meter_map(dd, _events(dd)), P) - 1)
                                        + int(tail_bars)))
     elif song_length is not None:
         res.update(flp_set_song_length(output, float(song_length)))
     if warns:
         res["warnings"] = warns
+    if pre:
+        res["before"] = pre
     return _overlap_report(res, [(r[2], r[0], r[3], r[4]) for r in recs])
 
 
@@ -2075,6 +2132,17 @@ def flp_tempo_write(project, output, midi=None, points=None, pattern="Tempo"):
          "bpm_range": [min(b for _, b in tmap), max(b for _, b in tmap)]}
     if created:
         r["created"] = created
+    try:                                                          # a tempo AUTOMATION clip plays over the lane where
+        ev = _events(d); auto = _tempo_automation(d, ev, P)       # it lies: FL keeps that older tempo there
+        over = [(a, b) for a, b, _ in auto if a < tmap[-1][0] + P and b > tmap[0][0]]
+        if over:
+            bt = max(1, int(round(bpb * P)))
+            r["WARNING"] = ("tempo automation clip(s) play over the written lane at bars "
+                            + ", ".join(f"{a // bt + 1}-{-(-b // bt)}" for a, b in over[:4])
+                            + ": FL plays the automation there, not these points. Remove or mute that clip "
+                              "(flp_playlist) for the new tempo map to play")
+    except Exception:                                             # noqa: BLE001 - a check only
+        pass
     return r
 
 
@@ -2150,9 +2218,11 @@ def _overlap_report(res, rows):
 
 def _write_into_fresh_song(template, output, parts, sections, tempo="auto", tail_bars=2, beats_per_bar=None):
     """flp_write_arrangement / flp_write_notes on a project whose patterns are all empty (flh_new_song's section
-    blocks, FL templates): its pattern clips go, one named pattern per section is placed (tracks 1/2 alternating so
-    ringing notes aren't cut), the notes go in with flp_replace_part (verified read-back), clips are stretched over
-    notes that ring past their section, markers are rewritten from the sections, empty leftovers are removed."""
+    blocks, FL templates): its pattern clips go, one named pattern per section is placed (all on playlist track 1:
+    alternating tracks looked like empty sections once FL's playlist scrolled; a clip stretched over notes that ring
+    past its section overlaps the next one on that track and both play), the notes go in with flp_replace_part
+    (verified read-back), markers are rewritten from the sections, empty leftovers are removed. A MIDI tempo map with
+    changes becomes a Tempo lane (flp_tempo_write) - the whole map, not just its first tempo."""
     global _EDIT_DEPTH
     import shutil
     writable(output)
@@ -2196,11 +2266,13 @@ def _write_into_fresh_song(template, output, parts, sections, tempo="auto", tail
             if not has:
                 continue
             nm = str(sec.get("name") or f"Part {i + 1}")
+            # PC-VERIFY: section clips on ONE playlist track, a ringing one overlapping the next: FL plays both (the
+            # ringing tail is heard) and the playlist shows every section on track 1
             r = flp_new_pattern(output, nm, output=output, place_at_bar=1 + st / bar, length_bars=(en - st) / bar,
-                                playlist_track=1 + len(layout) % 2)
+                                playlist_track=1)
             ring = max([t + l for _, _, ts in notes_by for t, l, _, _ in ts if st <= t < en] + [en])
             layout.append({"pattern": r["pattern"], "name": nm, "bar": round(1 + st / bar, 3),
-                           "length_bars": round((-(-(ring - st) // P) * P) / bar, 2), "track": 1 + (len(layout)) % 2,
+                           "length_bars": round((-(-(ring - st) // P) * P) / bar, 2), "track": 1,
                            "_ring": ring > en})
         written = 0
         for ch, part, ts in notes_by:
@@ -2223,7 +2295,7 @@ def _write_into_fresh_song(template, output, parts, sections, tempo="auto", tail
         _edit_exit()
     d = _load(output)
     d, nmark = _set_markers(d, [(L["bar"], L["name"]) for L in layout], _ppq(d), bpb)
-    tempo_note = None
+    tempo_note = None; lane = None
     if tempo not in ("keep", None):
         if tempo != "auto":
             bpm = float(tempo)
@@ -2231,10 +2303,8 @@ def _write_into_fresh_song(template, output, parts, sections, tempo="auto", tail
             bpm = float(tmap[0][0][1])
         else:
             bpm = None
-            if tmap:
-                tempo_note = (f"the MIDI has a tempo map ({len(tmap[0])} changes): only its first tempo was set here; "
-                              "a fresh single-pattern project keeps the whole map")
-                bpm = float(tmap[0][0][1])
+            if tmap:                                              # the whole map: a Tempo lane, after the save
+                lane = tmap; bpm = float(tmap[0][0][1])
         if bpm:
             ev = _events(d)
             ed = [(k, k + 1, bytes([EV_TEMPO]) + struct.pack("<I", int(round(bpm * 1000)))) for k, e in enumerate(ev)
@@ -2242,6 +2312,15 @@ def _write_into_fresh_song(template, output, parts, sections, tempo="auto", tail
             if ed:
                 d = _splice(d, ev, ed)
     _save(d, output)
+    if lane:
+        tm, tdiv = lane; dd = _load(output); ms = _meter_map(dd, _events(dd)); PP = _ppq(dd)
+        pts = [[_tick_to_bar(t * PP / tdiv, ms, PP, None), b] for t, b in tm]
+        try:
+            tw = flp_tempo_write(output, output, points=pts)
+            tempo_note = (f"the MIDI's tempo map ({len(tm)} points) is the song's Tempo lane (track "
+                          f"{(tw.get('created') or {}).get('clip_track', '?')})")
+        except ValueError as e:                                   # e.g. a tempo outside FL's 10-522 BPM
+            tempo_note = f"only the MIDI's first tempo was set: its tempo map couldn't be a Tempo lane ({e})"
     total = max(int(round((L["bar"] - 1 + L["length_bars"]) * bar)) for L in layout)   # FL plays to the last clip
     try:
         import flh_store
@@ -2262,8 +2341,9 @@ def _write_into_fresh_song(template, output, parts, sections, tempo="auto", tail
 
 def flp_write_arrangement(template, output, parts, sections, tempo="auto", tail_bars=2, beats_per_bar=None):
     """Like flp_write_notes, but the song is split into one named pattern per section and laid out in the
-    playlist (sections: [{"name": "Intro", "bar": 1}, ...]). Clips alternate between playlist tracks 1 and 2 so
-    notes that ring past a section's end are not cut. A tempo map goes into its own "Tempo" pattern on track 3.
+    playlist (sections: [{"name": "Intro", "bar": 1}, ...]). Every section clip goes on playlist track 1 (a clip that
+    rings past its section's end overlaps the next one; both play). A tempo map goes into its own "Tempo" pattern on
+    track 3.
     Bars are bars of the template's time signature unless beats_per_bar is given (then the song gets that meter)."""
     writable(output)
     d = _load(template); ev = _events(d); P = _ppq(d)
@@ -2321,8 +2401,8 @@ def flp_write_arrangement(template, output, parts, sections, tempo="auto", tail_
         meta += struct.pack("<BH", EV_PATTERN_NEW, pid) + _data_event(EV_PATTERN_NAME, (str(sec.get("name") or f"Part {pid}")).encode("utf-16-le") + b"\x00\x00")
         if color:
             meta += bytes([150]) + color
-        clips.append(clip(st, pid, length, 1 + i % 2)); layout.append({"pattern": pid, "name": sec.get("name"), "bar": round(1 + st / bar, 3),
-                                                                      "length_bars": round(length / bar, 2), "notes": len(rel), "track": 1 + i % 2})
+        clips.append(clip(st, pid, length, 1)); layout.append({"pattern": pid, "name": sec.get("name"), "bar": round(1 + st / bar, 3),
+                                                              "length_bars": round(length / bar, 2), "notes": len(rel), "track": 1})
     if tempo != "keep":
         if tempo != "auto":
             tmap, tdiv = [(0, float(tempo))], P
@@ -2426,22 +2506,44 @@ def _fl_fields(r):
     return [r[1], r[5], r[6], r[7], r[8], r[9], r[10], r[12], r[13]]
 
 
-def flp_replace_part(project, output, channel, midi=None, notes=None, pattern=None):
+REPLACE_INTO = ("auto", "covering_clip")
+REPLACE_HIDDEN = ("remove", "keep")
+
+
+def _tempo_lane_pids(pats):
+    """Patterns that are a tempo lane (recorded tempo events, no notes): never a home for a part's notes."""
+    return {pid for pid, v in pats.items() if not v["notes"] and v.get("ctrl")
+            and any((c[4], c[7]) == TEMPO_CTRL for c in _ctrl_records(v["ctrl"]))}
+
+
+def flp_replace_part(project, output, channel, midi=None, notes=None, pattern=None, into="auto", hidden="remove"):
     """Swap one channel's notes in an arranged song (several patterns laid out in the playlist). Each new note (a MIDI
     file in song time, or `notes` inline as [bar, length_bars, pitch, vel(, {"slide": true})]) goes into the clip that
     covers it whose pattern already holds this channel's notes there (or the clip of `pattern`, the section the
-    caller targets); never just "some clip at that bar". The channel's old notes go from the patterns the playlist
-    plays. A pattern placed several times (a repeated chorus) holds one copy: notes that differ between its repeats
-    can't all be kept, and the result says where. The written song is read back and compared before it's saved."""
+    caller targets); never just "some clip at that bar". A section clip whose pattern doesn't hold the channel yet
+    takes the notes when it's the only clip there (a tempo lane never counts); into="covering_clip" also settles
+    stacked clips that don't hold the channel: the latest-starting playing clip there gets them (no placeholder notes
+    needed). The channel's old notes go from the patterns the playlist plays; hidden="remove" (default) also drops the
+    channel's notes no clip plays any more (past a shortened clip's end), "keep" leaves them. Notes a hair (up to a
+    32nd) before the clip that holds the part start with it, silently; only grace notes that end before it are
+    reported. A pattern placed several times (a repeated chorus) holds one copy: notes that differ between its
+    repeats can't all be kept, and the result says where. The written song is read back and compared before saving."""
     writable(output)
     if (midi is None) == (notes is None):
         raise ValueError("give either midi (a .mid file) or notes ([bar, length_bars, pitch, vel], ...)")
+    into = str(into or "auto").strip().lower().replace("-", "_")
+    if into not in REPLACE_INTO:
+        raise ValueError(f"into: {' | '.join(REPLACE_INTO)}")
+    hidden = str(hidden or "remove").strip().lower()
+    if hidden not in REPLACE_HIDDEN:
+        raise ValueError(f"hidden: {' | '.join(REPLACE_HIDDEN)}")
     d = _load(project); ev = _events(d); P = _ppq(d); ch = int(channel)
     pats = _patterns(d, ev); note_ks = _pattern_note_events(d, ev)
+    lanes = _tempo_lane_pids(pats)
     spans = []                                                    # (pos, end, pattern, window start, muted)
     for _, _, r in _clips(d, ev):
         item, = struct.unpack("<H", r[6:8])
-        if item < PATTERN_BASE or item - PATTERN_BASE not in pats:
+        if item < PATTERN_BASE or item - PATTERN_BASE not in pats or item - PATTERN_BASE in lanes:
             continue
         pos, = struct.unpack("<I", r[0:4]); ln, = struct.unpack("<I", r[8:12]); s0, _ = _clip_offsets(r)
         spans.append((pos, pos + ln, item - PATTERN_BASE, s0, bool(struct.unpack("<H", r[18:20])[0] & CLIP_MUTE)))
@@ -2484,7 +2586,7 @@ def flp_replace_part(project, output, channel, midi=None, notes=None, pattern=No
     def is_repeat(sp, po):
         return any(x[0] < sp[0] and x[3] <= po < x[3] + x[1] - x[0] for x in by_pid[sp[2]])
 
-    def pick(ps, key=None, vel=None):
+    def pick(ps, key=None, vel=None, ln=None):
         lo = bisect.bisect_left(starts, ps - LONG); hi = bisect.bisect_right(starts, ps)
         cover = [sp for sp in shorts[lo:hi] + longs if sp[0] <= ps < sp[1]]
         if key is not None and want_pid is None and len(cover) > 1:
@@ -2522,7 +2624,8 @@ def flp_replace_part(project, output, channel, midi=None, notes=None, pattern=No
         best = min(owned, key=lambda x: (x[0], x[1][4], -x[1][0], x[1][2])) if owned else None
         if soon:
             nxt = min(soon, key=lambda x: (x[0], x[1][4], x[1][0], x[1][2]))
-            if best is None or nxt[0] < best[0]:
+            grace = ln is not None and ps + ln <= nxt[1][0]       # over before the next clip starts: a grace
+            if best is None or (nxt[0] < best[0] and not grace):  # note the clip it falls in plays as written
                 return nxt[1], "early"
         if best is not None:                                      # the pattern(s) that already hold this part there
             return best[1], None
@@ -2539,19 +2642,22 @@ def flp_replace_part(project, output, channel, midi=None, notes=None, pattern=No
         score = sorted(((len(chs_of[sp[2]] & partners), sp) for sp in cover), key=lambda x: (-x[0], -x[1][0]))
         if score and score[0][0] and (len(score) == 1 or score[1][0] < score[0][0]):
             return score[0][1], None
+        if into == "covering_clip":                               # the caller's rule: the clip that covers it
+            return min(cover, key=lambda sp: (sp[4], -sp[0], sp[2])), None    # playing first, then the latest
         return None, "ambiguous"
 
     div, new_notes = _inline_notes_x(project, notes, P) if notes is not None else midi_read(midi)[:2]
     per = {}; unplaced = 0; ambiguous = []; slides = 0; repeats = {}; differs = []; meters = _meter_map(d, ev); nudged = 0
+    graces = []; asked = []                                       # asked: where each note was meant to sound
     written = {}                                                  # pattern -> {(offset, key)} written so far
     resolved = []
     for nn in new_notes:
         s0, e0, key, v = nn[:4]; sl = len(nn) > 4 and nn[4]; fl = nn[5] if len(nn) > 5 else None
         ps = s0 * P // div; pl_ = max(1, e0 * P // div - ps)
-        sp, why = pick(ps, key, v)
+        sp, why = pick(ps, key, v, pl_)
         if sp is None:
             if why == "outside":
-                unplaced += 1
+                unplaced += 1; asked.append((ps, key))
             else:
                 ambiguous.append(round(_tick_to_bar(ps, meters, P), 2))
             continue
@@ -2559,11 +2665,14 @@ def flp_replace_part(project, output, channel, midi=None, notes=None, pattern=No
     resolved.sort(key=lambda x: (x[0], x[1]))                     # notes moved to a clip start go last: never doubled
     for early, ps, pl_, key, v, sl, fl, sp in resolved:
         st, en, p_, off, _m = sp
-        if early:                                                 # starts with its clip (moved by under a 32nd)
+        if early:                                                 # starts with its clip (moved by under a 32nd:
+            if ps + pl_ <= st:                                    # humanized timing, said nowhere); a grace note
+                graces.append(round(_tick_to_bar(ps, meters, P), 2))   # that ends before the clip is said
             pl_ = max(1, pl_ - (st - ps)); ps = st
             if (off, key) in written.get(p_, set()):
                 continue                                          # the clip already starts with this note
             nudged += 1
+        asked.append((ps, key))
         po = ps - st + off
         earlier = [x for x in by_pid[p_] if x[0] < st and x[3] <= po < x[3] + x[1] - x[0]]
         if earlier:                                               # a repeat of a stretch an earlier clip already plays
@@ -2576,15 +2685,29 @@ def flp_replace_part(project, output, channel, midi=None, notes=None, pattern=No
         per.setdefault(p_, []).append(_note_record(po, pl_, ch, key, v, sl, fl, midi_ch))
     if ambiguous:
         raise ValueError(f"channel {ch} has no notes in the clips at bar(s) {ambiguous[:6]} and several patterns start "
-                         "there; say which pattern the new notes go to (pattern=...)")
+                         "there; say which pattern the new notes go to (pattern=...), or into='covering_clip' (the "
+                         "latest-starting clip there takes them)")
+    played = {}                                                   # windows other arrangements play (kept)
+    for a_ in _arrangements(d, ev):
+        if a_["current"]:
+            continue
+        for r in _playlist_at(d, ev, a_["index"])[2]:
+            item, = struct.unpack("<H", bytes(r[6:8]))
+            if item >= PATTERN_BASE:
+                s0_, _ = _clip_offsets(r)
+                played.setdefault(item - PATTERN_BASE, []).append((s0_, s0_ + struct.unpack("<I", bytes(r[8:12]))[0]))
     for p_ in per:                                                # a target pattern without a notes event gets one
         if not note_ks.get(p_):
             d = _write_pattern_notes(d, ev, p_, []); ev = _events(d); note_ks = _pattern_note_events(d, ev)
-    edits, removed, added = [], 0, 0
+    edits, removed, added, stale = [], 0, 0, 0
     for p_ in sorted({sp[2] for sp in spans} | set(per)):
         old = pats.get(p_, {"notes": []})["notes"]
         keep = [r for r in old if not (r[2] == ch and any(a <= r[0] < b for a, b in windows.get(p_, [])))]
-        gone = len(old) - len(keep)                               # the old part as the playlist plays it
+        if hidden == "remove" and p_ in windows:                  # what no clip plays any more (a clip shortened
+            kept_ = [r for r in keep if r[2] != ch                # after its notes): junk that would come back
+                     or any(a <= r[0] < b for a, b in played.get(p_, []))]    # when the clip is lengthened
+            stale += len(keep) - len(kept_); keep = kept_
+        gone = len(old) - len(keep)                               # the old part (+ its hidden rest)
         if not gone and not per.get(p_):
             continue
         removed += gone; added += len(per.get(p_, []))
@@ -2603,7 +2726,7 @@ def flp_replace_part(project, output, channel, midi=None, notes=None, pattern=No
     if got != expect:
         raise RuntimeError("flp_replace_part's read-back didn't match what it wrote, so nothing was saved "
                            f"({len(_multiset_minus(expect, got))} notes missing); please report this project")
-    want = sorted((nn[0] * P // div, nn[2]) for nn in new_notes)
+    want = sorted(asked)                                          # (a note a hair early: where its clip starts)
     missing = len(_multiset_minus(want, got)); extra = len(_multiset_minus(got, want))
     _save(new_d, output)
     res = {"output": output, "channel": ch, "removed": removed, "added": added, "outside_clips": unplaced,
@@ -2612,8 +2735,13 @@ def flp_replace_part(project, output, channel, midi=None, notes=None, pattern=No
                                               "heard_not_asked": extra}}
     if slides:
         res["slides"] = slides
-    if nudged:
-        res["moved_to_clip_start"] = nudged                       # a hair early for the clip that holds the part
+    if stale:
+        res["hidden_removed"] = stale                             # old notes of this channel no clip played
+    if graces:                                                    # jitter is clamped silently; a grace note that
+        res["grace_notes_moved"] = len(graces)                    # ends before its clip changes the music: said
+        res["grace_note_bars"] = sorted(set(graces))[:12]
+        res["grace_note"] = ("short note(s) just before a section clip (grace notes) were moved onto the clip's first "
+                             "tick (1 tick long): lengthen the previous clip to keep them before the downbeat")
     if repeats:
         res["repeated_patterns"] = {pats[p_]["name"] or f"pattern {p_}": len(v) + 1 for p_, v in repeats.items()}
         res["note"] = ("the part spans repeated clips of the same pattern: each pattern holds one copy, so its repeats "
@@ -3861,15 +3989,113 @@ def _note_fl_holds(path, data=None):
             with open(path, "rb") as f:
                 data = f.read()
         _FL_HOLDS[_ud_key(path)] = _crc(data)
+        _note_fl_synced()                                         # FL's live changes are in the file now
         _holds_persist()
     except Exception:
         pass
+
+
+# ---- live changes FL holds that its file doesn't (yet) ---------------------------------------------------------
+# Live tools (fl_plugin_set, fl_channel_set, fl_mixer_set ...) change FL, not the file. A save through FL puts them
+# into the file; a reload WITHOUT that save throws them away. Normally every edit of the open project saves FL first,
+# but some paths skip FL's save (FL is known to hold an older copy than the file: a reload that couldn't be proven,
+# or the file changed behind FL) - and FL's own 'changed' flag doesn't see changes made through its scripting API.
+# So fl-headless keeps its own log; those paths check it (_live_save_probe) instead of dropping the changes (PC
+# 2026-10-27, twice: a master Convolver's wet level, an INSTRUMENT choir's dynamics knobs, set live and gone after the
+# next queued edit's sync).
+LIVE_CHANGE_TOOLS = {"fl_channel_set", "fl_mixer_set", "fl_playlist_track_set", "fl_pattern_set", "fl_pattern_new",
+                     "fl_steps", "fl_batch", "fl_organize", "fl_plugin_set", "fl_plugin_set_value", "fl_plugin_preset",
+                     "fl_plugin_set_named", "fl_load_preset", "fl_set_tempo", "fl_mix_apply"}
+_LIVE_LOG = []                     # [(time, tool, parts)] live changes made through the bridge (bounded)
+_FL_SYNC_T = {"t": 0.0}            # when FL last saved or loaded its project (its file then held what FL holds)
+
+
+def _note_fl_synced():
+    _FL_SYNC_T["t"] = time.time()
+
+
+def _live_parts(name, kw):
+    """The parts of the project (render-cache fingerprint parts: ('m', mixer track), ('lv', track levels), ('c',
+    channel), 'G' global) a live call changes; {'*'} when it can't say (then nothing can be proven about it)."""
+    def num(*keys):
+        for k in keys:
+            try:
+                if kw.get(k) is not None:
+                    return int(kw[k])
+            except (TypeError, ValueError):
+                return None
+        return None
+    if name in ("fl_plugin_set", "fl_plugin_set_value", "fl_plugin_preset", "fl_plugin_set_named"):
+        i = num("index", "track"); s = num("slot")
+        if name == "fl_plugin_set_named" and s is None:
+            s = 0
+        if i is None:
+            return {"*"}
+        return {("m", i)} if s is not None and s >= 0 else {("c", i)}
+    if name == "fl_mixer_set":
+        t = num("track", "index")
+        return {("m", t), ("lv", t)} if t is not None else {"*"}
+    if name == "fl_channel_set":
+        c = num("index", "channel")
+        return {("c", c)} if c is not None else {"*"}
+    if name == "fl_steps":
+        c = num("channel")
+        return {("c", c), "G"} if c is not None else {"*"}
+    if name == "fl_load_preset":
+        c, t = num("channel"), num("track")
+        return {("c", c)} if c is not None else {("m", t)} if t is not None else {"*"}
+    if name in ("fl_playlist_track_set", "fl_pattern_set", "fl_pattern_new", "fl_set_tempo"):
+        return {"G"}
+    if name == "fl_batch":
+        out = set()
+        for o in kw.get("ops") or []:
+            got = _live_parts({"mixer": "fl_mixer_set", "channel": "fl_channel_set", "plugin": "fl_plugin_set"}
+                              .get(str((o or {}).get("op")), "?"), o or {}) if isinstance(o, dict) else {"*"}
+            out |= got
+        return out or {"*"}
+    return {"*"}
+
+
+def _note_live_change(name, kw=None):
+    """A live change went into FL (not into its file)."""
+    try:
+        parts = _live_parts(name, kw or {})
+    except Exception:                                             # noqa: BLE001
+        parts = {"*"}
+    _LIVE_LOG.append((time.time(), str(name), frozenset(parts)))
+    del _LIVE_LOG[:-60]
+
+
+def _live_since(t):
+    """Names of the live changes made after time t (oldest first, each once)."""
+    return list(dict.fromkeys(n for tt, n, _p in list(_LIVE_LOG) if tt > float(t or 0)))
+
+
+def _live_unsaved():
+    """Live changes FL holds that aren't in its file: made after FL last saved or loaded. [(tool, parts)]"""
+    t0 = _FL_SYNC_T["t"]
+    return [(n, p) for tt, n, p in list(_LIVE_LOG) if tt > t0]
+
+
+def _live_noting(name, fn):
+    """A live tool that records its change in _LIVE_LOG when it worked (dry runs / reads aren't changes)."""
+    def run(*a, **kw):
+        r = fn(*a, **kw)
+        if not kw.get("dry_run") and not (isinstance(r, dict) and r.get("error")):
+            _note_live_change(name, kw)
+        return r
+    run.__wrapped__ = getattr(fn, "__wrapped__", fn)
+    for attr in ("__lazy__",):
+        if hasattr(fn, attr):
+            setattr(run, attr, getattr(fn, attr))
+    return run
 
 
 def _fl_forget(path=None):
     """FL no longer holds `path` (it switched files) - or anything (path None: FL closed)."""
     if path is None:
         _FL_HOLDS.clear(); _LAST_PROVEN.clear()
+        _note_fl_synced()                                         # FL closed: no live changes left to keep
     elif path:
         _FL_HOLDS.pop(_ud_key(path), None)
         if _LAST_PROVEN.get("path") and _ud_key(_LAST_PROVEN["path"]) == _ud_key(path):
@@ -4080,7 +4306,7 @@ def _check_previous_edit(project):
         got = _fingerprint(project)
     except Exception:
         return None
-    bad = [k for k in pend["want"] if got.get(k) != pend["want"][k]]
+    bad = [k for k in pend["want"] if _fp_differs(pend["want"], got, k)]   # tempo lane: with a tolerance
     if bad:
         _state({"verify_alert": f"{os.path.basename(project)}: at the next edit FL's copy had an older "
                                 f"{', '.join(bad)} than the previous edit wrote (FL kept an old copy, or it was "
@@ -4092,21 +4318,38 @@ def _check_previous_edit(project):
 def _hot_reload_locked(project, fn, T0):
     """The save is also the identity proof: every file FL's title could mean is watched, and only when the save lands
     in `project` is it edited and reloaded (answering 'No' to 'save changes?' is then safe: FL's work is on disk).
-    Lands in a same-name twin -> _NOT_THIS (FL has the other file; this one may be written directly)."""
+    Lands in a same-name twin -> _NOT_THIS (FL has the other file; this one may be written directly).
+    FL known to hold an older copy (stale / file changed behind it) is edited WITHOUT its save - unless live changes
+    are in FL that its file lacks (_live_unsaved): then FL saves anyway and _live_save_probe keeps that save as the
+    base only when FL proves to hold the file's edits too, else puts the file back and refuses (nothing lost)."""
     steps = {"wait_prev_check": round(time.time() - T0, 1)}; T0 = time.time()
+    live = _live_unsaved()                                       # live changes FL holds that its file doesn't
+    probe = None
     if _stale_get(project):                                       # FL holds an OLDER copy (its last reload failed):
-        return _hot_reload_stale(project, fn, steps, T0)          # its save would undo the edits on disk
-    older = _fl_copy_older(project)
-    if older:                                                     # the file changed behind FL (a restore copied over
-        if _fl_changed_flag() == 0:                               # it...): FL's save would overwrite it. Nothing of
-            return _hot_reload_stale(project, fn, steps, T0)      # FL's unsaved: edit the file, FL loads it
-        raise RuntimeError(older + ", and FL has unsaved changes (or can't say), so nothing was changed. "
-                           "fl_open(project, save_current=false) loads the file into FL (FL's changes are dropped); "
-                           "then edit again. If the change on disk was your own save in FL, fl_save() once, then "
-                           "edit again")
+        if not live:                                              # its save would undo the edits on disk
+            return _hot_reload_stale(project, fn, steps, T0)
+        probe = "stale"                                           # ... but a reload alone would drop the live changes
+    else:
+        older = _fl_copy_older(project)
+        if older:                                                 # the file changed behind FL (a restore copied over
+            if _fl_changed_flag() == 0 and not live:              # it...): FL's save would overwrite it. Nothing of
+                return _hot_reload_stale(project, fn, steps, T0)  # FL's unsaved: edit the file, FL loads it
+            if not live:
+                raise RuntimeError(older + ", and FL has unsaved changes (or can't say), so nothing was changed. "
+                                   "fl_open(project, save_current=false) loads the file into FL (FL's changes are "
+                                   "dropped); then edit again. If the change on disk was your own save in FL, fl_save() "
+                                   "once, then edit again")
+            probe = older
     if _preview_mutes_on():
         raise RuntimeError(_preview_mutes_on())
     cands = _same_name_files(project); dlg = _dialog_ids()
+    file_before = None
+    if probe:                                                     # FL's save is a probe: the file comes back unless
+        try:                                                      # FL is proven to hold it plus the live changes
+            with open(project, "rb") as f:
+                file_before = f.read()
+        except OSError as e:
+            raise RuntimeError(f"{os.path.basename(project)} couldn't be read ({e}), so nothing was changed")
     try:
         was_playing = bool(_bridge_state_light().get("playing"))
         before = _sigs(cands)
@@ -4129,7 +4372,15 @@ def _hot_reload_locked(project, fn, T0):
         except Exception:
             pass
     if landed is None:
+        if probe and file_before is not None:                     # a save that landed only now: the newer file back
+            try:
+                if open(project, "rb").read() != file_before:
+                    _backup(project); _write_bytes(project, file_before)
+            except Exception:                                     # noqa: BLE001
+                pass
         return None
+    if probe and _ud_key(landed) == _ud_key(project):
+        steps["live_probe"] = _live_save_probe(project, file_before, live, probe)   # raises: file put back
     _note_open_proof(landed)
     if _ud_key(landed) != _ud_key(project):
         _HOT_MISS["other"] = landed
@@ -4143,7 +4394,117 @@ def _hot_reload_locked(project, fn, T0):
         orig, pre = None, None
     res = _as_edit(fn)                                            # writers inside it: the file only (one reload)
     steps["edit"] = round(time.time() - T0, 1)
+    if steps.get("live_probe") and isinstance(res, dict):
+        res["live_kept"] = steps.pop("live_probe")                # said in the result, not only in the timings
     return _reload_edited(project, res, steps, orig, pre, was_playing, prev_ok)
+
+
+def _rc_parts(fp):
+    """A render-cache fingerprint as {part: hash}: 'G' (song-wide), ('c', channel), ('m', mixer track), ('lv', track
+    levels)."""
+    out = {"G": fp.get("G")}
+    out.update({("c", int(c)): h for c, h in (fp.get("chan") or {}).items()})
+    out.update({("m", int(t)): h for t, h in (fp.get("mix") or {}).items()})
+    out.update({("lv", int(t)): tuple(v or ()) for t, v in (fp.get("levels") or {}).items()})
+    return out
+
+
+def _part_words(x):
+    if x == "G":
+        return "the song itself (patterns, playlist, tempo)"
+    k, i = x
+    return {"c": f"channel {i}", "m": f"mixer track {i}", "lv": f"mixer track {i}'s level"}.get(k, str(x))
+
+
+def _master_tempo_like(data, ref):
+    """`data` with its master tempo set to `ref`'s when ref's tempo lane plays from bar 1 (FL saves the master tempo
+    as the lane's value at the playhead: that difference means nothing)."""
+    try:
+        dr, er = ref, _events(ref)
+        if not _tempo_lane_fp(dr, er)[0]:
+            return data
+        rv = next((_payload(dr, e) for e in er if e["id"] == EV_TEMPO and e["len"] == 4), None)
+        ev = _events(data)
+        k = next((k for k, e in enumerate(ev) if e["id"] == EV_TEMPO and e["len"] == 4), None)
+        if rv is None or k is None:
+            return data
+        return _splice(data, ev, [(k, k + 1, bytes([EV_TEMPO]) + bytes(rv))])
+    except Exception:                                             # noqa: BLE001
+        return data
+
+
+def _live_save_probe(project, file_before, live, why):
+    """FL had to save although it holds an OLDER copy than the file (`why`: a reload that wasn't proven, or the file
+    changed behind FL), because live changes (`live`: [(tool, parts)]) would otherwise be lost: its save just landed
+    in `project`. Keep it only when FL is proven to hold the file's edits too - part by part (render-cache
+    fingerprint: song, channels, mixer tracks, levels; FL's playhead tempo on a song with a tempo lane ignored):
+      - with the version from before the file's last edit (kept with the stale mark): every part that edit changed
+        is in FL's save -> FL holds the edit (other differences are FL's: live / by hand, kept);
+      - else: FL's save differs from the file only in parts the live changes touched.
+    Then the edit goes on top of FL's save (the live changes kept) -> a note. Otherwise the file is put back as it
+    was, FL's save kept as a backup (flp_versions), and RuntimeError says what to do - nothing was changed, so a
+    queued edit stays queued. PC-VERIFY: after a reload that wasn't proven (content_check 'can't tell'), fl_plugin_set
+    on a mixer effect, then flp_edit (queued) + flh_sync: the knob keeps its live value and the edit is in FL."""
+    tools = list(dict.fromkeys(n for n, _p in live))
+    parts = set()
+    for _n, p in live:
+        parts |= set(p)
+    try:
+        with open(project, "rb") as f:
+            saved = f.read()
+    except OSError:
+        saved = None
+    ent = _STALE_FL.get(_ud_key(project)) or {}
+    prev = ent.get("prev")
+    ok, detail = False, "FL's save couldn't be read"
+    if saved is not None:
+        try:
+            RC = _rc()
+            pF = _rc_parts(RC.fingerprint(file_before))
+            pS = _rc_parts(RC.fingerprint(_master_tempo_like(saved, file_before)))
+            if RC.fingerprint(file_before).get("raw") or RC.fingerprint(saved).get("raw"):
+                raise ValueError("a project layout the check can't split into parts")
+            if prev is not None:
+                pP = _rc_parts(RC.fingerprint(_master_tempo_like(prev, file_before)))
+                edited = [x for x in set(pF) | set(pP) if pF.get(x) != pP.get(x)]
+                lacks = [x for x in edited if pS.get(x) != pF.get(x)]
+                ok = not lacks
+                detail = ("FL's save holds every part the file's last edit changed" if ok else
+                          "FL's save lacks the file's last edit in " + ", ".join(_part_words(x) for x in sorted(
+                              lacks, key=str)[:4]))
+            else:
+                diff = [x for x in set(pF) | set(pS) if pF.get(x) != pS.get(x)]
+                other = [x for x in diff if "*" in parts or x not in parts]
+                ok = not other
+                detail = ("FL's save differs from the file only where the live changes went" if ok else
+                          "FL's save differs from the file in " + ", ".join(_part_words(x) for x in sorted(
+                              other, key=str)[:4]) + " too, not only where the live changes went")
+        except Exception as e:                                    # noqa: BLE001
+            ok, detail = False, f"FL's save and the file couldn't be compared ({type(e).__name__}: {str(e)[:80]})"
+    if ok:
+        _stale_clear(project)                                     # FL holds the file's edits (+ its live changes)
+        was = ("FL was marked as holding an older copy (its last reload wasn't proven)" if why == "stale" else
+               "the file had changed behind FL")
+        return f"{was}, so FL's save was checked first: {detail}, so its live changes ({', '.join(tools)}) are kept"
+    bk = None
+    try:
+        bk = _backup(project, data=saved) if saved else None      # FL's state with the live changes: restorable
+    except Exception:                                             # noqa: BLE001
+        pass
+    _write_bytes(project, file_before)                            # the file exactly as it was
+    if ent:
+        _STALE_FL[_ud_key(project)] = ent                         # (still stale: FL holds the older copy)
+    name = os.path.basename(project)
+    reason = ent.get("why") if ent else str(why)
+    raise RuntimeError(
+        f"nothing was changed: FL holds live changes made since it last loaded or saved {name} ({', '.join(tools)}), "
+        f"but FL's copy is older than the file ({str(reason)[:200]}): {detail}. Reloading FL would throw the live "
+        "changes away and saving FL would throw the file's newer edits away, so neither was done - the file is as it "
+        "was and queued edits stay queued" + ("; FL's current state (with the live changes) is backed up "
+                                              "(flp_versions)" if bk else "")
+        + f". To keep the file: fl_open('{project}', save_current=false), redo the live changes, then flh_sync(). To "
+          "keep FL's state instead: save in FL (Ctrl+S), then flh_sync() (the file's newer edits are then only in "
+          "flp_versions)")
 
 
 def _hot_reload_stale(project, fn, steps, T0):
@@ -4200,6 +4561,8 @@ def _reload_edited(project, res, steps, orig, pre, was_playing, prev_ok):
                 steps.update(_reload_in_fl(project) or {})
         else:
             steps.update(_reload_in_fl(project) or {})            # same window
+        _note_fl_synced()                                         # FL loaded (proven or not): earlier live changes
+                                                                  # were saved first or are gone with that load
         if steps.get("unproven"):                                 # FL's load of the edit couldn't be proven: no claim
             raise RuntimeError(steps.pop("unproven"))             # that FL holds it (FL is marked stale already)
         if steps.get("proof") != "marker":                        # (the marker route recorded what FL holds itself)
@@ -4208,6 +4571,9 @@ def _reload_edited(project, res, steps, orig, pre, was_playing, prev_ok):
         if not isinstance(res, dict):
             res = {"result": res}
         _stale_mark(project, f"{type(e).__name__}: {e}", written)  # no save may land over the edit until FL has it
+        if orig is not None and not (isinstance(res, dict) and res.get("fl_held_older_copy")):
+            _STALE_FL[_ud_key(project)]["prev"] = orig            # FL's own save before the edit: lets a later save
+                                                                  # prove whether FL holds the edit (_live_save_probe)
         if want is not None:                                      # what FL must hold once it loaded the file
             _PENDING_VERIFY[os.path.normcase(os.path.abspath(project))] = {"want": want, "t": time.time(), "job": None}
         res.update(reloaded_in_fl=False, fl_shows_old_version=True, steps_s=steps,
@@ -4404,8 +4770,8 @@ def _verify_in_background(project, written, want, was_playing, pre=None):
     jid = _job_id("verify", {"status": "running", "started": time.strftime("%H:%M:%S")})
     ev = _JOB_EVENTS[jid] = threading.Event()
     key = os.path.normcase(os.path.abspath(project))
-    gen = _PENDING_VERIFY.get("__gen", 0)
-    _PENDING_VERIFY[key] = {"want": want, "t": time.time(), "job": jid}
+    gen = _PENDING_VERIFY.get("__gen", 0); since = time.time()   # live changes after this are FL's, kept
+    _PENDING_VERIFY[key] = {"want": want, "t": since, "job": jid}
     aside = {"verified": None, "verify_note": "a newer edit checks it"}
     newer = lambda: _PENDING_VERIFY.get("__gen", 0) != gen
 
@@ -4429,7 +4795,7 @@ def _verify_in_background(project, written, want, was_playing, pre=None):
                     if newer() or _VERIFY_STOP.is_set():
                         r = aside
                     else:
-                        r = _verify_loaded(project, written, want, was_playing, pre, gen)
+                        r = _verify_loaded(project, written, want, was_playing, pre, gen, since)
                     JOBS[jid].update(status="done", result=r)
                     if r.get("verified") is not None and _PENDING_VERIFY.get(key, {}).get("job") == jid:
                         _PENDING_VERIFY.pop(key, None)            # settled: the next edit needn't check it
@@ -4462,12 +4828,102 @@ def _fingerprint(path):
         clips = []
     h = lambda x: hashlib.sha256(repr(x).encode()).hexdigest()[:16]
     tempo = next((struct.unpack("<I", _payload(d, e))[0] for e in ev if e["id"] == EV_TEMPO and e["len"] == 4), None)
+    lane = _tempo_lane_fp(d, ev)[1]
+    # FL saves the master tempo as the tempo lane's value at the playhead (PC 2026-10-27: 71.8 / 70.9 / 69.2 / 81.2
+    # on one song, depending where playback stopped): FL's saved master tempo is then compared loosely (any value the
+    # lane plays counts as the same) and the lane itself with a tolerance (_fp_differs)
+    # PC-VERIFY: a song with a tempo lane, playhead stopped mid-song, two syncs: no 'didn't stick' alert (core.md 3b)
     return {"notes": h(notes), "clips": h(clips), "channels": sum(1 for e in ev if e["id"] == EV_CHANNEL),
-            "tempo": tempo}
+            "tempo": tempo, "tempo_lane": lane}
 
 
-FINGERPRINT_PARTS = "notes, playlist clips, channel count and tempo"
+FINGERPRINT_PARTS = "notes, playlist clips, channel count and tempo (the tempo lane when the song has one)"
 NOT_FINGERPRINTED = "mixer, plugin, automation-shape, color and project-info changes"
+TEMPO_LANE_TOL_BPM = 0.5           # FL re-saves tempo-lane points with its own rounding: closer than this = the same
+
+
+def _tempo_lane_fp(d, ev):
+    """(covers_bar_1, lane) of a project's tempo lane as the playlist plays it - tempo events recorded in placed
+    patterns (flp_tempo_write / flp_write_arrangement's 'Tempo' lane) and tempo automation clips, NOT the master tempo.
+    lane = (ppq, ((tick, bpm), ...)) or None (no lane). covers_bar_1: the lane sets the tempo from the song's start."""
+    try:
+        P = _ppq(d); pats = _patterns(d, ev); pts = []
+        for _, _, r in _clips(d, ev):
+            if struct.unpack("<H", r[18:20])[0] & CLIP_MUTE:
+                continue
+            pat = pats.get(struct.unpack("<H", r[6:8])[0] - PATTERN_BASE)
+            if not pat or not pat.get("ctrl"):
+                continue
+            pos, length = struct.unpack("<I", r[0:4])[0], struct.unpack("<I", r[8:12])[0]
+            start = _clip_offsets(r)[0]
+            for c in _ctrl_records(pat["ctrl"]):
+                t = struct.unpack("<I", c[:4])[0]
+                if (c[4], c[7]) == TEMPO_CTRL and start <= t < start + length:
+                    b = _sane_bpm(struct.unpack("<I", c[8:])[0] / 1000)
+                    if b:
+                        pts.append((pos + t - start, round(b, 3)))
+        auto = _tempo_automation(d, ev, P)
+    except Exception:                                             # noqa: BLE001 - an odd file: no lane claim
+        return False, None
+    if auto:
+        spans = [(a, b) for a, b, _ in auto]
+        pts = [x for x in pts if not any(a <= x[0] < b for a, b in spans)] + [pt for _, _, ps in auto for pt in ps]
+    if not pts:
+        return False, None
+    pts = tuple(sorted(set(pts)))
+    covers = pts[0][0] <= max(1, P // 16) or any(a <= 0 < b for a, b, _ in auto)
+    return covers, (P, pts)
+
+
+def _lanes_close(a, b, tol=None):
+    """Two tempo lanes ((ppq, ((tick, bpm), ...)) or None) play the same tempo within `tol` BPM everywhere, allowing
+    each point to sit up to 1/8 beat off (FL re-rounds lane points when it saves)."""
+    if a == b:
+        return True
+    if not a or not b:
+        return False
+    import bisect
+    tol = TEMPO_LANE_TOL_BPM if tol is None else float(tol)
+    (pa_, pa), (pb_, pb) = a, b
+    if pb_ != pa_ and pb_:                                        # another resolution: ticks onto a's
+        pb = tuple((int(round(t * pa_ / pb_)), v) for t, v in pb)
+    P = max(1, int(pa_ or 96)); J = max(1, P // 8)
+
+    def f(pts):
+        ticks = [t for t, _ in pts]
+        return lambda x: pts[max(0, bisect.bisect_right(ticks, x) - 1)][1]
+    fa, fb = f(pa), f(pb)
+    end = max(pa[-1][0], pb[-1][0]) + P
+    step = max(1, P // 4, end // 20000 + 1)
+    xs = set(range(0, end, step)) | {t for t, _ in pa} | {t for t, _ in pb}
+    for x in xs:
+        if min(abs(fa(x) - fb(y)) for y in (x - J, x, x + J)) > tol or \
+                min(abs(fb(x) - fa(y)) for y in (x - J, x, x + J)) > tol:
+            return False
+    return True
+
+
+def _fp_differs(a, b, k):
+    """Does _fingerprint() b (FL's save, when one side is) differ from a in part k? The tempo lane with a tolerance
+    (_lanes_close). The master tempo: when both have the same tempo lane, b's counts as the same when it is a value
+    that lane plays - FL saves the master tempo as the lane's value at the playhead, so on a song with a lane it
+    follows where playback stopped (a real stale copy has its OLD lane: then the master tempo is compared exactly)."""
+    x, y = (a or {}).get(k), (b or {}).get(k)
+    if x == y:
+        return False
+    if k == "tempo_lane":
+        return not _lanes_close(x, y)
+    if k == "tempo" and x is not None and y is not None:
+        la, lb = (a or {}).get("tempo_lane"), (b or {}).get("tempo_lane")
+        if la and lb and _lanes_close(la, lb) and \
+                any(abs(y / 1000.0 - bpm) <= TEMPO_LANE_TOL_BPM for _t, bpm in lb[1]):
+            return False
+    return True
+
+
+def _fp_diff(a, b):
+    """The parts in which two _fingerprint()s differ (see _fp_differs), [] when they hold the same."""
+    return [k for k in dict.fromkeys(list(a or {}) + list(b or {})) if _fp_differs(a, b, k)]
 
 
 _SAVE_TL = threading.local()       # .why: why this thread's last _save_in_fl_and_wait was refused (None: it wasn't)
@@ -4553,7 +5009,7 @@ def _save_in_fl_and_wait(project, wait_s=8.0, stop=None, explicit=False):
     return ok
 
 
-def _verify_loaded(project, written, want, was_playing, pre=None, gen=None):
+def _verify_loaded(project, written, want, was_playing, pre=None, gen=None, since=None):
     """Prove FL holds the edit: let FL save what it has loaded and compare it with what was written (`want`) and
     with what FL held before the edit (`pre`).
     - FL's save == the edit (in every part the edit touched): verified; other differences are hand edits, kept.
@@ -4561,10 +5017,13 @@ def _verify_loaded(project, written, want, was_playing, pre=None, gen=None):
       backed up first) and FL reloads once more.
     - anything else: FL's copy differs from both, i.e. it was changed by hand in FL right after the reload. Nothing
       is restored (that would throw the hand edits away); the edit is kept as a backup and reported.
-    Every write and reload first checks that no newer edit wants FL (then it steps aside)."""
+    Every write and reload first checks that no newer edit wants FL (then it steps aside). Live changes made in FL
+    since the reload (`since`: fl_plugin_set, fl_channel_set ...) are never thrown away by putting the edit back: the
+    check then reports instead (PC 2026-10-27: a plugin gain set right after a sync was gone).
+    The tempo lane is compared with a tolerance and the master tempo of a song with a lane isn't (_fp_differs)."""
     stepped_aside = {"verified": None, "verify_note": "a newer edit checks it"}
     stop = lambda: _VERIFY_STOP.is_set() or (gen is not None and _PENDING_VERIFY.get("__gen", 0) != gen)
-    touched = [k for k in want if pre is None or pre.get(k) != want[k]]
+    touched = [k for k in want if pre is None or _fp_differs(pre, want, k)]
     if not touched:                                              # nothing the check can see changed
         return {"verified": None, "checked": [],
                 "verify_note": (f"FL reloaded the file, but this edit changed nothing the reload check compares "
@@ -4590,14 +5049,27 @@ def _verify_loaded(project, written, want, was_playing, pre=None, gen=None):
                 return stepped_aside
             return {"verified": None, "verify_note": "FL didn't save, so the reload couldn't be checked"}
         got = _fingerprint(project)
-        bad = [k for k in want if got.get(k) != want[k]]
+        bad = [k for k in want if _fp_differs(want, got, k)]
         if not bad:
             return dict(seen, verified=True) if attempt == 1 else dict(seen, verified=True, verify_note=(
                 "FL had kept an old copy; reloaded it a second time"))
-        if all(got.get(k) == want[k] for k in touched):            # the edit is there; the rest was done by hand
+        if all(not _fp_differs(want, got, k) for k in touched):    # the edit is there; the rest was done by hand
             return {"verified": True, "hand_edits": bad, **seen,
                     "verify_note": f"FL holds the edit; its {', '.join(bad)} also changed by hand in FL (kept)"}
-        reverted = pre is not None and all(got.get(k) == pre.get(k) for k in want)
+        reverted = pre is not None and all(not _fp_differs(pre, got, k) for k in want)
+        live = _live_since(since) if since is not None else []
+        if reverted and live:                                     # FL looks like it ignored the reload, but live
+            kept = None                                           # changes went in since: putting the edit back
+            try:                                                  # would throw them away - report, keep FL's state
+                kept = _backup(project, data=written)
+            except Exception:                                     # noqa: BLE001
+                pass
+            return {"verified": False, "live_kept": live, **seen,
+                    "verify_note": (f"FL's save looks like the version from before the edit ({', '.join(bad)}), but "
+                                    f"live changes were made in FL since the reload ({', '.join(live)}), so the edit "
+                                    "wasn't put back over them: FL's state (with those changes) is in the file now"
+                                    + ("; the edit is saved as a backup (flp_versions)" if kept else "")
+                                    + ". Run the edit again - it goes on top of FL's state")}
         if not reverted:
             kept = None
             try:
@@ -4638,6 +5110,12 @@ def _verify_loaded(project, written, want, was_playing, pre=None, gen=None):
                 pass
     if stop():
         return stepped_aside
+    live = _live_since(since) if since is not None else []
+    if live:                                                      # (as above: FL's live changes are kept)
+        return {"verified": False, "live_kept": live,
+                "verify_note": (f"FL still showed an older {', '.join(bad)} after a second reload, and live changes "
+                                f"were made in FL since ({', '.join(live)}), so nothing was put back over them; "
+                                "run the edit again - it goes on top of FL's state")}
     _backup(project)
     _write_bytes(project, written)
     _stale_mark(project, f"FL kept an older {', '.join(bad)} after two reloads", written)   # FL still holds the old
@@ -4705,13 +5183,32 @@ def _snapshot_alt(title, size, focused=None, caption=None, popups=None, area="wi
     return ". ".join(bits) + "."
 
 
+SNAP_BLANK_RETRY_S = (0.3, 0.6, 1.2)   # a blank capture (FL repainting right after a reload) is taken again after these
+
+
+def _snap_has_pixels(data):
+    """Any non-black pixel in a capture (BGRA bytes; alpha not looked at), ~120k pixels sampled over the window."""
+    n = len(data or b"") // 4 * 4
+    if not n:
+        return False
+    step = max(1, n // 4 // 120000) * 4
+    for o in (0, step // 2 // 4 * 4):                             # two interleaved passes: thin lines are found too
+        if any(data[p] or data[p + 1] or data[p + 2] for p in range(o, n - 3, step)):
+            return True
+    return False
+
+
 def fl_snapshot(area="window", region=None, max_width=1400, save=False, hwnd=None):
     """A picture of FL's main window only (nothing else on the screen), so the playlist, mixer or a popup can be
     checked by eye without screen control. area: window|top|bottom|left|right, or region [x0, y0, x1, y1] as
-    0..1 fractions of the window. Works while FL is behind other windows."""
-    import base64, ctypes
-    from ctypes import wintypes
-    if os.name != "nt":
+    0..1 fractions of the window. Works while FL is behind other windows.
+    The whole window is captured and the area / region cut from it; 'blank' is judged on the whole window (a dark
+    corner of FL is no blank capture), and a blank one is taken again a few times (SNAP_BLANK_RETRY_S) - right after a
+    reload FL repaints for a moment (PC 2026-10-27: region=... said 'blank' where a full snapshot a moment later
+    worked). PC-VERIFY: fl_snapshot(region=[0, 0, 0.5, 0.3]) right after flh_sync's reload returns the picture."""
+    import base64
+    grab = _snap_grab
+    if os.name != "nt" and getattr(grab, "__win__", False):
         raise RuntimeError("fl_snapshot needs Windows")
     if hwnd:                                                      # one of FL's popups (fl_dialog list gives hwnd)
         mine = {d["hwnd"]: d["title"] for d in fl_dialogs()}
@@ -4723,36 +5220,34 @@ def fl_snapshot(area="window", region=None, max_width=1400, save=False, hwnd=Non
         hw = _fl_main_window()
     if not hw:
         raise RuntimeError("FL isn't running")
-    hwnd = hw[0]; user32 = ctypes.windll.user32; gdi = ctypes.windll.gdi32
-    if user32.IsIconic(hwnd):
-        raise RuntimeError("FL is minimized; restore its window first")
-    r = wintypes.RECT(); user32.GetWindowRect(hwnd, ctypes.byref(r)); w, h = r.right - r.left, r.bottom - r.top
-    wdc = user32.GetWindowDC(hwnd); mdc = gdi.CreateCompatibleDC(wdc); bmp = gdi.CreateCompatibleBitmap(wdc, w, h)
-    old = gdi.SelectObject(mdc, bmp)
-    try:
-        if not user32.PrintWindow(hwnd, mdc, 2):                  # PW_RENDERFULLCONTENT
-            user32.PrintWindow(hwnd, mdc, 0)
-        class BIH(ctypes.Structure):
-            _fields_ = [("biSize", wintypes.DWORD), ("biWidth", wintypes.LONG), ("biHeight", wintypes.LONG),
-                        ("biPlanes", wintypes.WORD), ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD),
-                        ("biSizeImage", wintypes.DWORD), ("biXPelsPerMeter", wintypes.LONG),
-                        ("biYPelsPerMeter", wintypes.LONG), ("biClrUsed", wintypes.DWORD),
-                        ("biClrImportant", wintypes.DWORD)]
-        bih = BIH(ctypes.sizeof(BIH), w, -h, 1, 32, 0, 0, 0, 0, 0, 0)
-        buf = ctypes.create_string_buffer(w * h * 4)
-        gdi.GetDIBits(mdc, bmp, 0, h, buf, ctypes.byref(bih), 0)
-        data = buf.raw
-    finally:
-        gdi.SelectObject(mdc, old); gdi.DeleteObject(bmp); gdi.DeleteDC(mdc); user32.ReleaseDC(hwnd, wdc)
     f = region or _SNAP_AREAS.get(area)
     if not f or len(f) != 4:
         raise ValueError(f"area is one of {sorted(_SNAP_AREAS)}, or give region [x0, y0, x1, y1] (0..1)")
-    box = (int(w * max(0, f[0])), int(h * max(0, f[1])), int(w * min(1, f[2])), int(h * min(1, f[3])))
+    try:
+        f = [float(x) for x in f]
+    except (TypeError, ValueError):
+        raise ValueError("region is [x0, y0, x1, y1] as numbers 0..1")
+    if not (f[2] > f[0] and f[3] > f[1]):
+        raise ValueError("region [x0, y0, x1, y1] needs x1 > x0 and y1 > y0 (0..1 fractions of FL's window)")
+    w = h = 0; data = b""; tries = 0
+    for wait in (0.0,) + tuple(SNAP_BLANK_RETRY_S):
+        if wait:
+            time.sleep(wait)
+        tries += 1
+        w, h, data = grab(hw[0])
+        if w > 0 and h > 0 and _snap_has_pixels(data):
+            break
+    else:
+        raise RuntimeError(f"FL's window came back blank {tries} times (it may be on a sleeping display or "
+                           "minimized to a blank state); wake the display or bring FL up, then try again")
+    box = (int(w * max(0.0, f[0])), int(h * max(0.0, f[1])), int(w * min(1.0, f[2])), int(h * min(1.0, f[3])))
+    if box[2] <= box[0] or box[3] <= box[1]:
+        raise ValueError("that region is empty at FL's window size")
     step = max(1, -(-(box[2] - box[0]) // int(max_width)))
     ow, oh, rgb = _bgra_crop_scale(data, w, h, box, step)
-    if not ow or not any(rgb[i] for i in range(0, min(len(rgb), 300000), 997)):
-        raise RuntimeError("FL's window came back blank (it may be on a sleeping display)")
     png = _png_encode(ow, oh, rgb); out = {"window": hw[1], "size": [ow, oh], "_image_png": base64.b64encode(png).decode()}
+    if tries > 1:
+        out["note"] = f"FL's window came back blank at first (repainting); taken again ({tries} tries)"
     try:                                                          # words for screen-reader users (and the model)
         ctx = {}
         try:
@@ -4772,7 +5267,41 @@ def fl_snapshot(area="window", region=None, max_width=1400, save=False, hwnd=Non
     return out
 
 
-_EDIT_DEPTH = 0                                                    # >0 inside flp_edit: one reload at the end
+def _snap_grab(hwnd):
+    """FL's window `hwnd` as (width, height, top-down BGRA bytes), through PrintWindow (works while FL is behind other
+    windows). Windows only."""
+    import ctypes
+    from ctypes import wintypes
+    user32 = ctypes.windll.user32; gdi = ctypes.windll.gdi32
+    if user32.IsIconic(hwnd):
+        raise RuntimeError("FL is minimized; restore its window first")
+    r = wintypes.RECT(); user32.GetWindowRect(hwnd, ctypes.byref(r)); w, h = r.right - r.left, r.bottom - r.top
+    if w <= 0 or h <= 0:
+        return 0, 0, b""
+    wdc = user32.GetWindowDC(hwnd); mdc = gdi.CreateCompatibleDC(wdc); bmp = gdi.CreateCompatibleBitmap(wdc, w, h)
+    old = gdi.SelectObject(mdc, bmp)
+    try:
+        if not user32.PrintWindow(hwnd, mdc, 2):                  # PW_RENDERFULLCONTENT
+            user32.PrintWindow(hwnd, mdc, 0)
+        class BIH(ctypes.Structure):
+            _fields_ = [("biSize", wintypes.DWORD), ("biWidth", wintypes.LONG), ("biHeight", wintypes.LONG),
+                        ("biPlanes", wintypes.WORD), ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD),
+                        ("biSizeImage", wintypes.DWORD), ("biXPelsPerMeter", wintypes.LONG),
+                        ("biYPelsPerMeter", wintypes.LONG), ("biClrUsed", wintypes.DWORD),
+                        ("biClrImportant", wintypes.DWORD)]
+        bih = BIH(ctypes.sizeof(BIH), w, -h, 1, 32, 0, 0, 0, 0, 0, 0)
+        buf = ctypes.create_string_buffer(w * h * 4)
+        gdi.GetDIBits(mdc, bmp, 0, h, buf, ctypes.byref(bih), 0)
+        data = buf.raw
+    finally:
+        gdi.SelectObject(mdc, old); gdi.DeleteObject(bmp); gdi.DeleteDC(mdc); user32.ReleaseDC(hwnd, wdc)
+    return w, h, data
+
+
+_snap_grab.__win__ = True
+
+
+_EDIT_DEPTH = 0                                                   # >0 inside flp_edit: one reload at the end
 _EDIT_TL = threading.local()                                      # the same, per thread: a background flush of
                                                                   # queued edits must never see a foreground edit's depth
 
@@ -7711,8 +8240,48 @@ def flp_remove_effect(project, output, track, slot):
     return {"output": output, "removed": name, "track": int(track), "slot": int(slot)}
 
 
-def flp_add_channel(project, output, clone_from, preset=None):
-    """Add a channel cloned from an existing one (routing, volume, plugin); optionally load a .fst onto it."""
+def _free_mixer_insert(d, ev):
+    """A mixer insert no channel plays into and that isn't a named bus / send ('Insert N' or unnamed), or None
+    (flh_newsong's rule, which knows FL's last 'Current' track; a plain fallback without it)."""
+    NS = sys.modules.get("flh_newsong")
+    if NS is not None and hasattr(NS, "_free_insert"):
+        try:
+            return NS._free_insert(d, ev)
+        except Exception:                                         # noqa: BLE001 - the fallback below
+            pass
+    used = set(_channel_inserts(d, ev).values()); names = _mixer_names(d, ev)
+    n = sum(1 for e in ev if e["id"] == EV_MIXER_TRACK)
+    for t in range(1, max(0, n - 2) + 1):                         # never the master (0) or FL's last 'Current' track
+        nm = (names.get(t) or "").strip()
+        if t not in used and (not nm or re.fullmatch(r"(insert|track)\s*\d*", nm, re.I)):
+            return t
+    return None
+
+
+def _set_channel_insert(d, ch, ins):
+    """The project bytes with channel `ch` playing into mixer insert `ins` (event 104 word; an older file's event
+    22 byte; added before the block's end when the block has neither).
+    PC-VERIFY: a channel added with flp_add_channel(insert='new') plays through the named free insert in FL."""
+    ev = _events(d); a, b = _channel_ranges(d, ev)[int(ch)]
+    for k in range(a, b):
+        e = ev[k]
+        if e["id"] == EV_CHANNEL_INSERT and e["len"] == 2:
+            return _splice(d, ev, [(k, k + 1, bytes([EV_CHANNEL_INSERT]) + struct.pack("<h", int(ins)))])
+    for k in range(a, b):
+        e = ev[k]
+        if e["id"] == EV_CHANNEL_INSERT_OLD and e["len"] == 1 and -128 <= int(ins) <= 127:
+            return _splice(d, ev, [(k, k + 1, bytes([EV_CHANNEL_INSERT_OLD]) + struct.pack("<b", int(ins)))])
+    NS = sys.modules.get("flh_newsong")
+    if NS is not None and hasattr(NS, "_chan_edit"):
+        return NS._chan_edit(d, int(ch), {EV_CHANNEL_INSERT: struct.pack("<h", int(ins))})
+    raise ValueError(f"channel {ch}'s block has no mixer-insert event to set")
+
+
+def flp_add_channel(project, output, clone_from, preset=None, insert=None, name=None):
+    """Add a channel cloned from an existing one (volume, plugin, settings); optionally load a .fst onto it.
+    insert: None / 'same' = the cloned channel's mixer insert (its effects too); 'new' = a free insert of its own,
+    named after the channel (PC 2026-10-27: a new channel landed on the Bass channel's EQ'd insert); a number = that
+    insert. name: the new channel's name (also the new insert's)."""
     writable(output)
     d = _load(project); ev = _events(d)
     spans = [(i, a, b) for kind, i, a, b in _blocks(d, ev) if kind == "channel"]
@@ -7727,10 +8296,53 @@ def flp_add_channel(project, output, clone_from, preset=None):
     at = max(b for _, _, b in spans)                              # after the last channel (FL's rack order)
     new = bytearray(_splice(d, ev, [(at, at, clone)]))
     fmt, nch, ppq = struct.unpack("<hHH", new[8:14]); new[8:14] = struct.pack("<hHH", fmt, nch + 1, ppq)
+    how = "same" if insert in (None, "", "same", "clone") else insert
+    ins_res = {}
+    if how != "same":
+        nd = bytes(new); nev = _events(nd)
+        if str(how).strip().lower() == "new":
+            t = _free_mixer_insert(nd, nev)
+            if t is None:
+                t = 0
+                ins_res["insert_note"] = ("no free mixer insert: routed to the Master (0) - add inserts in FL or pick "
+                                          "one with insert=N")
+        else:
+            try:
+                t = int(how)
+            except (TypeError, ValueError):
+                raise ValueError("insert: 'new' (a free mixer insert), 'same' (the cloned channel's) or a track "
+                                 "number") from None
+            ntr = sum(1 for e in nev if e["id"] == EV_MIXER_TRACK)
+            if not 0 <= t < max(1, ntr - 1):
+                raise ValueError(f"insert {t} isn't a mixer insert of this project (0..{max(0, ntr - 2)})")
+        new = bytearray(_set_channel_insert(nd, new_index, t))
+        ins_res["insert"] = t
     _save(bytes(new), output)
-    res = {"output": output, "new_channel": new_index, "cloned_from": src}
+    res = {"output": output, "new_channel": new_index, "cloned_from": src, **ins_res}
+    if how == "same":
+        res["insert"] = _channel_inserts(bytes(new)).get(new_index)
+        if res["insert"]:
+            res["insert_shared_with"] = f"channel {src} (insert='new' gives the new channel its own)"
     if preset:
         res.update(flp_load_plugin(output, output, preset, channel=new_index))
+    if name:
+        flp_style_channels(output, output, [{"channel": new_index, "name": str(name)}])
+        res["name"] = str(name)
+    t = res.get("insert")
+    if how != "same" and t:                                        # the new insert carries the channel's name
+        nm = name
+        if not nm:
+            try:
+                dd = _load(output); _, chans, _fx = _structure(dd)
+                nm = (chans.get(new_index) or {}).get("name")
+            except Exception:                                     # noqa: BLE001 - an unnamed insert is fine
+                nm = None
+        if nm:
+            try:
+                flp_mixer(output, output, [{"track": int(t), "name": str(nm)}])
+                res["insert_name"] = str(nm)
+            except Exception as e:                                # noqa: BLE001 - routed; only the name is missing
+                res["insert_note"] = f"routed to insert {t} but its name wasn't set ({str(e)[:60]})"
     return res
 
 
@@ -7802,6 +8414,80 @@ def _instrument_not_downloaded(pack, content):
             f"({content['files']} file(s)), so INSTRUMENT will most likely load it silent. Download the pack in "
             "INSTRUMENT (its library page) or the Splice app, then try again - or pick a pack with "
             "downloaded=true (flp_instrument_sounds)")
+
+
+_CONTENT_MEMO = {}               # (pack folder, its mtime) -> (when, _instrument_pack_content)
+CONTENT_MEMO_S = 30.0
+
+
+def _instrument_content_check(label, state):
+    """Content check for a Splice INSTRUMENT state (its META family = a pack folder of the library): None when the
+    state isn't INSTRUMENT or the library can't be found here, else {family, pack, problem} (problem None = the
+    pack is installed with its sounds). Reads only the one pack folder (fast enough for fl_doctor).
+    PC-VERIFY: a channel whose INSTRUMENT pack was removed (FL: 'Content Not Found') is fl_doctor's content_missing;
+    a pack that plays is not flagged (checklists/review.md R2)."""
+    m_ = re.search(rb'<META family="([^"]*)"', state or b"")
+    if not m_ or not _is_splice_instrument(label or _wrapper_name(state)):
+        return None
+    fam = m_.group(1).decode("utf-8", "replace").strip()
+    lib = _splice_lib()
+    if not os.path.isdir(lib):
+        return None
+    strip = lambda p: re.sub(r"^(LABS|Spitfire Audio|Splice)\s*-\s*", "", p).strip().lower()
+    try:
+        packs = [p for p in os.listdir(lib) if os.path.isdir(os.path.join(lib, p, "Presets"))]
+    except OSError:
+        return None
+    pack = next((p for p in packs if strip(p) == fam.lower()), None)
+    out = {"family": "Splice INSTRUMENT", "sound": fam, "pack": pack, "problem": None}
+    if not pack:
+        out["problem"] = (f"its pack '{fam}' isn't in the INSTRUMENT library ({lib}): FL shows 'Content Not Found' "
+                          "and the channel stays silent")
+        out["fix"] = ("download the pack in INSTRUMENT / the Splice app, or switch the channel to a pack you have: "
+                      "flp_instrument_sounds lists them, flp_instrument_sound switches")
+        return out
+    pdir = os.path.join(lib, pack)
+    try:
+        key = (pdir, os.path.getmtime(pdir))
+    except OSError:
+        key = (pdir, None)
+    hit = _CONTENT_MEMO.get(key)
+    if hit and time.time() - hit[0] < CONTENT_MEMO_S:             # one doctor run asks once per pack, not per channel
+        content = hit[1]
+    else:
+        content = _instrument_pack_content(pdir)
+        if len(_CONTENT_MEMO) > 64:
+            _CONTENT_MEMO.clear()
+        _CONTENT_MEMO[key] = (time.time(), content)
+    if not content["downloaded"]:
+        out["problem"] = _instrument_not_downloaded(pack, content)
+        out["fix"] = "download its sounds, or switch the channel (flp_instrument_sound) to a downloaded pack"
+        return out
+    seen = (_state().get("silent_packs") or {}).get(pack)
+    if seen:
+        out["problem"] = (f"'{pack}' rendered silent on this PC before ({seen.get('seen')}, {seen.get('project')}): "
+                          "the installed INSTRUMENT probably can't play it")
+        out["fix"] = "update the pack in Splice, or switch the channel to another pack (flp_instrument_sound)"
+        out["soft"] = True
+    return out
+
+
+# Content checks per instrument family fl-headless can read: name -> fn(plugin label, state bytes) -> None (not
+# this family / can't tell) or {family, sound, pack, problem, fix}. Extensions add theirs (flh_flex: FLEX packs).
+CONTENT_CHECKS = {"splice_instrument": _instrument_content_check}
+
+
+def plugin_content_status(label, state):
+    """Is the sound content a channel's saved state points at on this PC? The first CONTENT_CHECKS entry that knows
+    the state answers ({family, sound, pack, problem, fix}); None = no check knows this plugin."""
+    for fn in list(CONTENT_CHECKS.values()):
+        try:
+            r = fn(label, state)
+        except Exception:                                         # noqa: BLE001 - a check must never break a reader
+            r = None
+        if r:
+            return r
+    return None
 
 
 def flp_instrument_sounds():
@@ -7991,6 +8677,51 @@ def _name_tokens(t, drop=()):
     return [w for w in re.split(r"[^a-z0-9]+", str(t or "").lower()) if w and w not in drop]
 
 
+def _name_key(t):
+    return re.sub(r"[^a-z0-9]+", "", str(t or "").lower())
+
+
+def _match_name(want, names, drop=()):
+    """The one entry of `names` (preset / patch / pack names of any plugin) the caller meant by `want`, or None.
+    Display names and file names differ in spelling: 'Glass Grand Soft' = 'Glass_Grand_Soft' = 'GLASS-GRAND SOFT'.
+    Order: exact; same letters and digits; the same words (minus `drop`, e.g. the pack's own words); the one name
+    holding every word asked; the one name holding the asked letters; one clearly closest spelling. Several equally
+    good -> None (never a silent pick: PC 2026-10-27 'Glass Grand Soft' loaded the pack's first preset).
+    -> (name or None, how, [closest names for an error])."""
+    import difflib
+    names = [str(n) for n in names or []]
+    w = str(want or "").strip()
+    if not w or not names:
+        return None, "no match", names[:12]
+    if w in names:
+        return w, "exact", []
+    key = _name_key(w)
+    hits = [n for n in names if _name_key(n) == key]
+    if len(hits) == 1:
+        return hits[0], "same name, other spelling", []
+    drop = tuple(drop or ())
+    wt = set(_name_tokens(w, drop)) or set(_name_tokens(w))
+    tok = {n: set(_name_tokens(n, drop)) or set(_name_tokens(n)) for n in names}
+    same = [n for n in names if tok[n] == wt]
+    if len(same) == 1:
+        return same[0], "same words", []
+    sub = [n for n in names if wt and wt <= tok[n]]
+    if len(sub) == 1:
+        return sub[0], "every word asked", []
+    inside = [n for n in names if key and (key in _name_key(n) or
+                                         (len(_name_key(n)) >= 4 and _name_key(n) in key))]
+    if len(inside) == 1:
+        return inside[0], "name holds it", []
+    ratio = lambda n: difflib.SequenceMatcher(None, key, _name_key(n)).ratio()
+    ranked = sorted(names, key=lambda n: (-(len(wt & tok[n]) / max(1, len(wt | tok[n]))), -ratio(n)))
+    best = sorted(names, key=lambda n: -ratio(n))
+    if best and ratio(best[0]) >= 0.85 and (len(best) == 1 or ratio(best[0]) - ratio(best[1]) >= 0.08):
+        return best[0], "closest spelling", []
+    many = sub if len(sub) > 1 else (inside if len(inside) > 1 else (same if len(same) > 1 else []))
+    close = many or [n for n in ranked if (wt & tok[n]) or ratio(n) >= 0.5] or ranked
+    return None, ("several match" if many else "no match"), close[:12]
+
+
 def _instrument_artic(preset, patches):
     """(articulation name, how) for a preset: INSTRUMENT finds an articulation by its patch's name, exact case
     (PC 2026-10-26: 'LABS_CHOIR' played nothing, the patch 'LABS_Choir' played). The preset's own name when a patch
@@ -8030,20 +8761,54 @@ def _instrument_saved_state(family, preset):
     return None
 
 
-def flp_instrument_sound(project, output, channel, pack, preset=None, name=None):
+def _channel_sound_now(d, ev, ch):
+    """What a channel's INSTRUMENT-style (JUCE META) state plays now, 'family / name', or None."""
+    try:
+        _, ks = _channel_block(d, ev, int(ch))
+        st = _payload(d, ev[ks])
+        m_ = re.search(rb'<META family="([^"]*)" name="([^"]*)"', st)
+        if m_:
+            a_ = re.search(rb'id="a_name" value="([^"]*)"', st)
+            return " / ".join(dict.fromkeys(x.decode("utf-8", "replace") for x in m_.groups() if x)) + \
+                (f" ({a_.group(1).decode('utf-8', 'replace')})" if a_ and a_.group(1) else "")
+    except Exception:                                             # noqa: BLE001 - only used in a message
+        pass
+    return None
+
+
+def flp_instrument_sound(project, output, channel, pack, preset=None, name=None, force=False):
     """Switch a Splice INSTRUMENT channel to another downloaded pack/preset (e.g. pack 'LABS - Choir') by editing
-    its saved state - no INSTRUMENT window needed. Best for LABS packs (one sound per preset). Check by ear after."""
+    its saved state - no INSTRUMENT window needed. Best for LABS packs (one sound per preset). Check by ear after.
+    A preset or patch that can't be matched is REFUSED (the channel keeps the sound it has) with the names this pack
+    really has: PC 2026-10-27 an unmatched patch overwrote a working, user-chosen state with one FL showed as
+    'Content Not Found' (silent). force=true writes it anyway.
+    PC-VERIFY: preset 'Glass Grand Soft' (display name) loads that preset, not the pack's first; an unknown preset /
+    one without a patch is refused and FL's channel still plays its old sound after flh_sync (checklists/core.md
+    'instrument sound refusals')."""
     writable(output)
     lib = flp_instrument_sounds()["packs"]
     want = str(pack).strip().lower()
     hit = next((x for x in lib if x["pack"].lower() == want), None) or \
         next((x for x in lib if want in x["pack"].lower()), None)
     if not hit:
+        pk, _how, _close = _match_name(pack, [x["pack"] for x in lib], drop=("labs", "spitfire", "audio", "splice"))
+        hit = next((x for x in lib if x["pack"] == pk), None) if pk else None
+    if not hit:
         raise ValueError(f"pack '{pack}' isn't downloaded; have: {[x['pack'] for x in lib]}")
     if not hit["presets"]:
         raise ValueError(f"{hit['pack']} has no presets on disk")
-    pre = next((p_ for p_ in hit["presets"] if preset and p_.lower() == str(preset).lower()), hit["presets"][0])
     family = re.sub(r"^(LABS|Spitfire Audio|Splice)\s*-\s*", "", hit["pack"]).strip()
+    pre_how = None
+    if preset:
+        pre, pre_how, close = _match_name(preset, hit["presets"], drop=("labs",) + tuple(_name_tokens(family)))
+        if not pre:
+            raise ValueError(f"NOT changed (channel {channel} keeps its sound): '{hit['pack']}' has no preset like "
+                             f"'{preset}' ({pre_how}). Its presets: {hit['presets'][:30]}"
+                             + (f" (+{len(hit['presets']) - 30} more: flp_instrument_sounds)" if len(hit["presets"]) > 30
+                                else "") + (f"; closest: {close[:5]}" if close and pre_how == "several match" else "")
+                             + ". Give one of these names")
+    else:
+        pre = hit["presets"][0]
     d = _load(project); ev = _events(d); ch = int(channel)
     converted = None
     saved = _instrument_saved_state(family, pre)
@@ -8059,9 +8824,21 @@ def flp_instrument_sound(project, output, channel, pack, preset=None, name=None)
                                                                b"\x00\x00"))]), output)
         return {"output": output, "channel": ch, "sound": f"{hit['pack']} / {pre}", "version": hit["version"],
                 "from_saved_sound": saved["name"],
+                **({"preset_matched": f"'{preset}' -> '{pre}' ({pre_how})"} if pre_how not in (None, "exact") else {}),
                 "how": "your saved sound of this preset (INSTRUMENT's own state, picked in its window): plays as saved"}
     patches = _instrument_patches(hit["pack"], hit["version"])
     artic, how = _instrument_artic(pre, patches)
+    if how == "preset name (no patch matched)" and patches:       # the pack's patches are known and none fits
+        p2, h2, _c = _match_name(pre, patches, drop=("labs",) + tuple(_name_tokens(family)))
+        if p2:
+            artic, how = p2, f"patch name ({h2})"
+    if how == "preset name (no patch matched)" and patches and not force:
+        now = _channel_sound_now(d, ev, ch)
+        raise ValueError(f"NOT changed (channel {ch} keeps {repr(now) if now else 'its sound'}): no patch of "
+                         f"'{hit['pack']}' matches preset '{pre}', and writing it would load as 'Content Not Found' "
+                         f"(silent). The pack's patches: {patches[:20]}; its presets: {hit['presets'][:20]}. Pick a "
+                         "preset named like a patch, pick the sound once in INSTRUMENT's window and save it "
+                         "(flp_save_sound), or force=true to write it anyway")
     try:
         _, ks = _channel_block(d, ev, ch)
         st = _payload(d, ev[ks])
@@ -8091,6 +8868,11 @@ def flp_instrument_sound(project, output, channel, pack, preset=None, name=None)
     res = {"output": output, "channel": ch, "sound": f"{hit['pack']} / {pre}", "version": hit["version"],
            "was": (m_.group(2).decode("utf-8", "replace") if m_ else None),
            **({"made_instrument_from": converted} if converted else {}),
+           **({"preset_matched": f"'{preset}' -> '{pre}' ({pre_how})"} if pre_how not in (None, "exact") else {}),
+           **({"preset_default": f"no preset asked: the pack's first, '{pre}' (others: {hit['presets'][1:8]})"}
+              if not preset and len(hit["presets"]) > 1 else {}),
+           **({"forced": "no patch matched: written anyway (force=true)"} if force and
+              how == "preset name (no patch matched)" and patches else {}),
            "articulation": artic + ("" if how == "exact" else f" ({how})"),
            "check": "listen to it (fl_preview on this channel): an unsupported pack loads silent or keeps the old sound"}
     if how == "preset name (no patch matched)" or (patches and artic not in patches) or \
@@ -9555,26 +10337,28 @@ OPEN_IGNORE_COST_FRAC = 1.0       # 'FL ignored the Open' only after this share 
 OPEN_LEFTOVER_GRACE_S = 1.5       # after a retried Open: a Ctrl+O FL queued while busy surfaces within this
 
 
-def _fl_load_busy(bridge_up=False):
+def _fl_load_busy(bridge_up=False, cpu=True):
     """FL looks busy loading right now: 'Opening: ...' in its title, its script's heartbeat stopped, the bridge that
-    answered before (bridge_up) no longer answers, or the FL process using CPU (Windows). A Ctrl+O sent now would wait
-    in FL's queue and pop up later. PC-VERIFY: True during a 20 s load of a big project with an unchanged title."""
+    answered before (bridge_up) no longer answers, or (cpu) the FL process using CPU (Windows). A Ctrl+O sent now would
+    wait in FL's queue and pop up later. PC-VERIFY: True during a 20 s load of a big project with an unchanged title."""
     try:
         if _fl_loading_title() or _fl_ui_busy():
             return True
         if bridge_up and not _ping_ok():
             return True
-        return bool(_fl_cpu_busy())
+        return bool(_fl_cpu_busy()) if cpu else False
     except Exception:                                             # noqa: BLE001
         return False
 
 
-def _wait_load_out(project, wait_s=None, bridge_up=False):
-    """Wait while FL is busy loading (bounded by the project's load cost, scaled). -> seconds waited."""
+def _wait_load_out(project, wait_s=None, bridge_up=False, cpu=True):
+    """Wait while FL is busy loading (bounded by the project's load cost, scaled). -> seconds waited. cpu=False: FL's
+    CPU use alone isn't 'loading' (sample streamers keep it busy for good once a song is in: PC 2026-10-26, every
+    reload of a LABS/Spitfire song waited out the whole 30 s cap after the load had long finished)."""
     t0 = time.time()
     cost = (_load_cost_guess(project)[0] or 0.0) if project else 0.0
     limit = _scaled(wait_s if wait_s is not None else max(OPEN_SWITCH_IDLE_S, 1.5 * cost + 10.0))
-    while time.time() - t0 < limit and _fl_load_busy(bridge_up):
+    while time.time() - t0 < limit and _fl_load_busy(bridge_up, cpu=cpu):
         time.sleep(0.25)
     return round(time.time() - t0, 1)
 
@@ -10079,17 +10863,32 @@ def _live_ready(name):
     targets something only a queued edit makes (then: in once, and the tool again)."""
     if getattr(_SYNC_LOCAL, "busy", False):
         return
-    try:
-        if IS_WINDOWS and _fl_load_busy(False):
-            _wait_load_out(_open_project_guess()[0])
+    try:                                                          # only FL's own loading signs: its CPU use is
+        if IS_WINDOWS and _fl_loading_now():                      # no sign (a loaded INSTRUMENT keeps FL busy:
+            proj = _open_project_guess()[0]                       # PC 2026-10-26 every live call waited 14 s)
+            cost = (_load_cost_guess(proj)[0] or 0.0) if proj else 0.0
+            t0 = time.time(); limit = _scaled(max(OPEN_SWITCH_IDLE_S, 1.5 * cost + 10.0))
+            while time.time() - t0 < limit and _fl_loading_now():
+                time.sleep(0.25)
     except Exception:                                             # noqa: BLE001
         pass
+
+
+def _fl_loading_now():
+    """FL is loading a project right now: 'Opening: ...' in its title, or its script's heartbeat stopped."""
+    try:
+        return bool(_fl_loading_title() or _fl_ui_busy())
+    except Exception:                                             # noqa: BLE001
+        return False
 
 
 def _fl_locked(name, fn):
     """TOOLS wrapper for a tool that drives FL: holds the FL lock while it runs (re-entrant). A background job
     holding FL refuses the call at once with 'busy'; a background check of the last edit steps aside. Read-only /
     popup tools (FL_LOCK_FREE) never wait: they run beside whoever holds FL."""
+    if name in LIVE_CHANGE_TOOLS:                                 # its change is FL's, not the file's: logged
+        fn = _live_noting(name, fn)
+
     def run(*a, **kw):
         if _lock_free(name, kw):
             if not _FL_LOCK.acquire(blocking=False):
@@ -10682,7 +11481,21 @@ def _reload_in_fl(project, discard=False, force_blank=False):
         escalate = ("the file changed behind FL" if verify else "FL ignored a direct reopen")
         steps["direct"] = "empty project first"
     else:
-        pre = _fl_visible() if float(prior or 0) >= RELOAD_SUSPECT_MIN_COST_S else None   # what FL shows now
+        suspectable = float(prior or 0) >= RELOAD_SUSPECT_MIN_COST_S
+        pre = _fl_visible() if suspectable else None              # what FL shows now
+        # a fast reopen of a song that 'should' load slowly gets a file-only marker up front, so a quick reload is
+        # proven on the spot instead of loading the song again through the empty template (PC 2026-10-26: every
+        # reload of a note/plugin edit was 'too fast to trust', content 'can't tell' -> +40 s each)
+        fmk = forig = None
+        if suspectable and FAST_RELOAD_MARKER and _ping_ok():
+            try:
+                with open(project, "rb") as f:
+                    forig = f.read()
+                fmk, _no = _reload_marker_stamp(project, forig)
+                if _no:
+                    steps["fast_marker"] = f"none: {_no}"[:120]
+            except Exception as e:                                # noqa: BLE001
+                fmk = None; steps["fast_marker"] = f"none: {type(e).__name__}"
         tr, orig = _tag_track()
         gone = False
         try:
@@ -10701,8 +11514,19 @@ def _reload_in_fl(project, discard=False, force_blank=False):
                 if settled is None:
                     steps["unsettled"] = True
                 sus = _reload_suspect(prior, steps)
+                if sus and fmk and not steps.get("unsettled"):
+                    T3 = time.time()
+                    seen_fast = _await_marker(project, fmk[0], fmk[1], prior)
+                    steps["fast_marker"] = {True: "seen", False: "not seen (FL showed another copy)",
+                                            None: "no answer"}[seen_fast]
+                    if seen_fast is True:
+                        steps["marker_wait"] = round(time.time() - T3, 1)
+                        steps["proof"] = "marker"; sus = None
+                        _marker_put_back_live(project, fmk, forig, steps)
+                        fmk = None
                 if sus:
-                    chk, why = _reload_content_check(project, pre, skip_track=tr)
+                    chk, why = _reload_content_check(project, pre, skip_track=tr,
+                                                     skip_more=(fmk[0],) if fmk else ())
                     steps["content_check"] = {True: "file", False: "old copy", None: "can't tell"}[chk]
                     if chk is True:
                         steps["proof"] = "content"; steps.pop("unsettled", None)
@@ -10720,6 +11544,11 @@ def _reload_in_fl(project, discard=False, force_blank=False):
             if tr is not None and not gone:
                 if _untag(tr, orig) is False:
                     steps["tag_left"] = _tag_left_note(tr, orig)
+            if fmk:                                               # the up-front marker wasn't used as the proof:
+                if gone and not escalate:                         # FL took the file (trusted): its name out of FL too
+                    _marker_put_back_live(project, fmk, forig, steps, proven=False)
+                else:                                             # the file as it was, before any slower route
+                    _reload_marker_put_back(project, fmk, forig)
         if gone and escalate:                                     # the fast 'reload' isn't counted as the load
             steps["fast_load"] = steps.pop("load", None); steps.pop("unsettled", None)
     if escalate:
@@ -10822,12 +11651,12 @@ def _visible_diff(want, pre, skip=()):
     return [k for k in want if k in pre and k not in skip and pre[k] is not None and pre[k] != want[k]]
 
 
-def _reload_content_check(project, pre, skip_track=None):
+def _reload_content_check(project, pre, skip_track=None, skip_more=()):
     """After a reload: does FL show the FILE where the file differs from what FL showed before (pre)? -> (True |
     False | None, why). True: FL shows the file's values there; False: still its old ones (it didn't load); None:
     can't tell (no difference the bridge can read - notes, velocities, plugin settings aren't readable - or no
     answer, or a mix)."""
-    skip = (f"mixer {int(skip_track)}",) if skip_track is not None else ()
+    skip = tuple(f"mixer {int(t)}" for t in ((skip_track,) if skip_track is not None else ()) + tuple(skip_more))
     want = _file_visible(project)
     keys = _visible_diff(want, pre, skip)
     if not keys:
@@ -10989,6 +11818,34 @@ def _reload_marker_put_back(project, mk, orig):
     return False
 
 
+FAST_RELOAD_MARKER = True         # a fast reopen of a slow-loading song carries a file-only marker (proof on the spot)
+
+
+def _marker_put_back_live(project, mk, orig, steps, proven=True):
+    """After FL loaded the file with marker mk in it: the track's name back in FL, then the file as it was (only while
+    it still holds the stamped copy). proven: FL showed the marker - recorded as what FL holds, steps['proof']."""
+    # PC-VERIFY: mixer_set(track, name="") gives an unnamed track FL's default name back (core.md 'reload marker')
+    try:
+        BRIDGE.call("mixer_set", track=mk[0], name=mk[2] or "", timeout=2.0)
+        back = (BRIDGE.call("mixer_set", track=mk[0], timeout=2.0) or {}).get("name")
+    except Exception:                                             # noqa: BLE001
+        back = None
+    restored = back is not None and str(back).strip() != mk[1]
+    if restored:
+        restored = _reload_marker_put_back(project, mk, orig)
+    elif proven:
+        steps["marker_left"] = (f"mixer track {mk[0]} is still named '{mk[1]}' in FL and in the file (FL didn't "
+                                "take its name back): rename it in FL's mixer")
+    else:                                                         # not proven FL shows it: the file as it was
+        _reload_marker_put_back(project, mk, orig)
+    if proven:
+        _stale_clear(project)
+        _note_fl_holds(project, orig if restored else mk[3])      # recorded only on the marker's proof
+        _note_proven_open(project, "marker")
+        steps["proof"] = "marker"
+    return restored
+
+
 def _await_marker(project, track, marker, cost=None):
     """After FL was asked to open `project`: True once the bridge reads `marker` as mixer track `track`'s name - only
     the file has it, so FL read the file (an in-memory copy, an undo state or an autosave can't have it). False when FL
@@ -11011,7 +11868,7 @@ def _await_marker(project, track, marker, cost=None):
             answered = True
             if str(nm).strip() == marker:
                 return True
-        if nm is not None and on_song and not _fl_load_busy(False):
+        if nm is not None and on_song and not _fl_load_busy(False, cpu=False):
             since = since if since is not None else now
             if now - since >= grace:
                 return False
@@ -11032,9 +11889,9 @@ def _reload_marked(project, prior, steps, why):
     writable): marked the same, steps['unproven'] says why. Without an empty template the file is reopened directly
     (still proven by the marker)."""
     try:                                          # a fast reopen that wasn't trusted may still be loading the file:
-        w = _wait_load_out(project, bridge_up=True)   # FL holds it open meanwhile (PC 2026-10-24 lazy.big_project:
-        if w >= 0.5:                                  # the marker's write hit WinError 5 mid-load)
-            steps["load_out_wait"] = w
+        w = _wait_load_out(project, bridge_up=True, cpu=False)   # FL holds it open meanwhile (PC 2026-10-24
+        if w >= 0.5:                                  # lazy.big_project: the marker's write hit WinError 5 mid-load;
+            steps["load_out_wait"] = w                # a file still held is retried below)
     except Exception:                                             # noqa: BLE001
         pass
     try:
@@ -11076,22 +11933,7 @@ def _reload_marked(project, prior, steps, why):
         _stale_mark(project, f"reload not taken: {why}; FL's Open failed", orig)
         raise
     if seen is True:                                              # FL read the file: put the marker back out
-        # PC-VERIFY: mixer_set(track, name="") gives an unnamed track FL's default name back (core.md 'reload marker')
-        try:
-            BRIDGE.call("mixer_set", track=mk[0], name=mk[2] or "", timeout=2.0)
-            back = (BRIDGE.call("mixer_set", track=mk[0], timeout=2.0) or {}).get("name")
-        except Exception:                                         # noqa: BLE001
-            back = None
-        restored = back is not None and str(back).strip() != mk[1]
-        if restored:
-            restored = _reload_marker_put_back(project, mk, orig)
-        else:
-            steps["marker_left"] = (f"mixer track {mk[0]} is still named '{mk[1]}' in FL and in the file (FL didn't "
-                                    "take its name back): rename it in FL's mixer")
-        _stale_clear(project)
-        _note_fl_holds(project, orig if restored else mk[3])      # recorded only on the marker's proof
-        _note_proven_open(project, "marker")
-        steps["proof"] = "marker"
+        _marker_put_back_live(project, mk, orig, steps)
         return steps
     if mk:
         _reload_marker_put_back(project, mk, orig)                # the file keeps exactly what was written into it
@@ -12501,6 +13343,383 @@ def flp_project_info(path, output=None, **changes):
     return flp_project_info(output)
 
 
+# ----------------------------------------------------------------------------- meter, new song from a project, pattern names
+METER_NUMS, METER_DENS = range(1, 17), (2, 4, 8, 16)             # what FL's time-signature settings take
+
+
+def _parse_meter(num, den=None):
+    """'3/4', [3, 4], (3, 4) or num + den -> (num, den), checked against FL's ranges."""
+    if den is None:
+        if isinstance(num, str) and "/" in num:
+            num, den = num.split("/", 1)
+        elif isinstance(num, (list, tuple)) and len(num) == 2:
+            num, den = num
+        else:
+            den = 4
+    try:
+        n, dd = int(str(num).strip()), int(str(den).strip())
+    except (TypeError, ValueError):
+        raise ValueError(f"time signature: like '3/4' or num=3, den=4 (got {num!r}/{den!r})") from None
+    if n not in METER_NUMS or dd not in METER_DENS:
+        raise ValueError(f"time signature {n}/{dd}: FL takes 1-16 beats over 2, 4, 8 or 16")
+    return n, dd
+
+
+def _midi_meters(path, P):
+    """A MIDI file's time signatures (FF 58) as [(project tick, num, den)] at project PPQ P; [] when it has none."""
+    try:
+        with open(path, "rb") as f:
+            div = struct.unpack(">H", f.read(14)[12:14])[0]
+        ms = _midi_meter_drums(path)[0]
+    except Exception:                                             # noqa: BLE001 - the notes reader says what's wrong
+        return []
+    if not div or div & 0x8000:
+        return []
+    return [(int(t) * P // div, n, dd) for t, n, dd in ms]
+
+
+def _project_meter_bytes(d, num, den):
+    """The project time signature (events 17/18 before the first channel) set to num/den; added after the project
+    settings (event 80 pitch / 11 / 9) when the file has none. PC-VERIFY: a file whose 17/18 were added this way
+    shows the time signature in FL (Song settings) and FL keeps it on save."""
+    ev = _events(d); first = {}; stop = len(ev)
+    sizes = {17: (1,), 18: (1,), 80: (2,), 11: (1,), 9: (1,)}
+    for k, e in enumerate(ev):
+        if e["id"] in (EV_CHANNEL, EV_PATTERN_NEW, EV_ARRANGEMENT):
+            stop = k; break
+        if e["id"] not in first and (e["id"] == EV_VERSION or e["len"] in sizes.get(e["id"], ())):
+            first[e["id"]] = k
+    edits = []
+    for eid, val in ((17, num), (18, den)):
+        if eid in first:
+            edits.append((first[eid], first[eid] + 1, bytes([eid, int(val)])))
+    missing = b"".join(bytes([eid, int(val)]) for eid, val in ((17, num), (18, den)) if eid not in first)
+    if missing:
+        at = next((first[i] + 1 for i in (80, 11, 9, EV_VERSION) if i in first), None)
+        if at is None or at > stop:
+            raise ValueError("couldn't find the project settings to put a time signature in")
+        edits.append((at, at, missing))
+    return _splice(d, ev, edits)
+
+
+def _sig_markers(d, ev, a):
+    """[(first event, end event, tick)] of the time-signature markers in arrangement a."""
+    out = []
+    if a is None:
+        return out
+    k, hi = a["first"] + 1, a["end"]
+    while k < hi:
+        e = ev[k]
+        if e["id"] == EV_MARKER_POS and e["len"] == 4:
+            v, = struct.unpack("<I", _payload(d, e)); j = _marker_group_end(ev, k, hi)
+            if v & MARKER_SIGNATURE:
+                out.append((k, j, v & 0x07FFFFFF))
+            k = j
+            continue
+        k += 1
+    return out
+
+
+def _meter_marker_bytes(d, tick, num=None, den=None, name=None):
+    """A time-signature marker at `tick` of the current arrangement: set (num/den; an existing one there gets the new
+    values) or removed (num None). An arrangement without a playlist event gets an empty one first (markers go right
+    after it, FL's place: _marker_slot). -> (bytes, "set" | "added" | "removed" | None)."""
+    ev = _events(d); a = _arrangement(d, ev, None)
+    if a is None:
+        raise ValueError("this project has no arrangement (playlist) for a time-signature marker")
+    hit = next((g for g in _sig_markers(d, ev, a) if g[2] == int(tick)), None)
+    if num is None:
+        return (_splice(d, ev, [(hit[0], hit[1], b"")]), "removed") if hit else (d, None)
+    if hit:
+        k, j, _ = hit; edits = []
+        have = {ev[i]["id"]: i for i in range(k, j)}
+        for eid, val in ((EV_MARKER_NUM, num), (EV_MARKER_DEN, den)):
+            if eid in have:
+                edits.append((have[eid], have[eid] + 1, bytes([eid, int(val) & 0xFF])))
+        add = b"".join(bytes([eid, int(val) & 0xFF]) for eid, val in ((EV_MARKER_NUM, num), (EV_MARKER_DEN, den))
+                       if eid not in have)
+        if add:
+            edits.append((k + 1, k + 1, add))
+        return _splice(d, ev, edits), "set"
+    if a.get("playlist") is None:                                 # PC-VERIFY: FL loads an arrangement whose
+        j = a["first"] + 1                                        # playlist event is empty (no clips) + a marker
+        while j < a["end"] and ev[j]["id"] in (241, 36):
+            j += 1
+        d = _splice(d, ev, [(j, j, _data_event(EV_PLAYLIST, b""))]); ev = _events(d); a = _arrangement(d, ev, None)
+    slot = _marker_slot(d, ev, a)
+    # PC-VERIFY: a time-signature marker written here shows on FL's playlist ruler at that bar with its meter, the
+    # bars after it follow it, and FL's save keeps it (checklists/core.md 'flp_meter')
+    return _splice(d, ev, [(slot, slot, _marker_event(int(tick), name or f"{num}/{den}", (num, den)))]), "added"
+
+
+def _meter_map_write(d, mt):
+    """Make the project's meter map `mt` [(tick, num, den)] (tick 0 first): the project time signature, a
+    time-signature marker per later change; other time-signature markers of the current arrangement go.
+    -> (bytes, what was done in words or None)."""
+    ok, bad = [], []
+    for t, n, dd in mt:
+        try:
+            ok.append((int(t),) + _parse_meter(n, dd))
+        except ValueError:
+            bad.append(f"{n}/{dd}")
+    if not ok:
+        return d, (f"time signature(s) {', '.join(bad)} can't be set in FL; kept the project's" if bad else None)
+    clean = []
+    for t, n, dd in sorted(ok):
+        if clean and clean[-1][0] == t:
+            clean[-1] = (t, n, dd)
+        elif not clean or clean[-1][1:] != (n, dd):
+            clean.append((t, n, dd))
+    ev = _events(d)
+    if clean[0][0] != 0:
+        clean.insert(0, (0,) + _project_meter(d, ev))
+    if _meter_map(d, ev) == clean:
+        return d, None
+    d = _project_meter_bytes(d, clean[0][1], clean[0][2])
+    ev = _events(d); later = {t for t, _, _ in clean[1:]}
+    old = [g for g in _sig_markers(d, ev, _arrangement(d, ev, None)) if g[2] and g[2] not in later]
+    if old:                                                       # the template's other meter changes go
+        d = _splice(d, ev, [(k, j, b"") for k, j, _ in old]); ev = _events(d)
+    if any(g[2] == 0 for g in _sig_markers(d, ev, _arrangement(d, ev, None))):
+        d, _ = _meter_marker_bytes(d, 0, *clean[0][1:])           # one at bar 1 would override the project's
+    for t, n, dd in clean[1:]:
+        d, _ = _meter_marker_bytes(d, t, n, dd)
+    said = f"time signature {clean[0][1]}/{clean[0][2]}"
+    if len(clean) > 1:
+        said += f" + {len(clean) - 1} change(s) as time-signature markers ({', '.join(f'{n}/{dd}' for _, n, dd in clean[1:][:4])})"
+    if bad:
+        said += f"; left out {', '.join(bad)} (FL takes 1-16 over 2/4/8/16)"
+    return d, said
+
+
+def flp_meter(project, output=None, num=4, den=None, at_bar=1, remove=False, name=None):
+    """Set the time signature: at_bar=1 = the project's own (FL's Song settings), a later bar = a time-signature
+    marker there (FL's playlist ruler), which later bars follow; remove=True takes the marker at that bar out.
+    num may be '3/4'. Positions are ticks in FL, so clips after a change stay where they are: the result says which
+    ones no longer start on a bar line."""
+    if output is None:                                            # in place: the open FL project saved/reloaded around
+        return _with_open_project(project, project, lambda: flp_meter(project, project, num, den, at_bar, remove, name))
+    writable(output)
+    d = _load(project); ev = _events(d); P = _ppq(d); before = _meter_map(d, ev)
+    if remove:
+        n_ = dd = None
+    else:
+        n_, dd = _parse_meter(num, den)
+    try:
+        at = float(at_bar)
+    except (TypeError, ValueError):
+        raise ValueError(f"at_bar: a bar number (got {at_bar!r})") from None
+    if at < 1 or abs(at - round(at)) > 1e-9:
+        raise ValueError("at_bar: a whole bar, 1 or later (a time signature changes on a bar line)")
+    tick = _bar_to_tick(at, before, P)
+    if tick == 0:
+        if remove:
+            raise ValueError("bar 1 holds the project's time signature: set another one instead of removing it")
+        d = _project_meter_bytes(d, n_, dd)
+        if any(g[2] == 0 for g in _sig_markers(d, _events(d), _arrangement(d, _events(d), None))):
+            d, _ = _meter_marker_bytes(d, 0, n_, dd)              # a marker at bar 1 would override the project's
+        did = "project"
+    else:
+        d, did = _meter_marker_bytes(d, tick, n_, dd, name)
+        if remove and did is None:
+            raise ValueError(f"there's no time-signature marker at bar {at:g}")
+    ev2 = _events(d); after = _meter_map(d, ev2)
+    off = []
+    for _, _, r in _clips(d, ev2):
+        pos, = struct.unpack("<I", r[0:4])
+        if pos > tick:
+            b0, b1 = _tick_to_bar(pos, before, P, None), _tick_to_bar(pos, after, P, None)
+            if abs(b0 - round(b0)) < 1e-6 and abs(b1 - round(b1)) > 1e-6:
+                off.append(round(b1, 3))
+    _save(d, output)
+    res = {"output": output, "at_bar": at, "time_signature": None if remove else f"{n_}/{dd}",
+           "written_as": {"project": "the project's time signature", "added": "a time-signature marker",
+                          "set": "the time-signature marker there, changed", "removed": "marker removed"}[did],
+           "meter_map": [{"bar": _tick_to_bar(t, after, P), "time_signature": f"{a}/{b}"} for t, a, b in after]}
+    if off:
+        res["clips_off_bar_lines"] = len(off)
+        res["off_bar_line_bars"] = sorted(set(off))[:12]
+        res["note"] = ("FL keeps clip positions in ticks: these clips after the change now start inside a bar - move "
+                       "them (flp_playlist move) if they should start on one")
+    return res
+
+
+def _new_song_bytes(d, meter=None, tempo=None):
+    """A project's bytes as a new, empty song: every pattern (notes, tempo lane, pattern markers), every playlist clip
+    and marker of every arrangement go; channels, plugins, mixer and playlist track names stay; one empty 'Pattern 1'
+    is made (FL's new-project shape, and what flp_write_notes fills). -> (bytes, {patterns, clips, markers})."""
+    ev = _events(d)
+    edits = [(a, b, b"") for _k, _pid, a, b in _pattern_groups(d, ev)]
+    npat = len(_patterns(d, ev)); nclips = nmark = 0
+    for a in _arrangements(d, ev):
+        k = a["playlist"]
+        if k is not None:                                         # FL leaves an empty arrangement without its 233
+            p = _payload(d, ev[k]); nclips += len(p) // _clip_size(d, ev, p) if p else 0
+            edits.append((k, k + 1, b""))
+        j = a["first"] + 1
+        while j < a["end"]:
+            if ev[j]["id"] == EV_MARKER_POS and ev[j]["len"] == 4:
+                e_ = _marker_group_end(ev, j, a["end"]); edits.append((j, e_, b"")); nmark += 1; j = e_
+                continue
+            j += 1
+    d = _splice(d, ev, edits)
+    d, pid = _add_pattern(d, "Pattern 1")
+    ev = _events(d)
+    for k, e in enumerate(ev):                                    # FL's current pattern: the new one
+        if e["id"] in (EV_CHANNEL, EV_ARRANGEMENT):
+            break
+        if e["id"] == 67 and e["len"] == 2:
+            d = _splice(d, ev, [(k, k + 1, bytes([67]) + struct.pack("<H", pid))])
+            break
+    if meter:
+        d = _project_meter_bytes(d, *_parse_meter(meter))
+    if tempo is not None:
+        bpm = float(tempo)
+        if not 10 <= bpm <= 522:
+            raise ValueError(f"tempo {tempo} BPM is outside FL's range (10-522)")
+        ev = _events(d)
+        hits = [(k, k + 1, bytes([EV_TEMPO]) + struct.pack("<I", int(round(bpm * 1000)))) for k, e in enumerate(ev)
+                if e["id"] == EV_TEMPO]
+        if hits:
+            d = _splice(d, ev, hits)
+    return d, {"patterns": npat, "clips": nclips, "markers": nmark}
+
+
+NEW_FROM_KEEP = ("channels+mixer",)
+
+
+def flp_new_from(project, name, folder=None, keep="channels+mixer", meter=None, tempo=None, title=None):
+    """A new song that reuses a project's sounds: the same channels (plugins and their settings), mixer and insert FX,
+    with an EMPTY playlist - no clips, no patterns (one empty 'Pattern 1'), no markers, no tempo lane - and its own
+    Project-info title. The source is never changed (edits queued for it and FL's unsaved changes of it are saved
+    into it first, as flp_save_version). name: a song name (file <name>.flp in `folder`, default the source's) or a
+    .flp path. meter '3/4' / tempo BPM set the new song's; default the source's."""
+    src = os.path.abspath(project)
+    if not os.path.isfile(src) or not src.lower().endswith(".flp"):
+        raise FileNotFoundError(f"project: an existing .flp ({project})")
+    if str(keep or "channels+mixer").strip().lower().replace(" ", "") not in NEW_FROM_KEEP:
+        raise ValueError(f"keep: {' | '.join(NEW_FROM_KEEP)} (the sounds and the mixer; the song itself never)")
+    nm = str(name or "").strip()
+    if not nm:
+        raise ValueError("name: the new song's name, e.g. 'Second Song' (or a .flp file name / path)")
+    if nm.lower().endswith(".flp") or os.sep in nm or "/" in nm:
+        dst = nm if os.path.isabs(nm) else os.path.join(folder or os.path.dirname(src), nm)
+        dst = dst if dst.lower().endswith(".flp") else dst + ".flp"
+    else:
+        dst = os.path.join(folder or os.path.dirname(src), safe_file_name(nm, "song name") + ".flp")
+    dst = os.path.abspath(dst)
+    if os.path.normcase(dst) == os.path.normcase(src):
+        raise ValueError("name: the new song needs another file than its source")
+    if os.path.exists(dst):
+        raise FileExistsError(f"{dst} exists already: pick another name (nothing was changed)")
+    writable(dst)
+    notes = []; T = time.time(); steps = {}
+    try:                                                          # the source as it really is: queued edits in
+        if _pending_get(src):
+            _sync_before("new_from", src)
+            notes.append("edits queued for the source were applied to it first")
+    except Exception as e:                                        # noqa: BLE001 - said; the file on disk is used
+        notes.append(f"queued edits of the source not applied first ({type(e).__name__}: {e})")
+    try:                                                          # ... and FL's unsaved changes of it
+        if fl_running() and _open_state(src) == "open" and _fl_changed_flag() not in (0, None) and not _stale_get(src):
+            if _save_in_fl_and_wait(src, 8.0):
+                notes.append("FL had unsaved changes of the source: saved first, so the new song has its sounds")
+    except Exception:                                             # noqa: BLE001
+        pass
+    steps["source"] = round(time.time() - T, 2); T = time.time()
+    with open(src, "rb") as f:
+        d = f.read()
+    d, info = _new_song_bytes(d, meter, tempo)
+    song = os.path.splitext(os.path.basename(dst))[0]
+    new_title = str(title).strip() if title is not None and str(title).strip() else song
+    k, _t = _title_of_bytes(d)
+    if k is not None:
+        d = _splice(d, _events(d), [(k, k + 1, _data_event(PROJECT_TEXT["title"], new_title.encode("utf-16-le") + b"\x00\x00"))])
+    _save(d, dst)
+    if k is None:
+        try:
+            flp_project_info(dst, output=dst, title=new_title)
+        except Exception as e:                                    # noqa: BLE001
+            notes.append(f"title not set ({type(e).__name__}: {e})")
+    steps["write"] = round(time.time() - T, 2)
+    try:
+        import flh_store
+        flh_store.journal_update(dst, set={"song": song, "made_from": src,
+                                           "notes": [f"new song made from {os.path.basename(src)}'s sounds and mixer "
+                                                     f"({time.strftime('%Y-%m-%d')})"]})
+    except Exception:                                             # noqa: BLE001 - the song is there either way
+        pass
+    dd = _load(dst); ev, chans, fx = _structure(dd)
+    num, den = _project_meter(dd, ev)
+    res = {"path": dst, "song": song, "title": new_title, "made_from": src,
+           "kept": {"channels": len(chans), "mixer_effects": len(fx)},
+           "left_out": info, "time_signature": f"{num}/{den}",
+           "tempo_bpm": flp_project_info(dst).get("tempo_bpm"), "steps_s": steps,
+           "next": "write the parts (flp_write_notes / flp_write_arrangement / flp_compose / sheet_import) into "
+                   f"{song}.flp, then fl_open it; the source stays as it was"}
+    if notes:
+        res["notes"] = notes
+    return res
+
+
+def flp_patterns_set(project, output=None, patterns=None):
+    """Rename / recolor patterns in the file (FL closed or not: the open project is saved and reloaded around it).
+    patterns: [{"pattern": id or name, "name": "Verse", "color": "#3A4A5A"}, ...]."""
+    if output is None:                                            # in place: the open FL project saved/reloaded around
+        return _with_open_project(project, project, lambda: flp_patterns_set(project, project, patterns))
+    writable(output)
+    if not patterns:
+        raise ValueError("patterns: [{pattern, name?, color?}, ...]")
+    d = _load(project); ev = _events(d); pats = _patterns(d, ev)
+    plan = {}
+    for spec in patterns:
+        if not isinstance(spec, dict) or spec.get("pattern") is None:
+            raise ValueError("patterns: each {pattern: id or name, name?, color?}")
+        want = spec["pattern"]
+        if isinstance(want, str) and not want.strip().isdigit():
+            hits = [p for p, v in pats.items() if v["name"].strip().lower() == want.strip().lower()]
+            if not hits:
+                raise ValueError(f"no pattern named '{want}' (flp_patterns lists them)")
+            pid = hits[0]
+        else:
+            pid = int(want)
+            if pid not in pats:
+                raise ValueError(f"no pattern {pid}")
+        if spec.get("name") is None and spec.get("color") is None:
+            raise ValueError(f"pattern {want}: give name and/or color")
+        plan.setdefault(pid, {}).update({k: v for k, v in spec.items() if k in ("name", "color") and v is not None})
+    done = []
+    for pid, sp in sorted(plan.items()):
+        ev = _events(d)
+        meta = next((g for g in _pattern_groups(d, ev) if g[1] == pid and g[0] in ("pattern_meta", "pattern")), None)
+        name_ev = _data_event(EV_PATTERN_NAME, str(sp["name"]).encode("utf-16-le") + b"\x00\x00") if "name" in sp else b""
+        col_ev = b""
+        if "color" in sp:
+            c = _hexcolor(sp["color"])
+            col_ev = bytes([150, int(c[1:3], 16), int(c[3:5], 16), int(c[5:7], 16), 0])
+        if meta is None:                                          # a pattern with notes but no name group yet
+            j = _pattern_meta_anchor(d, ev)
+            d = _splice(d, ev, [(j, j, struct.pack("<BH", EV_PATTERN_NEW, pid) + name_ev + col_ev)])
+        else:
+            _kind, _p, a, b = meta; edits = []
+            kn = next((k for k in range(a + 1, b) if ev[k]["id"] == EV_PATTERN_NAME), None)
+            kc = next((k for k in range(a + 1, b) if ev[k]["id"] == 150 and ev[k]["len"] == 4), None)
+            if name_ev:
+                edits.append((kn, kn + 1, name_ev) if kn is not None else (a + 1, a + 1, name_ev))
+            if col_ev:
+                if kc is not None:
+                    edits.append((kc, kc + 1, col_ev))
+                else:
+                    at = (kn + 1) if kn is not None else a + 1
+                    edits.append((at, at, col_ev))
+            d = _splice(d, ev, edits)
+        done.append({"pattern": pid, "was": pats[pid]["name"], **sp})
+    _save(d, output)
+    # PC-VERIFY: a pattern renamed / recolored here shows its new name and color in FL's pattern picker and on its
+    # playlist clips after the reload
+    return {"output": output, "patterns": done}
+
+
 # ============================================================================= self-test (run after FL updates)
 def _file_version(path):
     """'26.1.4.5589' from an exe's version resource (version.dll; no PowerShell, no localized text)."""
@@ -13640,8 +14859,74 @@ def fl_organize(color_by="role", name_mixer=True, playlist=True, colors=None):
     return {"plan": plan, **res}
 
 
+PLUGIN_READY_WAIT_S = 6.0        # a plugin FL is still loading (right after a reload) answers with 'NoneType' errors
+PLUGIN_READY_STEP_S = 0.5        # (no event says when it's ready: asked again this often, this long)
+_NOT_READY_RE = re.compile(r"NoneType|cannot be interpreted as an integer|not ready|plugin is loading", re.I)
+
+
+def _plugin_call(cmd, **a):
+    """BRIDGE.call for a plugin command that waits briefly while the plugin isn't ready in FL (PC 2026-10-26:
+    fl_plugin_params right after a reload -> "TypeError: 'NoneType' object cannot be interpreted as an integer")."""
+    t_end = time.time() + PLUGIN_READY_WAIT_S; tries = 0
+    while True:
+        try:
+            r = BRIDGE.call(cmd, **a)
+            if tries and isinstance(r, dict):
+                r.setdefault("ready_after_s", round(PLUGIN_READY_WAIT_S - max(0.0, t_end - time.time()), 1))
+            return r
+        except Exception as e:
+            if not _NOT_READY_RE.search(str(e)):
+                raise
+            if time.time() + PLUGIN_READY_STEP_S > t_end:
+                where = (f"mixer track {a.get('index')} slot {a.get('slot')}" if int(a.get("slot", -1)) >= 0
+                         else f"channel {a.get('index')}")
+                raise RuntimeError(f"the plugin on {where} isn't ready in FL after {PLUGIN_READY_WAIT_S:g} s ({e}): FL "
+                                   "is probably still loading it - try again in a moment, or check a plugin is "
+                                   "there (fl_state / fl_mixer_info)") from e
+            tries += 1
+            time.sleep(PLUGIN_READY_STEP_S)
+
+
+_RE_META = re.compile(r"[.*+?\[\](){}^$\\]")
+
+
 def fl_plugin_params(index, slot=-1, filter=""):
-    return BRIDGE.call("plugin_params", index=int(index), slot=int(slot), filter=str(filter))
+    """A plugin's parameters (name, 0..1 value, display text). filter: words a name must contain (case-insensitive);
+    'attack|release' or a list = any of them; a regular expression ('^Band [1-3]') when it has regex signs.
+    Waits briefly while the plugin isn't ready (right after a reload)."""
+    i, s = int(index), int(slot)
+    alts = [str(x).strip() for x in filter] if isinstance(filter, (list, tuple)) else \
+        [x.strip() for x in str(filter or "").split("|")]
+    alts = [x for x in alts if x]
+    if not alts:
+        return _plugin_call("plugin_params", index=i, slot=s, filter="")
+    if len(alts) == 1 and not _RE_META.search(alts[0]):
+        return _plugin_call("plugin_params", index=i, slot=s, filter=alts[0])
+    if not any(_RE_META.search(x) for x in alts) and len(alts) <= 8:   # 'a|b': one filtered read per word, merged
+        merged, head = {}, None
+        for x in alts:
+            r = _plugin_call("plugin_params", index=i, slot=s, filter=x)
+            head = head or r
+            for p in (r or {}).get("params") or []:
+                merged.setdefault(int(p.get("param", -1)), p)
+        out = dict(head or {}); out["params"] = [merged[k] for k in sorted(merged)]
+        out["filter"] = {"any_of": alts}
+        return out
+    pat = "|".join(alts) if not isinstance(filter, (list, tuple)) else "|".join(f"(?:{x})" for x in alts)
+    try:
+        rx = re.compile(pat[:300], re.I)
+    except re.error:                                              # not a valid regex: the words literally
+        rx = None
+    r = _plugin_call("plugin_params", index=i, slot=s, filter="")
+    ps = (r or {}).get("params") or []
+    keep = [p for p in ps if (rx and rx.search(str(p.get("name") or ""))) or   # a name with '(' etc. written
+            any(x.lower() in str(p.get("name") or "").lower() for x in alts)]          # literally still matches
+    out = dict(r or {}); out["params"] = keep
+    out["filter"] = {"regex" if rx else "any_of": pat if rx else alts}
+    if (r or {}).get("count") and len(ps) < int(r["count"]):
+        out["filter_note"] = (f"matched among the first {len(ps)} of {r['count']} parameters (FL's script lists at "
+                              "most 200 per read): give plain words ('a|b') to search all of them")
+    return out
 
 
 def fl_plugin_probe(index, param, points=17, slot=-1):
@@ -13662,7 +14947,7 @@ def fl_mixer_info(tracks="all"):
 
 
 def fl_plugin_set(index, param, value, slot=-1):
-    return BRIDGE.call("plugin_set", index=int(index), param=int(param), value=float(value), slot=int(slot))
+    return _plugin_call("plugin_set", index=int(index), param=int(param), value=float(value), slot=int(slot))
 
 
 def fl_plugin_preset(index, direction="next", slot=-1):
@@ -13691,17 +14976,233 @@ def _plugin_read(index, param, slot, name=None):
     return next((p for p in (r or {}).get("params") or [] if int(p.get("param", -1)) == int(param)), None) or {}
 
 
-def _plugin_held(r, rb, target):
-    """Did a display-target set hold? r: plugin_set_value's reply, rb: the later read-back. -> (ok, why)."""
-    tol = max(0.15, 0.02 * abs(float(target)))
-    got = _disp_num(rb.get("text"))
-    if got is None or abs(got - float(target)) > tol:
-        return False, f"FL shows '{rb.get('text')}' now, not {target:g}"
+# display units: unit -> (family, factor to the family's base: ms, Hz, dB, %, semitones, cents, BPM)
+DISP_UNITS = {"us": ("time", 0.001), "µs": ("time", 0.001), "ms": ("time", 1.0), "msec": ("time", 1.0),
+              "s": ("time", 1000.0), "sec": ("time", 1000.0), "secs": ("time", 1000.0), "min": ("time", 60000.0),
+              "hz": ("freq", 1.0), "khz": ("freq", 1000.0), "db": ("db", 1.0), "%": ("pct", 1.0),
+              "st": ("semi", 1.0), "semi": ("semi", 1.0), "semitones": ("semi", 1.0), "ct": ("cent", 1.0),
+              "cent": ("cent", 1.0), "cents": ("cent", 1.0), "bpm": ("bpm", 1.0)}
+OFF_WORDS = ("off", "none", "bypass", "bypassed", "mute", "muted", "disabled", "silent")
+SET_SEARCH_EVALS = 40            # server-side knob search (units / words): at most this many sets
+SET_SEARCH_PROBE = 33            # positions a word target is looked for at (one plugin_probe call, knob restored)
+_SEARCH_ERRORS = ("doesn't show a number", "never reached")
+
+
+def _disp_parse(text):
+    """FL's display text -> {num (in the family's base unit: ms, Hz ...) | None, fam, scale, word}: '194ms' -> 194
+    time, '2.00s' -> 2000 time, '2.4 kHz' -> 2400 freq, '-inf dB' -> -inf db, 'Off' -> word 'off'."""
+    low = str(text or "").strip().lower().replace(",", "")
+    if not low:
+        return {"num": None, "fam": None, "scale": 1.0, "word": None}
+    if "inf" in low or "∞" in low:
+        return {"num": float("-inf") if "-" in low else float("inf"), "fam": "db" if "db" in low else None,
+                "scale": 1.0, "word": None}
+    m_ = re.search(r"([-+]?\d+(?:\.\d+)?)\s*([a-zµ%]*)", low)
+    if not m_:
+        return {"num": None, "fam": None, "scale": 1.0,
+                "word": re.sub(r"\s+", " ", re.sub(r"[^\w%]+", " ", low)).strip()}
+    fam, f = DISP_UNITS.get(m_.group(2), (None, 1.0))
+    if fam is None and "khz" in low:
+        fam, f = "freq", 1000.0
+    return {"num": float(m_.group(1)) * f, "fam": fam, "scale": f, "word": None}
+
+
+def _word_norm(t):
+    return re.sub(r"\s+", " ", re.sub(r"[^\w%]+", " ", str(t or "").lower())).strip()
+
+
+def _target_spec(target):
+    """fl_plugin_set_value's target -> {val, fam, scale, unitless} for a number (30, '30', '30 ms', '1.2 kHz': val
+    in the unit written) or {word, text} for a word the knob shows ('Off')."""
+    bad = "target: a value as FL shows it (e.g. -3, '250 Hz', '30 ms') or a word it shows ('Off')"
+    if isinstance(target, bool):
+        raise ValueError(bad)
+    if isinstance(target, (int, float)):
+        if not math.isfinite(float(target)):
+            raise ValueError(bad)
+        return {"val": float(target), "fam": None, "scale": 1.0, "unitless": True}
+    t = str(target or "").strip()
+    try:
+        v = float(t.replace(",", ""))
+        if math.isfinite(v):
+            return {"val": v, "fam": None, "scale": 1.0, "unitless": True}
+    except ValueError:
+        pass
+    p_ = _disp_parse(t)
+    if p_["num"] is not None and math.isfinite(p_["num"]):
+        return {"val": p_["num"] / p_["scale"], "fam": p_["fam"], "scale": p_["scale"], "unitless": p_["fam"] is None}
+    if p_["word"]:
+        return {"word": p_["word"], "text": t}
+    raise ValueError(bad)
+
+
+def _knob_value_fn(spec, ref_text=None):
+    """(value_of(display text) -> number in the target's unit or None, target, tolerance, note). A unitless target
+    is read in the unit the knob shows at ref_text (else the first unit it shows); a display in another unit of
+    the same kind converts ('2.00s' = 2000 ms); an 'Off'-style word counts as the knob's bottom (0; -inf in dB)."""
+    ref = _disp_parse(ref_text) if ref_text is not None else {"num": None, "fam": None, "scale": 1.0}
+    note = None
+    if spec.get("unitless"):
+        unit = {"fam": ref["fam"], "scale": ref["scale"]} if ref.get("num") is not None and ref.get("fam") else {}
+        if unit:
+            name = next((u for u, (fa, fac) in DISP_UNITS.items() if fa == unit["fam"] and fac == unit["scale"]), "")
+            note = f"read {spec['val']:g} as {name or unit['fam']}, the unit the knob showed ('{ref_text}')"
+    else:
+        unit = {"fam": spec.get("fam"), "scale": spec.get("scale") or 1.0}
+    want = float(spec["val"])
+    tol = max(0.02 * abs(want), 0.15 / max(1.0, float(unit.get("scale") or 1.0)), 1e-9)
+
+    def value_of(text):
+        p_ = _disp_parse(text)
+        if p_["num"] is None:
+            if p_["word"] in OFF_WORDS:
+                return float("-inf") if unit.get("fam") == "db" else 0.0
+            return None
+        if p_["fam"] and not unit:                                 # unitless target: the first unit seen
+            unit.update(fam=p_["fam"], scale=p_["scale"])
+        if unit.get("fam") and p_["fam"] and p_["fam"] != unit["fam"]:
+            return None
+        return p_["num"] / float(unit.get("scale") or 1.0) if p_["fam"] else p_["num"]
+    return value_of, want, tol, note
+
+
+def _knob_search(i, p, s, value_of, want, tol, pos0, text0=None):
+    """Find the knob position whose display is closest to `want` (in value_of's terms) by sets from where the knob
+    is: never jumps to an end first, steps of at most 0.15, bisection once the target is bracketed (the bridge
+    script's way, but reading units and 'Off'). The knob is left on the best position; a target between two of the
+    knob's steps lands on the nearer one. -> {set_to, text, reached, nearest_step, evals}. Raises, knob put back at
+    pos0, when nothing comes near. PC-VERIFY: a plugin that updates its display later (async) still converges."""
+    pts = []                                                      # (pos, value, text)
+    n = [0]
+
+    def at(pos):
+        pos = max(0.0, min(1.0, pos))
+        r = _plugin_call("plugin_set", index=i, param=p, value=float(pos), slot=s)
+        n[0] += 1
+        tx = (r or {}).get("text")
+        pts.append((pos, value_of(tx), tx))
+        return pts[-1]
+    if text0 is None:
+        at(pos0)
+    else:
+        pts.append((pos0, value_of(text0), text0))
+    lo = None; direction = 1.0 if pos0 <= 0.98 else -1.0; flipped = False
+    pos = pos0 + 0.02 * direction
+    while n[0] < SET_SEARCH_EVALS:
+        valued = [(q_, v_) for q_, v_, _ in pts if v_ is not None]
+        if valued and min(abs(v_ - want) for _, v_ in valued) <= 1e-9:
+            break
+        if any(abs(pos - q_) < 1e-6 for q_, _, _ in pts):          # been there: nothing new to learn
+            break
+        q, _v, _t = at(pos)
+        valued = [(q_, v_) for q_, v_, _ in pts if v_ is not None]
+        below = [t for t in valued if t[1] < want]; above = [t for t in valued if t[1] >= want]
+        if below and above:                                       # bracketed: bisect between the closest pair
+            lo = min(below, key=lambda t: abs(t[0] - q)); hi = min(above, key=lambda t: abs(t[0] - lo[0]))
+            if abs(hi[0] - lo[0]) < 1e-4:
+                break
+            pos = (lo[0] + hi[0]) / 2.0
+            continue
+        two = [t for t in valued if math.isfinite(t[1])][-2:]
+        if len(two) == 2 and two[1][1] != two[0][1] and two[1][0] != two[0][0]:
+            (p1, w1), (p2, w2) = two
+            nxt = p2 + (want - w2) * (p2 - p1) / (w2 - w1)
+            nxt = max(p2 - 0.15, min(p2 + 0.15, nxt))
+        else:                                                     # flat, a word, -inf: keep walking
+            nxt = q + 0.05 * direction
+        nxt = max(0.0, min(1.0, nxt))
+        if abs(nxt - q) < 1e-9:                                    # at an end of the knob: try the other way once
+            if flipped:
+                break
+            flipped = True; direction = -direction; nxt = max(0.0, min(1.0, pos0 + 0.02 * direction))
+        pos = nxt
+    valued = [t for t in pts if t[1] is not None]
+    if not valued:
+        _plugin_call("plugin_set", index=i, param=p, value=float(pos0), slot=s)
+        shown = list(dict.fromkeys(t for _, _, t in pts if t))[:10]
+        raise ValueError(f"this knob shows nothing comparable to {want:g} (it showed {shown}); left unchanged")
+    err = lambda t: abs(t[1] - want) if math.isfinite(t[1]) else float("inf")
+    best = min(valued, key=lambda t: (err(t), abs(t[0] - pos0)))
+    reached = err(best) <= tol
+    if not reached and lo is None:
+        _plugin_call("plugin_set", index=i, param=p, value=float(pos0), slot=s)
+        raise ValueError(f"FL's display never reached {want:g} on this knob (closest it showed: '{best[2]}'); left "
+                         "unchanged")
+    if best[0] >= 0.999 and pos0 < 0.999 and not reached:
+        _plugin_call("plugin_set", index=i, param=p, value=float(pos0), slot=s)
+        raise ValueError(f"reaching {want:g} would need the knob at its maximum; left unchanged")
+    r = _plugin_call("plugin_set", index=i, param=p, value=float(best[0]), slot=s)
+    return {"set_to": round(best[0], 5), "text": (r or {}).get("text", best[2]), "reached": reached,
+            "nearest_step": not reached, "evals": n[0] + 1}
+
+
+def _knob_text_set(i, p, s, word, pos0, text0):
+    """Put a knob on the position whose display shows `word` ('Off'): where it is, then its two ends, then one
+    probe sweep (the bridge puts the knob back after it) and the middle of the matching positions. Not found: the
+    knob back where it was, and an error listing what it shows. -> {set_to, text}."""
+    w = _word_norm(word)
+    hit = lambda t: bool(t) and (_word_norm(t) == w or (len(w) >= 2 and _word_norm(t).startswith(w)))
+    if hit(text0):
+        return {"set_to": round(pos0, 5), "text": text0, "unchanged": True}
+    seen = [text0] if text0 else []
+    for end in (0.0, 1.0):
+        r = _plugin_call("plugin_set", index=i, param=p, value=end, slot=s)
+        seen.append((r or {}).get("text"))
+        if hit((r or {}).get("text")):
+            return {"set_to": end, "text": r.get("text")}
+    pr = BRIDGE.call("plugin_probe", index=i, param=p, points=SET_SEARCH_PROBE, slot=s, timeout=20.0) or {}
+    vals, texts = pr.get("values") or [], pr.get("texts") or []
+    seen += texts
+    idx = [k for k, t in enumerate(texts) if hit(t)]
+    if idx:
+        run = [idx[0]]
+        for k in idx[1:]:
+            if k != run[-1] + 1:
+                break
+            run.append(k)
+        pos = float(vals[run[len(run) // 2]])
+        r = _plugin_call("plugin_set", index=i, param=p, value=pos, slot=s)
+        if hit((r or {}).get("text")):
+            return {"set_to": round(pos, 5), "text": r.get("text")}
+    _plugin_call("plugin_set", index=i, param=p, value=float(pos0), slot=s)
+    shown = list(dict.fromkeys(t for t in seen if t))
+    raise ValueError(f"this knob never shows '{word}'; it shows {shown[:12]}" + (" ..." if len(shown) > 12 else "") +
+                     "; left unchanged")
+
+
+def _plugin_held(r, rb, target, judge=None):
+    """Did a display-target set hold? r: the set's reply (its text: what FL showed right after it), rb: the later
+    read-back. Held = the read-back shows the target (judge(text), else a number within 2 % / 0.15) - or, for a
+    knob that steps past it, the same nearest step the set showed - and the knob's value is the one set. -> (ok,
+    why)."""
+    txt = rb.get("text")
+    if judge is not None:
+        ok_txt = bool(judge(txt))
+    else:
+        tol = max(0.15, 0.02 * abs(float(target)))
+        got = _disp_num(txt)
+        ok_txt = got is not None and abs(got - float(target)) <= tol
+    if not ok_txt and r.get("nearest_step") and txt is not None and \
+            str(txt).strip() == str(r.get("text") or "").strip():
+        ok_txt = True
+    if not ok_txt:
+        return False, f"FL shows '{txt}' now, not {target if isinstance(target, str) else format(target, 'g')}"
     v, set_to = _numf(rb.get("value")), _numf(r.get("set_to"))
     if v is not None and set_to is not None and abs(v - set_to) > 0.01:
-        return False, (f"FL shows '{rb.get('text')}' but the knob's value is {v:.4g}, not the {set_to:.4g} it was "
+        return False, (f"FL shows '{txt}' but the knob's value is {v:.4g}, not the {set_to:.4g} it was "
                        "set to (FL didn't keep the change; a save would store the old value)")
     return True, None
+
+
+def _not_set(fn, what):
+    """fn with its 'never reached' / 'never shows' ValueErrors as 'NOT set: <what>: ...' RuntimeErrors (the knob was
+    put back; a wrong argument stays a ValueError)."""
+    def run(*a, **k):
+        try:
+            return fn(*a, **k)
+        except ValueError as e:
+            raise RuntimeError(f"NOT set: {what}: {e}") from e
+    return run
 
 
 def fl_plugin_set_value(index, param, target, slot=-1):
@@ -13709,36 +15210,97 @@ def fl_plugin_set_value(index, param, target, slot=-1):
     report it as done only when FL kept it - PC 2026-10-23: Fruity Convolver 'Wet level' reported '-38.0dB' with the
     value unchanged, and a save + reload showed the old -30.3 dB. One retry; then an honest failure that names an
     automation clip driving the knob when the saved project has one.
-    PC-VERIFY: fl_plugin_set_value on Fruity Convolver 'Wet level', then fl_save + reopen: the new level is kept."""
-    i, p, s, tgt = int(index), int(param), int(slot), float(target)
+    target: a number as shown (-3, 250), with a unit ('30 ms', '2 s', '1.2 kHz', '-6 dB', '50%': compared across
+    the units the knob shows, '194ms' ... '2.00s'), or a word the knob shows ('Off'). A number asked on a knob
+    showing 'Off' at its bottom counts 'Off' as 0. A knob that steps past the value lands on the nearest step and
+    says so (asked 30 ms, it shows 31 ms: done, reported) - PC 2026-10-26.
+    PC-VERIFY: fl_plugin_set_value on Fruity Convolver 'Wet level', then fl_save + reopen: the new level is kept.
+    PC-VERIFY: a reverb's 'Low cut' showing 'Off' at 0: target 'Off' and target 0 land on Off, target 120 works from
+    Off; a stepped pre-delay asked 30 ms reports the nearest step; a time knob showing '194ms' ... '2.00s' reaches
+    target '1.2 s' and target 1200 (checklists/core.md 'plugin set_value units')."""
+    i, p, s = int(index), int(param), int(slot)
+    spec = _target_spec(target)
     clips = [c for c in _driven_by(("plugin", i, s, p)) if c["placed"]]
     where = f"mixer track {i} slot {s}" if s >= 0 else f"channel {i}'s plugin"
-    r = BRIDGE.call("plugin_set_value", timeout=30.0, index=i, param=p, target=tgt, slot=s)
+    notes = []
+    knob_search = _not_set(_knob_search, f"{where} param {p}")
+    knob_text_set = _not_set(_knob_text_set, f"{where} param {p}")
+    asked = spec.get("text") or (str(target).strip() if isinstance(target, str) else format(spec["val"], "g"))
+    if "word" in spec:                                            # 'Off': put the knob where it shows that word
+        cur = _plugin_read(i, p, s)
+        w = spec["word"]
+        r = dict(knob_text_set(i, p, s, spec["text"], float(_numf(cur.get("value")) or 0.0), cur.get("text")),
+                 param=p, name=cur.get("name"), before=_numf(cur.get("value")), searched="by its text")
+        judge = lambda t: bool(t) and (_word_norm(t) == w or _word_norm(t).startswith(w))
+        tgt_v = spec["text"]
+    else:
+        tgt_v = spec["val"]; r = None; cur = None; script_target = None
+        if spec.get("unitless"):
+            script_target = spec["val"]
+        else:                                                     # a unit given: the bridge's search compares bare
+            cur = _plugin_read(i, p, s)                           # numbers, so only when the knob shows that unit
+            ref = _disp_parse(cur.get("text"))
+            if ref["num"] is not None and ref["fam"] == spec["fam"]:
+                base = spec["val"] * spec["scale"]
+                script_target = base if spec["fam"] == "freq" else base / ref["scale"]
+        if script_target is not None:                             # the bridge script's own search (one call)
+            try:
+                r = _plugin_call("plugin_set_value", timeout=30.0, index=i, param=p, target=script_target, slot=s)
+            except Exception as e:
+                if not any(x in str(e) for x in _SEARCH_ERRORS):
+                    raise
+                notes.append(f"the bridge script's search: {str(e)[:90]} - searched by fl-headless instead")
+        if r is not None:
+            value_of, want, tol, unote = _knob_value_fn(spec, r.get("text") if spec.get("unitless") else None)
+            v = value_of(r.get("text"))
+            if v is None or abs(v - want) > tol:                  # beside it (a step) or another unit: refine here
+                at = _numf(r.get("set_to"))
+                rs = knob_search(i, p, s, value_of, want, tol, at if at is not None else float(r.get("before") or 0),
+                                  r.get("text") if at is not None else None)
+                r = dict(r, **rs, searched="by fl-headless (after the bridge script)")
+        else:                                                     # units / 'Off' / mixed scales: search here
+            cur = cur or _plugin_read(i, p, s)
+            value_of, want, tol, unote = _knob_value_fn(spec, cur.get("text"))
+            pos0 = float(_numf(cur.get("value")) or 0.0)
+            rs = knob_search(i, p, s, value_of, want, tol, pos0, cur.get("text"))
+            r = dict(rs, param=p, name=cur.get("name"), before=round(pos0, 5), searched="by fl-headless")
+        if unote:
+            notes.append(unote)
+        judge = (lambda t, vf=value_of, w_=want, tl=tol: vf(t) is not None and abs(vf(t) - w_) <= tl) \
+            if r.get("reached", True) else None
     tries = []
     for attempt in (1, 2):
         time.sleep(SET_VERIFY_S)
         rb = _plugin_read(i, p, s, r.get("name"))
-        ok, why = _plugin_held(r, rb, tgt)
+        ok, why = _plugin_held(r, rb, tgt_v, judge)
         tries.append({"try": attempt, "text": rb.get("text"), "value": _numf(rb.get("value")), "held": ok})
         if ok:
             out = dict(r, text=rb.get("text"), value=round(_numf(rb.get("value")) or 0.0, 5), held=True)
+            out.pop("reached", None)
             if r.get("set_to") is None:
                 out["held_note"] = ("checked by the display text only: FL runs an older bridge script (v6 also checks "
                                     "the knob's value: fl_bridge_setup(action='update_script'), restart FL)")
             if attempt > 1:
                 out["note"] = "the first set didn't hold in FL; the second did (checked by a later read-back)"
+            if r.get("nearest_step"):
+                out["nearest_step"] = (f"asked {asked}: the knob steps past it, so it sits on the nearest step, "
+                                       f"'{rb.get('text')}'")
+            else:
+                out.pop("nearest_step", None)
+            if notes:
+                out["notes"] = notes
             return out
         if attempt == 1:                                          # once more: the found knob position directly
             if _numf(r.get("set_to")) is not None:
-                BRIDGE.call("plugin_set", index=i, param=p, value=float(r["set_to"]), slot=s)
+                _plugin_call("plugin_set", index=i, param=p, value=float(r["set_to"]), slot=s)
             else:
-                r = BRIDGE.call("plugin_set_value", timeout=30.0, index=i, param=p, target=tgt, slot=s)
+                r = BRIDGE.call("plugin_set_value", timeout=30.0, index=i, param=p, target=tgt_v, slot=s)
     what = f"{where} param {p} '{r.get('name') or '?'}'"
     if clips:
         msg = _automated_msg(what, clips, f"scale or edit that clip (it sets the knob while the song plays), or "
                                           f"delete it to set the knob by hand")
     else:
-        msg = (f"{what} didn't keep {tgt:g}: {why}. FL may apply plugin changes later or the plugin ignores script "
+        msg = (f"{what} didn't keep {asked}: {why}. FL may apply plugin changes later or the plugin ignores script "
                "sets; an automation clip added since the last save would do this too")
     raise RuntimeError(f"NOT set: {msg}. Read-backs: {json.dumps(tries)}")
 
@@ -15986,13 +17548,20 @@ TOOLS = {
                      "max_width": {"type": "integer", "description": "default 1400 px"},
                      "save": {"type": "boolean", "description": "also save a PNG next to FL's settings"},
                      "hwnd": {"type": "integer", "description": "picture of one of FL's popups instead (hwnd from fl_dialog list) - to read it"}}}),
-    "flp_info": (flp_info, "Tempo, PPQ, FL version, notes per channel and song length of a .flp.", _schema(path=_FLP)),
+    "flp_info": (flp_info, "Tempo, PPQ, FL version, notes per channel and song length of a .flp. fields=[...] "
+                           "returns only those keys (e.g. ['tempo_bpm', 'time_signature']).",
+                 _schema(path=_FLP, fields=_p(["array", "string"], "only these keys: tempo_bpm, ppq, fl_version, "
+                                              "notes_per_channel, last_note_end_bars, patterns, clips, "
+                                              "song_length_bars, time_signature, markers ...", True,
+                                              items={"type": "string"}))),
     "flp_list": (flp_list, "Channels (plugin, name, state size, mixer insert) and mixer effects (track, slot, plugin) of "
                            "a .flp.",
                  _schema(path=_FLP)),
     "flp_write_notes": (flp_write_notes,
                         "Write notes from MIDI files into a template .flp (one MIDI file per channel) and save as a new "
-                        "project. Replaces all notes of the single pattern; song length becomes tail_bars past the last note.",
+                        "project. Replaces all notes of the single pattern; song length becomes tail_bars past the last note. "
+                        "Takes the MIDI's time signature and whole tempo map; an arranged-song template needs "
+                        "clear_song=true (or flp_new_from first).",
                         _schema(template=_STR("Template .flp"), output=_OUT,
                                 parts=_p("array", "One entry per channel: {channel, midi} or {channel, notes: [[bar, "
                                          "length_bars, pitch, vel, {slide: true}?], ...]}", items={
@@ -16003,7 +17572,11 @@ TOOLS = {
                                 tail_bars=_INT("Bars after the last note when auto (default 2)", True),
                                 tempo=_p(["string", "number"], "'auto' (default: the MIDI files' tempo map, played by "
                                          "FL as recorded tempo events, so notes can sit on the grid while the tempo "
-                                         "moves), 'keep' (template's tempo) or a BPM", True))),
+                                         "moves), 'keep' (template's tempo) or a BPM", True),
+                                meter=_STR("'auto' (default: the MIDI file's time signature + its changes as "
+                                           "markers), 'keep', or '3/4'", True),
+                                clear_song=_BOOL("template is an arranged song: leave its patterns/clips/markers out "
+                                                 "and write a new song with its sounds (as flp_new_from)", True))),
     "flp_mixer": (flp_mixer, "Mixer settings in a project file (FL closed or project not open): per track name, "
                              "color, volume (dB), pan (-1..1), route_to / unroute.",
                   _schema(project=_FLP, output=_OUT,
@@ -16146,7 +17719,12 @@ TOOLS = {
                                           True, items={}),
                                  midi=_STR(".mid file, song time (or give notes)", True),
                                  pattern=_STR("pattern id or name: notes its clips cover go into it (the "
-                                              "section layer you target)", True))),
+                                              "section layer you target)", True),
+                                 into=_STR("auto (default: the clip whose pattern holds the channel, else the only "
+                                           "clip there) | covering_clip (stacked clips too: the latest-starting one "
+                                           "there; no placeholder notes needed)", True),
+                                 hidden=_STR("remove (default: drop this channel's old notes no clip plays, e.g. "
+                                             "past a shortened clip) | keep", True))),
     "flp_style_channels": (flp_style_channels, "Set channel colors, icons (FL icon number) and names in a project "
                                                "file, with FL closed or for a project that isn't open.",
                            _schema(project=_FLP, output=_OUT,
@@ -16176,9 +17754,13 @@ TOOLS = {
     "flp_remove_effect": (flp_remove_effect, "Remove the effect in a mixer track slot.",
                           _schema(project=_FLP, output=_OUT, track=_INT(), slot=_INT())),
     "flp_add_channel": (flp_add_channel,
-                        "Add a channel cloned from an existing one (routing and settings), optionally loading a .fst "
-                        "instrument onto it. Returns the new channel index.",
-                        _schema(project=_FLP, output=_OUT, clone_from=_INT(), preset=_STR(".fst instrument preset", True))),
+                        "Add a channel cloned from an existing one (settings; routing: insert='new' gives it a free "
+                        "mixer insert of its own named after it, default 'same' = the cloned channel's), optionally "
+                        "loading a .fst instrument onto it. Returns the new channel index.",
+                        _schema(project=_FLP, output=_OUT, clone_from=_INT(), preset=_STR(".fst instrument preset", True),
+                                insert=_p(["string", "integer"], "'same' (default) | 'new' (a free insert, named "
+                                          "after the channel) | a mixer track number", True),
+                                name=_STR("the new channel's name", True))),
     "fl_find_presets": (fl_find_presets, "Find .fst plugin/preset files in FL's plugin database and preset folders.",
                         _schema(query=_STR("Text to match, e.g. 'FLEX' or 'Limiter'"), limit=_INT("", True))),
     "fl_status": (fl_status, "Whether FL Studio is running, how many copies, its window title, open popups, the bridge "
@@ -16350,7 +17932,9 @@ TOOLS = {
                                    "on/off, routing (route_to / unroute other tracks), send levels, or reset it. The "
                                    "reply lists its sends with levels. A volume is checked after the set: when an "
                                    "automation clip drives the fader the call fails and names the clip (if_automated "
-                                   "scales the clip or uses an insert gain instead).",
+                                   "scales the clip or uses an insert gain instead). track = the mixer track "
+                                   "(index= works too: fl_plugin_params / fl_plugin_set take the same number as "
+                                   "index, with slot).",
                      _schema(track=_INT(), volume_db=_NUM("", True), pan=_NUM("", True), muted=_BOOL("", True),
                              name=_STR("", True), effects_enabled=_BOOL("", True), color=_STR("", True),
                              solo=_BOOL("", True), route_to=_p("array", "Send to these tracks", True, items={"type": "integer"}),
@@ -16389,20 +17973,31 @@ TOOLS = {
                                  "or kept), and name playlist tracks after the channels.",
                     _schema(color_by=_STR("role (default) | distinct | keep", True), name_mixer=_BOOL("", True),
                             playlist=_BOOL("", True), colors=_p("object", "{channel index: color} overrides", True))),
-    "fl_plugin_params": (fl_plugin_params, "A plugin's parameters with values. Instrument: index=channel, slot=-1. "
-                                           "Effect: index=mixer track, slot=0..9.",
-                         _schema(index=_INT(), slot=_INT("", True), filter=_STR("Only names containing this", True))),
-    "fl_plugin_set": (fl_plugin_set, "Set a plugin parameter (0..1).",
+    "fl_plugin_params": (fl_plugin_params, "A plugin's parameters with values. Instrument: index=channel (or "
+                                           "channel=), slot=-1. Effect: index=mixer track (track= works too, as "
+                                           "fl_mixer_set names it), slot=0..9. Waits briefly while a plugin is "
+                                           "still loading (right after a reload).",
+                         _schema(index=_INT(), slot=_INT("", True),
+                                 filter=_p(["string", "array"], "Only names containing this (case-insensitive); "
+                                           "'attack|release' or a list = any of them; regex when it has regex signs",
+                                           True, items={"type": "string"}))),
+    "fl_plugin_set": (fl_plugin_set, "Set a plugin parameter (0..1). index = channel (slot -1) or mixer track "
+                                     "(track= works too) with slot 0..9.",
                       _schema(index=_INT(), param=_INT(), value=_NUM(), slot=_INT("", True))),
     "fl_plugin_preset": (fl_plugin_preset, "Step a plugin to its next or previous preset (FL's preset list); "
                                            "returns the new preset name when the plugin reports one.",
                          _schema(index=_INT(), direction=_STR("next|prev", True), slot=_INT("", True))),
     "fl_plugin_set_value": (fl_plugin_set_value, "Set a plugin knob to a displayed value, live (e.g. an EQ band to -3 "
-                                                 "dB or 250 Hz; finds the knob position that shows it). Read back "
+                                                 "dB or 250 Hz, a time '30 ms' / '1.2 s', or a word it shows like "
+                                                 "'Off'; finds the knob position that shows it, across units; a "
+                                                 "stepped knob lands on the nearest step and says so). Read back "
                                                  "in a later call: reported done only when FL kept it (fails naming "
-                                                 "an automation clip that drives the knob).",
+                                                 "an automation clip that drives the knob). index = channel or "
+                                                 "mixer track (track= works too).",
                             _schema(index=_INT("Channel, or mixer track for an effect"), param=_INT("Parameter index"),
-                                    target=_NUM("Value as shown, e.g. -3 or 250"), slot=_INT("-1 = instrument", True))),
+                                    target=_p(["number", "string"], "Value as shown: -3, 250, '30 ms', '2.4 kHz', "
+                                              "'50%', or a word the knob shows ('Off')"),
+                                    slot=_INT("-1 = instrument", True))),
     "fl_listen": (fl_listen_tool, "Hear the song in the open FL without closing it or rendering: plays a bar range, records the "
                              "speakers, and reports loudness/peaks/clipping/tone/width per section (optionally vs a "
                              "reference profile). Use this for checks instead of renders; render only finals.",
@@ -16533,6 +18128,7 @@ def _plan_ops(out, ops):
     plan = []
     for i, op in enumerate(ops):
         op = dict(op); name = op.pop("tool", None); args = dict(op.pop("args", None) or op)
+        keep_in = bool(args.pop("_keep_input", False))           # a queued template -> project writer: its own input
         if name == "fl_load_preset":                              # its file-level twin, so it batches with the rest
             name = "flp_load_plugin"; args.pop("project", None)
             args["preset"] = _resolve_preset(args.get("preset", ""))
@@ -16540,10 +18136,13 @@ def _plan_ops(out, ops):
             raise ValueError(f"op {i + 1}: '{name}' isn't an flp_* tool")
         fn = getattr(TOOLS[name][0], "__wrapped__", TOOLS[name][0]); sig = inspect.signature(fn).parameters
         in_key = _OPEN_PROJECT_GUARD.get(name, (None,))[0] or next((k for k in ("project", "path") if k in sig), None)
-        if in_key:
+        keep_in = keep_in and bool(in_key and args.get(in_key))
+        if in_key and not keep_in:
             args[in_key] = out
         if "output" in sig:
             args["output"] = out
+        if keep_in:
+            fn = (lambda f_, k_: lambda **a: _with_src_title(f_, a, k_))(fn, in_key)
         for k in list(set(args) - set(sig)):                     # common other names for its arguments
             a = _alias_of(k, set(sig), args)
             if a:
@@ -16558,6 +18157,15 @@ def _plan_ops(out, ops):
             raise ValueError(f"op {i + 1} ({name}): unknown argument(s) {sorted(bad)}")
         plan.append((name, fn, args))
     return plan
+
+
+def _with_src_title(fn, args, in_key):
+    """Run a template -> project writer the way its guard does: a copy under another name keeps its own title."""
+    src = args.get(in_key)
+    if isinstance(src, str) and _stem(src).lower() != _stem(args.get("output") or src).lower():
+        with _write_source(src):
+            return fn(**args)
+    return fn(**args)
 
 
 def _run_plan(out, plan):
@@ -16638,11 +18246,16 @@ TOOLS["flp_instrument_sounds"] = (flp_instrument_sounds, "Splice INSTRUMENT pack
 TOOLS["flp_instrument_sound"] = (_guard_open_project(flp_instrument_sound, "project", "output"),
                                  "Switch a Splice INSTRUMENT channel to another downloaded pack/preset (e.g. 'LABS - Choir') "
                                  "with no INSTRUMENT window. Clone a channel that already has INSTRUMENT first "
-                                 "(flp_add_channel), then switch it. Listen after: LABS packs work best.",
+                                 "(flp_add_channel), then switch it. Listen after: LABS packs work best. A preset / patch that "
+                                 "doesn't match is refused (the channel keeps its sound) with the pack's real names.",
                                  _schema(project=_FLP, output=_OUT, channel=_INT("INSTRUMENT channel"),
                                          pack=_STR("pack folder name, e.g. 'LABS - Choir'"),
-                                         preset=_STR("preset name (default: the pack's first)", True),
-                                         name=_STR("rename the channel", True)))
+                                         preset=_STR("preset name as shown or as its file is named (spelling, case "
+                                                     "and _ are matched; no match = refused with the pack's real "
+                                                     "names; default: the pack's first)", True),
+                                         name=_STR("rename the channel", True),
+                                         force=_BOOL("write even when no patch matches (default false: refused, "
+                                                     "the channel keeps its sound)", True)))
 _OPEN_PROJECT_GUARD["flp_instrument_sound"] = ("project", "output")
 TOOLS["flh_reload"] = (lambda: flh_reload(), "Load fl-headless's updated code from disk into the running server (after "
                        "install/update): no Claude restart needed. FL connection and jobs carry over.", _schema())
@@ -16732,6 +18345,33 @@ TOOLS["flp_tempo_write"] = (_guard_open_project(flp_tempo_write, "project", "out
                                     points=_p("array", "[[bar, bpm], ...]", True, items={}),
                                     pattern=_STR("tempo pattern name (default Tempo)", True)))
 _OPEN_PROJECT_GUARD["flp_tempo_write"] = ("project", "output")
+TOOLS["flp_meter"] = (_guard_open_project(flp_meter, "project", "output"),
+                      "Set the time signature: at_bar=1 (default) = the project's (FL's Song settings), a later bar = "
+                      "a time-signature marker there; remove=true takes that marker out. Says which later clips no "
+                      "longer start on a bar line.",
+                      _schema(project=_FLP, output=_STR("save as (default: the project)", True),
+                              num=_p(["integer", "string"], "beats per bar, or '3/4'"),
+                              den=_INT("beat unit: 2, 4, 8 or 16 (default 4)", True),
+                              at_bar=_INT("bar of the change (default 1)", True),
+                              remove=_BOOL("remove the time-signature marker at at_bar", True),
+                              name=_STR("marker name (default '3/4')", True)))
+_OPEN_PROJECT_GUARD["flp_meter"] = ("project", "output")
+TOOLS["flp_patterns_set"] = (_guard_open_project(flp_patterns_set, "project", "output"),
+                             "Rename / recolor patterns in the file (no FL needed): patterns=[{pattern: id or name, "
+                             "name, color: '#3A4A5A'}].",
+                             _schema(project=_FLP, output=_STR("save as (default: the project)", True),
+                                     patterns=_p("array", "[{pattern, name?, color?}]", items={"type": "object"})))
+_OPEN_PROJECT_GUARD["flp_patterns_set"] = ("project", "output")
+TOOLS["flp_new_from"] = (flp_new_from,
+                         "A new song from an existing project's sounds: same channels/plugins, mixer and insert FX, "
+                         "EMPTY playlist (no clips, patterns, markers or tempo lane), its own title and journal; the "
+                         "source is never changed. Then write the parts into it.",
+                         _schema(project=_FLP, name=_STR("the new song's name (or a .flp path)"),
+                                 folder=_STR("where (default: the source's folder)", True),
+                                 keep=_STR("channels+mixer (default)", True),
+                                 meter=_STR("time signature, e.g. '3/4' (default: the source's)", True),
+                                 tempo=_NUM("BPM (default: the source's)", True),
+                                 title=_STR("Project-info title (default: the name)", True)))
 TOOLS["flp_channel_glide"] = (_guard_open_project(flp_channel_glide, "project", "output"),
                               "Channel polyphony in the project file: mono + porta so overlapping notes glide (808 "
                               "glides written as overlaps), slide time, max voices. FL's Channel settings > Misc > "
@@ -16899,7 +18539,10 @@ LAZY_TOOLS = {"flp_replace_part", "flp_edit_notes", "flp_add_notes", "flp_new_pa
               "flp_mixer", "flp_add_automation", "flp_add_audio_clip", "flp_load_plugin", "flp_remove_effect",
               "flp_add_channel", "flp_project_info", "flp_set_song_length", "flp_set_tempo", "flp_tempo_write",
               "flp_plugin_settings", "flp_instrument_sound", "flp_copy_state", "flp_edit", "flp_compose_write",
-              "flp_channel_glide"}
+              "flp_channel_glide", "flp_remove_channels", "flp_write_arrangement"}
+# ... of those, writers that build the project from ANOTHER file (template -> output): queued for the output when it's
+# the open project (the template stays as given). PC 2026-10-26: write_arrangement + remove_channels reloaded at once.
+LAZY_INTO_TOOLS = {"flp_write_arrangement"}
 # readers that can read the shadow copy (project + queued edits) cleanly: they only look at the file's content
 SHADOW_READERS = {"flp_info", "flp_list", "flp_notes", "flp_patterns", "flp_tempo_map", "flp_analyze_music",
                   "flp_export_midi", "flp_diff"}
@@ -16908,6 +18551,8 @@ SYNC_FIRST_TOOLS = {"fl_ab", "flp_perform", "flp_perform_setup", "flp_perform_un
 READ_ANNOTATE = {"fl_doctor", "flp_health"}                     # other readers that say when edits are queued
 NOT_READERS = {"flp_finish_piece", "flp_restore", "flp_remove_channels", "flp_write_notes", "flp_write_arrangement", "flp_collect_samples",
                "flp_compose", "flp_arrange_song", "flp_adjust", "flp_perform", "flp_perform_setup", "flp_perform_undo"}
+LAZY_TOOLS |= {"flp_meter", "flp_patterns_set"}                 # note / playlist writers added in 2.2
+NOT_READERS.add("flp_new_from")
 
 
 def _reload_mode_setting():
@@ -17125,6 +18770,7 @@ def _live_batch(project, ops, label, res):
         return None
     if int(r.get("done") or 0) != len(ops):
         return None                                               # the file route sets the same values again
+    _note_live_change("fl_batch", {"ops": ops})                   # in FL, not yet in the file
     with _AUTOSYNC_LOCK:
         _AUTOSYNC.setdefault(_ud_key(project), {})["live_dirty"] = True
     _schedule_autosync(project)                                   # FL saves them into the file in a moment
@@ -17236,6 +18882,7 @@ def _live_flp_set_tempo(project, kw):
         return None
     if abs(float(r.get("tempo") or 0) - bpm) > 0.01:
         return None
+    _note_live_change("fl_set_tempo")
     with _AUTOSYNC_LOCK:
         _AUTOSYNC.setdefault(_ud_key(project), {})["live_dirty"] = True
     _schedule_autosync(project)
@@ -17630,6 +19277,7 @@ def _unshadow(r, sh, src, n, read=False):
 
 def _read_only_call(name, kw):
     return ((name == "flp_project_info" and not kw.get("output"))
+            or (name == "flp_remove_channels" and kw.get("dry_run"))
             or (name == "flp_playlist" and kw.get("action", "list") == "list")
             or (name == "flp_audio_clip_settings" and not any(v is not None for k, v in kw.items()
                                                                  if k not in ("project", "channel", "output"))))
@@ -17651,34 +19299,65 @@ def _lazy_wanted(project):
     return False
 
 
-def _run_lazy(name, raw, kw, in_key, out_key, src):
+def _fl_behind(project):
+    """Why FL is known to hold an OLDER copy of `project` than the file fl-headless wrote (a reload that failed or
+    wasn't proven), or None. (A file changed behind FL by someone else - a save by hand - isn't counted: FL may hold
+    exactly that.)"""
+    try:
+        e = _stale_get(project)
+        return (e.get("why") or "its last reload wasn't proven") if e else None
+    except Exception:                                             # noqa: BLE001
+        return None
+
+
+def _run_lazy(name, raw, kw, in_key, out_key, src, writer=True, keep_in=False):
     """Run a writer on the shadow copy (so it's validated and returns its real result now) and queue it when it
-    changed something. Nothing touches FL or the real file."""
+    changed something. Nothing touches FL or the real file. A writer that changes nothing because the FILE already
+    holds it while FL holds an older copy is queued too: the sync then loads the file into FL (PC 2026-10-27: a
+    flp_tempo_write after a sync FL hadn't taken said nothing, flh_sync 'nothing was queued', FL kept its old tempo).
+    keep_in: the writer builds `src` from another file (flp_write_arrangement's template): that input stays as given."""
     global _EDIT_DEPTH
     with _PENDING_LOCK:
         sh, sig = _shadow(src)
         before = open(sh, "rb").read()
-        kw2 = dict(kw); kw2[in_key] = sh
+        kw2 = dict(kw)
+        if not keep_in:
+            kw2[in_key] = sh
         if out_key:
             kw2[out_key] = sh
         _edit_enter()
         try:
-            r = raw(**kw2)
+            if keep_in:
+                with _write_source(kw[in_key]):                   # a copy under another name: its own title
+                    r = raw(**kw2)
+            else:
+                r = raw(**kw2)
         finally:
             _edit_exit()
         changed = open(sh, "rb").read() != before
         q = _pending_get(src)
-        merge = changed and _autosync_wanted(src)
-        if changed:
+        behind = None if changed or not writer else _fl_behind(src)
+        queue = changed or bool(behind)
+        merge = queue and _autosync_wanted(src)
+        if queue:
             if name == "flp_edit":
                 add = [dict(o) for o in (kw.get("ops") or [])]
+            elif keep_in:
+                add = [{"tool": name, "_keep_input": True, in_key: os.path.abspath(kw[in_key]),
+                        **{k: v for k, v in kw.items() if k not in (in_key, out_key)}}]
             else:
                 add = [{"tool": name, **{k: v for k, v in kw.items() if k not in (in_key, out_key)}}]
             q = q + add
             _pending_set(src, q, base=sig)
         elif not q:
             _pending_set(src, [])                                 # a read: no shadow to keep
-        r = _unshadow(r, sh, src, len(q), read=not changed)
+        r = _unshadow(r, sh, src, len(q), read=not queue)
+        if behind and isinstance(r, dict):
+            r["fl_behind"] = (f"the file already holds this, but FL holds an older copy ({str(behind)[:160]}): it's "
+                              "queued so the sync loads the file into FL")
+        elif writer and not changed and isinstance(r, dict) and not q:
+            r.setdefault("note", "nothing changed: the project already holds this, so nothing was queued")
+        changed = queue
         if changed and isinstance(r, dict):
             c = project_load_cost(src).get("seconds")
             r["queued"] = True
@@ -17747,7 +19426,10 @@ def _lazy_tool(name, fn):
         if same and _read_only_call(name, kw):
             if not q:
                 return fn(**kw)
-            return _run_lazy(name, raw, kw, in_key, out_key, src)
+            return _run_lazy(name, raw, kw, in_key, out_key, src, writer=False)
+        if not same and not q and name in LAZY_INTO_TOOLS and isinstance(out, str) and os.path.isfile(out) \
+                and (_pending_get(out) or _lazy_wanted(out)):     # built from another file INTO the open project
+            return _run_lazy(name, raw, kw, in_key, out_key, out, keep_in=True)
         if same and name in LIVE_ROUTES and not q and _fast_on():  # FL's title can't tell (a 'Project N' name, a
             try:                                                    # same-name twin): one save proves which file FL
                 if fl_running() and _open_state(src) == "unknown":  # has, so the edit goes live instead of being
@@ -17866,7 +19548,7 @@ def _sync_pending(project=None, file_only=False):
                     _pending_done(p, ops, ok)
                 out[p] = {"ops": len(ops), **{x: res[x] for x in ("reloaded_in_fl", "steps_s", "verify_job",
                                                                   "previous_edit_held", "WARNING", "reload_check",
-                                                                  "fl_has_open", "fl_shows_old_version")
+                                                                  "fl_has_open", "fl_shows_old_version", "live_kept")
                                               if isinstance(res, dict) and x in res}}
             return out or None
     finally:
@@ -19825,7 +21507,7 @@ def _live_replace_part_locked(project, kw, force=False, name="flp_replace_part")
         except Exception as e:
             err = f"{type(e).__name__}: {e}"
         steps["live"] = round(time.time() - T, 1); T = time.time()
-        ok = err is None and _save_in_fl_and_wait(project, 8.0) and _fingerprint(project) == want
+        ok = err is None and _save_in_fl_and_wait(project, 8.0) and not _fp_diff(want, _fingerprint(project))
         if ok and _slide_marks(project, chans) != want_sl:        # FL kept the notes but not the slide on/off
             ok = False; err = "FL's piano roll didn't take the slide flags (slide on/off)"
         steps["verify"] = round(time.time() - T, 1)
@@ -20149,9 +21831,10 @@ SHORT_DESC = {                               # hand-written listing text (<= 250
     "flp_replace_part": "Replace one channel's notes across an arranged song: notes=[[bar, length_bars, pitch, vel], "
                         "...] in song bars (60 = 'C4') or midi=; each note lands in its clip.",
     "flp_info": "Quick facts of a .flp: tempo, PPQ, FL version, notes per channel, patterns, clips, length, meter, "
-                "markers.",
-    "fl_doctor": "Static project check in < 1 s, no FL: trial/not-owned plugins, silent MIDI setups, unused "
-                 "channels, routing, automation, missing samples, wrong notes. Ranked, with fixes.",
+                "markers (fields=[...] for only some).",
+    "fl_doctor": "Static project check in < 1 s, no FL: trial/not-owned plugins, silent MIDI setups, practically "
+                 "silent channels (missing content, level knob at 0), unused channels, routing, automation, missing "
+                 "samples, wrong notes. Ranked, with fixes.",
     "fl_review": "Per-section review: loudness arc, true peak, phase, clipping, mud/harshness, the collection target; "
                  "ranked. audio=<render> (fast) or live (a job). Run before calling a song done.",
     "flp_score": "Read a song like a score (~1k tokens): key, tempo/meter, chords per bar with numerals, each part's "
@@ -20259,7 +21942,7 @@ SHORT_PARAMS = {                             # listing-only parameter help (tigh
     "flh_run": {"steps": "[{tool, args: {...}, parallel?}, ...]"},
     "flh_new_song": {"genre": "e.g. lofi, trap, house, pop, cinematic (flh_genres lists all)"},
     "fl_visualize": {"kind": "energy|loudness|spectrogram|mix_balance|arrangement|piano_roll"},
-    "flh_journal": {"add": "{likes|dislikes|notes|sound_likes|sound_dislikes: items}"},
+    "flh_journal": {"add": "{likes|dislikes|notes|sound_likes|sound_dislikes: items} or a plain note"},
     "flh_tools": {"name": "a tool name (or up to 8) for its full help + arguments"},
     "flp_arrange_song": {"form": "section list or a form name of the genre"},
 }
@@ -20275,7 +21958,8 @@ GROUPS = {                                    # group -> tools (unknown extensio
               "flp_pattern_tools", "flp_write_notes", "flp_write_arrangement", "flp_export_midi", "flp_channel_glide"],
     "project": ["flp_info", "flp_edit", "flp_list", "flp_playlist", "flp_arrange", "flp_project_info",
                 "flp_set_song_length", "flp_set_tempo", "flp_tempo_map", "flp_tempo_write", "flp_add_automation",
-                "flp_add_audio_clip", "flp_audio_clip_settings", "flp_duck", "flp_style_channels", "flp_mixer",
+                "flp_meter", "flp_new_from", "flp_patterns_set", "flp_add_audio_clip", "flp_audio_clip_settings",
+                "flp_duck", "flp_style_channels", "flp_mixer",
                 "flp_add_channel", "flp_remove_channels", "flp_search", "flp_collect_samples", "flp_health"],
     "review": ["fl_doctor", "fl_review", "flp_score", "flp_clashes", "flp_diff"],
     "perform": ["flp_perform_setup", "flp_perform", "flp_perform_undo", "flp_realism", "flp_realism_write"],
@@ -20908,6 +22592,7 @@ def flh_reload():
                  "_TIMINGS", "_VERIFY_LOCK", "_VERIFY_LEAKS", "_VERIFY_STOP", "_PENDING_VERIFY", "_ERRORS", "_PENDING_LOCK", "_RECENT_CALLS", "_FL_LOCK", "_FL_HOLDER",
                  "_USAGE", "_USAGE_LOCK", "_STALE_FL", "_SYNC_RUN_LOCK", "_INFLIGHT",
                  "_STATE_LOCK", "_LC_LOCK", "_AUTOPLAY",
+                 "_LIVE_LOG", "_FL_SYNC_T",
                  "_FL_HOLDS", "_FH_WROTE", "_OPEN_PROOF"):          # live connection, jobs, locks, stats, recent calls
                                                                   # + what FL holds (stale guard) and identity proof
         if keep in old:
@@ -21043,6 +22728,47 @@ ARG_ALIASES = (                                                   # a common oth
 )
 
 
+# Per-tool other names for one argument (checked before ARG_ALIASES). The same mixer track is 'track' in fl_mixer_set
+# and 'index' (+ slot) in the plugin tools (PC 2026-10-27: calls failed both ways) - every one takes both.
+PLUGIN_TARGET_TOOLS = ("fl_plugin_params", "fl_plugin_set", "fl_plugin_set_value", "fl_plugin_probe",
+                       "fl_plugin_preset")
+_MIXER_WORDS = ("track", "mixer_track", "insert", "mixer")
+TOOL_ARG_ALIASES = {"fl_mixer_set": {"index": "track"},
+                    **{t: {"track": "index", "mixer_track": "index", "insert": "index", "mixer": "index",
+                           "channel": "index", "ch": "index", "fx_slot": "slot", "effect_slot": "slot"}
+                       for t in PLUGIN_TARGET_TOOLS}}
+
+
+def _tool_aliases(name, args):
+    """args with this tool's own names for the other names TOOL_ARG_ALIASES lists. For the plugin tools a mixer
+    name (track=) needs slot >= 0 (an effect), channel= means the instrument (slot -1): a contradiction is refused,
+    never guessed (index 3 slot -1 is channel 3's instrument, not mixer track 3)."""
+    amap = TOOL_ARG_ALIASES.get(name)
+    if not amap or not isinstance(args, dict):
+        return args
+    out = dict(args); used = []
+    for k in list(args):
+        own = amap.get(k)
+        if not own or k == own:
+            continue
+        if own in out and out.get(own) is not None:
+            raise ValueError(f"{name}: give {own} or {k}, not both (they name the same thing)")
+        out[own] = out.pop(k); used.append(k)
+    if name in PLUGIN_TARGET_TOOLS and used:
+        try:
+            sl = None if out.get("slot") is None else int(float(out["slot"]))
+        except (TypeError, ValueError):
+            sl = None
+        if any(k in _MIXER_WORDS for k in used) and (sl is None or sl < 0):
+            raise ValueError(f"{name}: {next(k for k in used if k in _MIXER_WORDS)}={out.get('index')} names a mixer "
+                             "track - give slot (0..9, the effect's slot on it). A channel's instrument is "
+                             "index=<channel> (or channel=) with slot -1")
+        if any(k in ("channel", "ch") for k in used) and sl is not None and sl >= 0:
+            raise ValueError(f"{name}: channel= means a channel's instrument (slot -1); an effect is "
+                             "track=<mixer track> (or index=) with slot 0..9")
+    return out
+
+
 def _alias_of(k, known, given):
     """The tool's own name for argument k (an alias from ARG_ALIASES), if exactly one fits."""
     hits = []
@@ -21168,6 +22894,7 @@ def _check_args(name, args, ent):
     sch = ent[2] if len(ent) > 2 and isinstance(ent[2], dict) else {}
     props = sch.get("properties") or {}
     params, free = _sig_of(ent[0])
+    args = _tool_aliases(name, args)                              # this tool's own other names (track / index)
     out = dict(args)
     _ARG_NOTES.items = []
     known_all = set(props) | {p for p in (params or {}) if not p.startswith("_")}

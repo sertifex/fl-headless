@@ -1,5 +1,82 @@
 # Changelog
 
+## 2.2.0 - 2026-10-27
+Fixes from building two full piano/orchestral songs end to end, and sheet music to FL in a fraction of the time.
+
+**Sheet music, much faster**
+- **Read a score in parallel.** `sheet_pages(systems=true)` lists each system's box, staff lines and bar-line
+  positions; `rows=S, bars='3-5'` and `crop=[x0,y0,x1,y1]` give zoomed crops of exactly those bars (`save=` writes
+  the PNG). `split=N` splits the pages into N ranges with about the same number of bars and writes a ready-to-paste
+  brief for each helper agent.
+- **Per-bar score data.** `sheet_import(score=...)` reads a simple per-bar format (`flh-score/1`: beats in quarters,
+  pitch names like 'Bb4'), checked exactly like ABC with the score's own bar numbers and beat sums per line. Parts
+  map to channels by name, notes land at their own bars, two voices on a staff stay one pattern, grace notes never
+  overlap the same key, and sections/chords go to the song journal.
+- **New `sheet_merge`** joins the helpers' page ranges with overlap, conflict, missing-bar and meter/key checks;
+  `sheet_diff` compares two readings bar by bar and part by part.
+- New guide: `docs/sheet_music.md` (render pages, find systems, split, format, checks, merge, import).
+
+**Live changes are never lost**
+- Changes made in FL (plugin knobs, channel/mixer settings) are no longer lost when a queued edit is synced, also
+  after a reload fl-headless couldn't prove. If FL's state and the file can't both be kept, nothing is changed: the
+  edit stays queued, FL's state is backed up, and the message says what to do.
+- The check after a sync never puts an edit back over live changes made after the reload.
+- **No more false "an earlier edit didn't stick (tempo)" alerts** on songs with a tempo lane: the lane is compared
+  with a tolerance and FL's playhead tempo isn't read as a change. Real stale copies are still caught.
+- `flp_tempo_write` behaves like the other queued writers (a write FL is behind on is queued so the sync loads it)
+  and warns when a tempo automation clip overrides the lane. `flp_remove_channels` and `flp_write_arrangement` queue
+  in lazy mode instead of reloading FL at once.
+- `fl_snapshot(region=...)` no longer reports "blank" for a dark area of FL or right after a reload.
+
+**Notes and playlist**
+- `flp_compose_write`: `place` on a pattern already in the playlist moves/resizes its clip instead of playing the
+  section twice (`place_mode='add'` for a repeat, `'replace'` to re-lay it). `flp_compose_drop(unplace=true)` also
+  removes the clips.
+- `flp_replace_part`: no more placeholder notes - a section clip that doesn't hold the channel yet takes its notes
+  (`into='covering_clip'` settles stacked clips); a tempo lane never gets notes; humanize jitter before a section is
+  clamped silently; grace notes stay in the clip that plays them; the channel's stale notes past a shortened clip are
+  removed (`hidden='keep'` leaves them).
+- `flp_write_notes`: writes the MIDI's time signature and its changes (`meter=`), keeps the whole tempo map, and
+  gives arranged songs a clear path (`clear_song=true` or `flp_new_from`).
+- Section clips go on one playlist track (alternating tracks looked like empty sections when the playlist scrolled).
+- **New `flp_new_from`:** a new song with an existing project's channels, plugins, mixer and FX, an empty playlist,
+  its own title and journal; the source is untouched.
+- **New `flp_meter`:** set the time signature, or a signature change at a bar; says which clips land off the bars.
+- **New `flp_patterns_set`:** rename / recolor patterns offline.
+
+**Sounds, plugins, review**
+- `flp_instrument_sound`: a preset or patch it can't match is refused (the channel keeps its sound) with the pack's
+  real names, instead of writing a state FL shows as 'Content Not Found'. Display and file names match across
+  spelling/case/`_`; `force=true` writes anyway. FLEX preset names match the same way.
+- `fl_doctor`: new `content_missing` (the library a channel points at isn't on this PC) and `silent_knob` (a volume /
+  gain / dynamics / expression knob at 0, judged by the plugin's own parameter names - works for any plugin;
+  `live=true` reads them from the open FL). `fl_review` shows them as hints.
+- `fl_review`: struck piano / plucked chords coming out of a decaying tail no longer count as abrupt entrances.
+- `fl_plugin_set_value`: targets with units ('30 ms', '1.2 s', '2 kHz', '-6 dB', '50%') and words ('Off'); reads
+  knobs that change units; a stepped knob lands on the nearest step and says so.
+- `fl_plugin_params` / `fl_plugin_set` wait for a plugin still loading after a reload; `filter` takes 'a|b', a list
+  or a regex.
+- Same argument names everywhere: plugin tools take `track=` (with slot) and `channel=`; `fl_mixer_set` takes
+  `index=`. `flp_info(fields=[...])`; `flh_journal(add='a plain note')`.
+- `flp_add_channel(insert='new')` gives a channel its own free mixer insert named after it; new FLEX channels from
+  `flp_flex_preset` do this by default.
+
+## 2.1.4 - 2026-10-26
+- **Fix: every live setting waited ~14 s in 2.1.3.** The new "wait while FL is loading" took FL's CPU use as a sign
+  of loading; a song with a loaded Splice INSTRUMENT keeps FL busy, so each mixer / channel setting waited its full
+  limit. It now waits only on FL's own loading signs ("Opening: ..." in its title, its script's heartbeat).
+- `flp_write_notes` on a project whose pattern isn't on the playlist (FL's empty template plus a new pattern) puts
+  the pattern at bar 1 instead of failing.
+- **Reloads ~30 s faster on sample-library songs.** A reload that had to be proven waited for FL's CPU to go quiet
+  before it started; sample streamers (LABS, Spitfire, Splice INSTRUMENT) keep it busy for good, so every such reload
+  waited out its whole 30 s limit. And a quick reload of a note or plugin edit is now proven on the spot (a marker
+  written into the file beforehand) instead of loading the song a second time through the empty template.
+- **Mix engineer: undo only touches the open song.** `revert_last` kept one list for every song, so it could send
+  another song's moves into the open project. Each applied batch now belongs to its project; undo refuses when the
+  last moves were made on another song, and an older install's shared list is never replayed.
+- **Mix engineer: `apply` with `ids` applies the list you saw.** It measured again and renumbered, so the ids could
+  name different moves. It now applies those ids from the last list for this project, without measuring again.
+
 ## 2.1.3 - 2026-10-26
 Speed: building a song in FL.
 - **One reload per burst of edits on big projects.** Edits of a song that takes long to load (Splice INSTRUMENT,

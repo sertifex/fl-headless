@@ -9,7 +9,7 @@ for k in ("FLH_FL_EDITION", "FLH_FL_EXE", "FL_EXE"):
 import fl_headless_mcp as m  # noqa: E402
 T = m.TOOLS
 assert "flh_setup" in T and "flh_run" in T, sorted(T)[:5]
-assert m.SERVER["version"] == "2.1.3"
+assert m.SERVER["version"] == "2.2.0"
 
 # ---- check: a fresh PC
 r = T["flh_setup"][0]()

@@ -2535,9 +2535,8 @@ def apply_ops(ops, label="mix engineer", project=None):
     else:
         fl_gone = None
     mark("apply")
-    prev = (H["_state"]().get("mix_engineer") or {}).get("applied", [])
     path = project or H["_open_project_guess"]()[0]
-    H["_state"]({"mix_engineer": {"project": path, "applied": prev + undo, "label": label}})
+    _undo_push(path, label, undo)
     if path:
         try:
             S = sys.modules.get("flh_store")
@@ -2553,12 +2552,51 @@ def apply_ops(ops, label="mix engineer", project=None):
     return out
 
 
-def revert():
-    """Undo everything the mix engineer applied since the last revert (faders, pans, plugin knobs; added effects
-    stay in their slots but are put back to how they were set before the moves)."""
+UNDO_KEEP = 10                    # applied batches kept for revert_last (newest last)
+
+
+def _same_project(a, b):
+    try:
+        return bool(a and b) and os.path.normcase(os.path.abspath(a)) == os.path.normcase(os.path.abspath(b))
+    except Exception:                                             # noqa: BLE001
+        return False
+
+
+def _undo_push(project, label, undo):
+    """One applied batch -> the undo stack: {project, label, when, undo}. Each batch belongs to ONE project
+    (PC 2026-10-26: one shared list grew across songs, and revert_last sent another song's 62 knob/fader moves into
+    the open project)."""
     me = H["_state"]().get("mix_engineer") or {}
+    batches = [b for b in (me.get("batches") or []) if isinstance(b, dict)]
+    if undo:
+        batches.append({"project": project, "label": label, "when": time.strftime("%Y-%m-%d %H:%M"), "undo": undo})
+    H["_state"]({"mix_engineer": {"batches": batches[-UNDO_KEEP:]}})
+
+
+def revert(project=None):
+    """Undo what the mix engineer applied to the project open now since the last revert (its latest batches, newest
+    first) - never another song's moves (faders, pans, plugin knobs; added effects stay in their slots but are put
+    back to how they were set before the moves)."""
+    me = H["_state"]().get("mix_engineer") or {}
+    batches = [b for b in (me.get("batches") or []) if isinstance(b, dict)]
+    if not batches:
+        r = {"reverted": 0, "note": "nothing to undo: no mix engineer moves recorded"}
+        if me.get("applied"):
+            r["note"] += (" (an older fl-headless kept one shared list for every song; it isn't used, so another "
+                          "song's moves can't land here - flp_versions / flp_restore puts a file back)")
+        return r
+    project = project or H["_open_project_guess"]()[0]
+    last = batches[-1]
+    if project and last.get("project") and not _same_project(last.get("project"), project):
+        raise ValueError(f"the last mix engineer moves were made on {os.path.basename(str(last.get('project')))}, "
+                         f"not on the project open now ({os.path.basename(str(project))}): open that one to undo them "
+                         "(nothing was changed)")
+    mine = []                                                     # this project's batches since the last revert
+    while batches and _same_project(batches[-1].get("project"), last.get("project")) or \
+            (batches and not last.get("project") and not batches[-1].get("project")):
+        mine.append(batches.pop())
     n = 0; failed = []
-    for u in reversed(me.get("applied", [])):
+    for u in [u for b in mine for u in reversed(b.get("undo") or [])]:
         try:
             if u["kind"] == "fader":
                 if u.get("before_v") is not None:                 # the exact position from before the move
@@ -2577,13 +2615,14 @@ def revert():
             else:
                 _bridge("plugin_set", index=u["track"], slot=u["slot"], param=u["param"], value=float(u["before"]))
             n += 1
-        except Exception as e:                                    # kept, so a later revert can retry it
+        except Exception as e:                                    # said once, then dropped with the batch
             failed.append(dict(u, error=f"{type(e).__name__}: {str(e)[:80]}"))
-    me["applied"] = [{k: v for k, v in u.items() if k != "error"} for u in reversed(failed)]
-    H["_state"]({"mix_engineer": me})
-    r = {"reverted": n}
+    H["_state"]({"mix_engineer": {"batches": batches}})
+    r = {"reverted": n, "batches": [{"label": b.get("label"), "when": b.get("when")} for b in mine]}
     if failed:
-        r["failed"] = [{"kind": u.get("kind"), "track": u.get("track"), "error": u["error"]} for u in failed]
+        r["failed"] = [{"kind": u.get("kind"), "track": u.get("track"), "error": u["error"]} for u in failed[:8]]
+        r["failed_count"] = len(failed)
+        r["note"] = "these moves couldn't be put back live: flp_versions / flp_restore puts the file back"
     return r
 
 
@@ -2686,9 +2725,8 @@ def insert_gain(track, delta_db):
     if not r.get("ok"):
         raise RuntimeError(f"Parametric EQ 2's Main level on track {t} didn't take {new:+.1f} dB (FL shows "
                            f"'{s.get('text')}'): {s.get('note') or r.get('skipped')}")
-    me = H["_state"]().get("mix_engineer") or {}
-    H["_state"]({"mix_engineer": dict(me, applied=(me.get("applied") or []) + [dict(u, kind="param")
-                                                                             for u in r.get("undo") or []])})
+    _undo_push(H["_open_project_guess"]()[0], f"insert gain track {t}",
+               [dict(u, kind="param") for u in r.get("undo") or []])
     return {"plugin": PEQ, "slot": slot, "main_level_db": [round(float(cur), 2), round(new, 2)], "text": s.get("text"),
             "added": added, "undo": "fl_mix_engineer(revert_last=true)"}
 
@@ -3093,6 +3131,30 @@ def _stems_meas(stems, section, project):
     return {"tracks": rows, "mix": mix}, items, secs
 
 
+def _apply_listed(ids, project, goal):
+    """apply=true with ids: the moves of the LAST proposal list for this project, by the ids it showed (PC
+    2026-10-26: apply re-measured, the list came back in another order, and ids 1/5/8/9 applied a melody boost and a
+    piano high-pass instead of the low strings / choir moves that were picked)."""
+    last = H["_state"]().get("mix_engineer_last") or {}
+    project = project or H["_open_project_guess"]()[0]
+    if not last.get("proposals") or not _same_project(last.get("project"), project):
+        raise ValueError("ids refer to a proposal list, and there is none for this project: run fl_mix_engineer "
+                         "without apply first, then apply=true with the ids it lists (nothing was changed)")
+    want = [int(i) for i in ids]
+    by_id = {int(p["id"]): p for p in last["proposals"] if p.get("id") is not None}
+    missing = [i for i in want if i not in by_id]
+    if missing:
+        raise ValueError(f"no proposal with id {missing} in the last list for this project (nothing was changed)")
+    chosen = [by_id[i] for i in want if by_id[i].get("ops")]
+    ops = [o for p in chosen for o in p["ops"] if o.get("track") is not None]
+    res = {"applied_ids": want, "from": "the last proposal list for this project (no new measurement)",
+           "moves": [{"id": p["id"], "kind": p.get("kind"), "name": p.get("name"), "why": p.get("why")} for p in chosen],
+           "applied": apply_ops(ops, label="mix engineer" + (f": {goal}" if goal else ""), project=project),
+           "next": "listen; fl_mix_engineer(revert_last=true) undoes this batch"}
+    H["_state"]({"mix_engineer_last": {}})                       # used: a second apply needs a fresh list
+    return res
+
+
 def mix_engineer(goal=None, section=None, tracks=None, apply=False, genre=None, stems=None, measurements=None,
                  project=None, bpm=None, lead=None, ids=None, start_bar=None, end_bar=None, seconds=None,
                  revert_last=False, max_items=14):
@@ -3100,6 +3162,8 @@ def mix_engineer(goal=None, section=None, tracks=None, apply=False, genre=None, 
     moves, optionally apply them in one undoable batch and verify the result against the goal's intents."""
     if revert_last:
         return revert()
+    if apply and ids:                                             # ids name the proposals the user SAW: apply those,
+        return _apply_listed(ids, project, goal)                  # never a fresh measurement's renumbered list
     steps, mark = _steps()
     live = measurements is None and not stems
     if live or apply:                                             # a retry right after a timed-out run finds FL
@@ -4158,9 +4222,7 @@ def _master_tone_live(project, bands, slot, replace, preset, why):
         if x.get("q"):
             vals[f"band{b}_width"] = f"{x['q']} Q"
     r = plugin_set_named(0, s, PEQ, vals); mark("set")
-    prev = (H["_state"]().get("mix_engineer") or {}).get("applied", [])
-    H["_state"]({"mix_engineer": {"project": project, "applied": prev + [dict(u, kind="param") for u in r["undo"]],
-                                  "label": "master tone"}})
+    _undo_push(project, "master tone", [dict(u, kind="param") for u in r["undo"]])
     saved = False
     try:
         saved = bool(H["_save_in_fl_and_wait"](project, 8.0))

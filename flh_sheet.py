@@ -9,7 +9,13 @@ Workflow (Claude reads the notes from pictures; this module makes the pictures s
                         (the dispatcher sends one image per result): a zoomed crop of one or more systems with small
                         red bar numbers above the detected bar lines (estimates), plus counts and a "next" call.
                         Decoded pages and their layout are cached, so stepping through systems is fast.
-2. sheet_import(abc | musicxml)  parse (sheet_notation) + validate; blocking issues (severity >= med; strict: any)
+                        Frame tools (coordinates in the page scaled to `frame` px wide, default 1000): systems=true
+                        (boxes, staff lines, bar-line x as text), rows=S + bars='a-b' / crop=[x0, y0, x1, y1]
+                        (upscaled crops, save= writes the PNG), split=N (page ranges for N parallel readers balanced
+                        by detected bars, each with the brief from data/sheet/reader_brief.md).
+2. sheet_import(abc | musicxml | score)  score = per-bar score data (flh-score/1, sheet_notation.parse_score_data:
+                        built through generated ABC, so every ABC check applies, with the data's bar numbers).
+                        Parse (sheet_notation) + validate; blocking issues (severity >= med; strict: any)
                         come back as a "re-read these bars" list (with page/system when `pages` maps bars to systems)
                         and nothing is written unless force=true. Otherwise: MIDI (output_mid, inside FLH_ROOTS)
                         and/or one named pattern per voice in the project in ONE flp_edit (lazy-aware, guarded),
@@ -19,7 +25,8 @@ Workflow (Claude reads the notes from pictures; this module makes the pictures s
                         missing/extra pitch classes and a confidence. Chroma can't hear octaves and dense polyphony
                         blurs it: a flag means "look again", no flag doesn't prove the reading right. A monophonic
                         score also gets an octave check from the pitch tracker.
-4. sheet_diff(a, b)     two readings (ABC/MusicXML) or a reading vs a project part: bars that differ.
+4. sheet_diff(a, b)     two readings (ABC/MusicXML; score data: per bar and part) or a reading vs a project part.
+   sheet_merge(readings) page-range readings (score data) -> one, with overlap / conflict / missing-bar checks.
 5. sheet_explain        the score in plain words: key, meter, tempo, form, repeats/endings, range per voice.
 
 Notation (parsing, validation, MIDI) lives in sheet_notation.py (pure Python), imported lazily.
@@ -1559,11 +1566,24 @@ def _is_path(s, exts):
     return "\n" not in s and len(s) < 1024 and s.lower().endswith(exts) and os.path.isfile(s)
 
 
-def load_score(abc=None, musicxml=None):
-    """-> (score, {"type", "file"}). abc / musicxml: the text itself or a path to the file."""
+def _is_score_data(x):
+    """A per-bar score-data reading: a dict, JSON object text or a .json path."""
+    if isinstance(x, dict):
+        return True
+    s = str(x).strip()
+    return s.startswith("{") or _is_path(s, (".json",))
+
+
+def load_score(abc=None, musicxml=None, score=None, parts=None):
+    """-> (score, {"type", "file"}). abc / musicxml: the text itself or a path to the file; score: per-bar score
+    data (dict, JSON text or a .json path; parts = only these parts)."""
     SN = _sn()
-    if (abc is None) == (musicxml is None):
-        raise ValueError("give abc= (ABC text or a .abc file) or musicxml= (.musicxml/.xml/.mxl file or the XML text)")
+    if sum(x is not None for x in (abc, musicxml, score)) != 1:
+        raise ValueError("give one of abc= (ABC text or a .abc file), musicxml= (.musicxml/.xml/.mxl file or the XML "
+                         "text) or score= (per-bar score data: a dict, JSON text or a .json file)")
+    if score is not None:
+        sc = SN.parse_score_data(score, parts=parts)
+        return sc, {"type": "score data", "file": sc.score_info.get("file")}
     if abc is not None:
         f = None
         if _is_path(abc, (".abc", ".txt")):
@@ -1654,6 +1674,58 @@ def _score_summary(score, voices, isum, issues=None):
             sv = str(i.get("severity", "med")).lower(); c[sv] = c.get(sv, 0) + 1
         out["issues"] = c
     return out
+
+
+def _score_data_report(si, place, full=False):
+    """Compact facts about a score-data reading: bars, parts, beat sums, where it lands in FL."""
+    r = {"bars": f"{si['first_bar']}-{si['last_bar']}", "parts": si["parts"], "beat_check": si["beat_check"]}
+    multi = {p: n for p, n in si["layers"].items() if n > 1}
+    if multi:
+        r["overlapping_lines"] = {p: f"{n} lines (chords / voices of different lengths)" for p, n in multi.items()}
+    if si.get("fixed"):
+        r["same_key_overlaps_fixed"] = si["fixed"]
+    if si["sections"]:
+        r["sections"] = si["sections"][:(60 if full else 12)]
+    if si["chords"]:
+        r["chord_symbols"] = len(si["chords"])
+    if place:
+        r["placement"] = (f"bar {si['first_bar']} starts at FL bar {int(place) if float(place).is_integer() else place}"
+                          + (" (the pickup is padded: it ends where the next FL bar starts)" if si.get("pickup")
+                             else ""))
+    if full:
+        r["abc"] = si["abc"]
+    return r
+
+
+def _range_check(score, pinfo=None):
+    """Score-data parts named after an instrument (data/instrument_ranges.json, via flh_score): notes outside its
+    range -> ['bar 12 flute: C3 below C4-C7', ...] (an octave misread, or the part name isn't the instrument)."""
+    try:
+        import importlib
+        import sys
+        FS = sys.modules.get("flh_score") or importlib.import_module("flh_score")
+    except Exception:
+        return []
+    out, by = [], {}
+    for n in getattr(score, "notes", []):
+        by.setdefault(n["voice"], []).append(n)
+    for part, ns_ in by.items():
+        info = (pinfo or {}).get(part) if isinstance((pinfo or {}).get(part), dict) else {}
+        try:
+            ent = FS.instrument_for([info.get("instrument"), part.replace("_", " ")])
+        except Exception:
+            return out
+        rg = (ent or {}).get("_range")
+        if not rg:
+            continue
+        lo, hi = rg
+        bad = [n for n in ns_ if not lo <= n["pitch"] <= hi]
+        for n in bad[:3]:
+            out.append(f"bar {n['measure']} {part}: {note_name(n['pitch'])} "
+                       f"{'below' if n['pitch'] < lo else 'above'} the {ent.get('id')} range "
+                       f"{note_name(lo)}-{note_name(hi)}" + (f" (+{len(bad) - 3} more)" if len(bad) > 3 and
+                                                             n is bad[2] else ""))
+    return out[:12]
 
 
 def _where(bar, pages):
@@ -1911,6 +1983,267 @@ def _call_hint(name, args):
         return f"{name}({json.dumps(args)})"
 
 
+# ----------------------------------------------------------------------------- page frame: systems list, crops
+FRAME_W = 1000                                     # crop / systems coordinates: the page scaled to this width
+CROP_MAX_UP = 4.0                                  # crops are upscaled at most this much (more adds only blur)
+SPLIT_BUDGET_S = 45.0                              # split=N analyses pages for this long, then splits by page count
+
+
+def _bars_arg(bars, nb, si):
+    """'3-5' | 3 | [3, 5] -> (a, b) 1-based bars within a system of nb bars."""
+    if isinstance(bars, (list, tuple)) and len(bars) in (1, 2):
+        a, b = int(bars[0]), int(bars[-1])
+    elif isinstance(bars, (int, float)) and not isinstance(bars, bool):
+        a = b = int(bars)
+    else:
+        m = re.fullmatch(r"\s*(\d+)\s*(?:-\s*(\d+))?\s*", str(bars))
+        if not m:
+            raise ValueError("bars: one bar (3), a range ('3-5' or [3, 5]) within the system")
+        a, b = int(m.group(1)), int(m.group(2) or m.group(1))
+    if not 1 <= a <= b <= nb:
+        raise ValueError(f"system {si + 1} has {nb} bars (detected bar lines; an estimate): ask for bars 1-{nb}, or "
+                         "use crop=[x0, y0, x1, y1]")
+    return a, b
+
+
+def _bar_edges(s):
+    """x edges of a system's bars: the system start, every detected bar line, the end (if the last bar is open)."""
+    edges = [float(s["x0"])] + [float(x) for x in s["bar_x"]]
+    if not s["bar_x"] or s["x1"] - s["bar_x"][-1] > 2 * s["space"]:
+        edges.append(float(s["x1"]))
+    return edges
+
+
+def crop_image(g, box, max_width=1400, budget=IMAGE_BUDGET_PX, up_max=CROP_MAX_UP):
+    """Page pixels box [x0, y0, x1, y1] -> (gray crop scaled to fit max_width and the pixel budget, scale, box)."""
+    Hh, W = g.shape
+    x0, y0, x1, y1 = (int(round(v)) for v in box)
+    x0, x1 = max(0, min(W, x0)), max(0, min(W, x1))
+    y0, y1 = max(0, min(Hh, y0)), max(0, min(Hh, y1))
+    if x1 - x0 < 4 or y1 - y0 < 4:
+        raise ValueError("the crop is empty or outside the page (coordinates are in the page frame: x 0..frame, "
+                         "y 0..page height in that frame)")
+    cw, ch = x1 - x0, y1 - y0
+    sc = min(max_width / cw, math.sqrt(budget / (cw * ch)), up_max)
+    nw, nh = max(1, int(cw * sc)), max(1, int(ch * sc))
+    return _resize(g[y0:y1, x0:x1], nw, nh), sc, [x0, y0, x1, y1]
+
+
+def _systems_in_frame(lay, k, plist):
+    out = []
+    for i, s in enumerate(lay["systems"]):
+        e = {"system": i + 1, "staves": s["staves"], "box": [int(round(v / k)) for v in s["box"]],
+             "staff_y": [[round(ln[0] / k, 1), round(ln[-1] / k, 1)] for ln in s["staff_lines"]],
+             "bar_x": [round(x / k, 1) for x in s["bar_x"]], "bars_est": s["bars_est"],
+             "staff_space": round(s["space"] / k, 2)}
+        if "first_bar_est" in plist[i]:
+            e["first_bar_est"] = plist[i]["first_bar_est"]
+        out.append(e)
+    return out
+
+
+def _write_png(path, png):
+    path = str(path).strip().strip('"')
+    if not path.lower().endswith(".png"):
+        raise ValueError("save must be a .png path")
+    H["writable"](path)
+    os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
+    with open(path, "wb") as f:
+        f.write(png)
+    return path
+
+
+def _pages_frame(res, lay, plist, source, p, npg, rows, crop, bars, frame, systems, save, max_width, marks, steps,
+                 T0):
+    """sheet_pages' frame modes: systems=true (boxes + bar lines as text), crop=[...] or rows=S + bars='a-b'."""
+    frame = float(frame or FRAME_W)
+    if not 100 <= frame <= 20000:
+        raise ValueError("frame: the width of the coordinate frame in px (default 1000)")
+    W, Hh = lay["size"]
+    k = W / frame
+    fw = int(frame) if float(frame).is_integer() else frame
+    res["frame"] = {"width": fw, "height": int(round(Hh / k)),
+                    "note": "every x/y here is in this frame (the page scaled to this width), after deskew"}
+    sysl = lay["systems"]
+    if systems and crop is None and bars is None:
+        res["systems"] = _systems_in_frame(lay, k, plist)
+        res.pop("page_systems", None)
+        res["how"] = ("crop one system's bars with rows=S, bars='a-b' (bars within the system), or any region with "
+                      "crop=[x0, y0, x1, y1] in this frame; bar_x = detected bar lines (estimates)")
+        res["steps_s"] = {**steps, "total": round(time.time() - T0, 3)}
+        return res
+    T1 = time.time()
+    s_idx = None
+    if bars is not None:
+        idx, mode = _parse_rows(rows if rows is not None else 1, len(sysl))
+        if mode != "systems" or len(idx) != 1 or not 0 <= idx[0] < len(sysl):
+            raise ValueError(f"bars= needs one system: rows=S (page {p} has {len(sysl)} systems)")
+        s_idx = idx[0]
+        s = sysl[s_idx]
+        edges = _bar_edges(s)
+        a, b = _bars_arg(bars, len(edges) - 1, s_idx)
+        pad = 0.6 * s["space"]
+        box = [edges[a - 1] - (2.5 * s["space"] if a == 1 else pad), s["box"][1], edges[b] + pad, s["box"][3]]
+        shown = {"system": s_idx + 1, "bars_in_system": f"{a}-{b}" if a != b else str(a)}
+        if plist[s_idx].get("first_bar_est"):
+            fb = plist[s_idx]["first_bar_est"]
+            shown["bar_numbers_est"] = f"{fb + a - 1}-{fb + b - 1}" if a != b else str(fb + a - 1)
+    else:
+        if not isinstance(crop, (list, tuple)) or len(crop) != 4:
+            raise ValueError("crop: [x0, y0, x1, y1] in the page frame (default 1000 px wide)")
+        box = [float(v) * k for v in crop]
+        shown = {}
+    g, sc, px = crop_image(lay["gray"], box, max_width=max_width)
+    rgb = np.repeat(g[:, :, None], 3, 2)
+    if marks:                                          # ticks above the detected bar lines inside the crop
+        for s in sysl:
+            if s["bottom"] < px[1] or s["top"] > px[3]:
+                continue
+            yt = int((s["top"] - px[1]) * sc)
+            ya, yb = max(0, yt - int(1.3 * s["space"] * sc)), max(0, yt - int(0.6 * s["space"] * sc))
+            w = max(1, int(round(s["space"] * sc * 0.12)))
+            for bx in s["bar_x"]:
+                if px[0] <= bx < px[2]:
+                    cx = int((bx - px[0]) * sc)
+                    rgb[ya:yb, max(0, cx - w // 2):cx + w // 2 + 1] = MARK_RGB
+    shown.update(crop=[round(v / k, 1) for v in px], image=f"{rgb.shape[1]}x{rgb.shape[0]}",
+                 upscale=round(sc, 2))
+    sp = [s["space"] for s in sysl if not (s["bottom"] < px[1] or s["top"] > px[3])]
+    if sp:
+        shown["px_per_staff_space"] = round(min(sp) * sc, 1)
+    if marks:
+        shown["marks"] = "red ticks = detected bar lines (estimates)"
+    res["showing"] = shown
+    res.pop("page_systems", None)
+    steps["render"] = round(time.time() - T1, 3)
+    pe = _h("_png_encode")
+    if pe is None:
+        raise RuntimeError("the server's PNG encoder isn't available")
+    import base64
+    png = pe(int(rgb.shape[1]), int(rgb.shape[0]), np.ascontiguousarray(rgb).tobytes())
+    res["_image_png"] = base64.b64encode(png).decode()   # PC-VERIFY: the client shows the crop as an image
+    if save:
+        res["saved"] = _write_png(save, png)
+    if s_idx is not None:
+        nb = len(_bar_edges(sysl[s_idx])) - 1
+        a, b = _bars_arg(bars, nb, s_idx)
+        w = b - a + 1
+        if b < nb:
+            nxt = {"source": source, "page": p, "rows": s_idx + 1, "bars": f"{b + 1}-{min(nb, b + w)}"}
+        elif s_idx + 1 < len(sysl):
+            nb2 = len(_bar_edges(sysl[s_idx + 1])) - 1
+            nxt = {"source": source, "page": p, "rows": s_idx + 2, "bars": f"1-{min(w, nb2)}"}
+        else:
+            nxt = {"source": source, "page": p + 1, "systems": True} if p < npg else None
+        res["next"] = _call_hint("sheet_pages", nxt) if nxt else "that was the last bar of the last page"
+    steps["total"] = round(time.time() - T0, 3)
+    res["steps_s"] = steps
+    return res
+
+
+# ----------------------------------------------------------------------------- split a score across readers
+def _brief_template():
+    """The helper-reader brief (data/sheet/reader_brief.md; a copy in <state folder>/sheet/ overrides it)."""
+    cands = []
+    try:
+        if H.get("STATE"):
+            cands.append(os.path.join(os.path.dirname(H["STATE"]), "sheet", "reader_brief.md"))
+    except Exception:
+        pass
+    cands.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "sheet", "reader_brief.md"))
+    for c in cands:
+        try:
+            with open(c, encoding="utf-8") as f:
+                return f.read().strip()
+        except OSError:
+            continue
+    return ("Read pages <<pages>> (bars <<bars>>) of <<source>> into fl-headless score data (flh-score/1, see "
+            "docs/sheet_music.md). Parts: <<parts>>. Check with sheet_import(score=..., dry_run=true); save as "
+            "<<output>>.")
+
+
+def _partition(weights, n):
+    """Contiguous groups of pages (weights) into n parts with the smallest largest part -> [(start, end_excl)]."""
+    P = len(weights)
+    n = max(1, min(n, P))
+    pre = [0.0]
+    for w in weights:
+        pre.append(pre[-1] + w)
+    INF = float("inf")
+    best = [[INF] * (P + 1) for _ in range(n + 1)]
+    cut = [[0] * (P + 1) for _ in range(n + 1)]
+    best[0][0] = 0.0
+    for g in range(1, n + 1):
+        for j in range(g, P + 1):
+            for i in range(g - 1, j):
+                c = max(best[g - 1][i], pre[j] - pre[i])
+                if c < best[g][j] - 1e-9:
+                    best[g][j], cut[g][j] = c, i
+    out, j = [], P
+    for g in range(n, 0, -1):
+        i = cut[g][j]
+        out.append((i, j))
+        j = i
+    return out[::-1]
+
+
+def split_plan(source, n, parts=None, first_bar=1, out_dir=None):
+    """Page ranges for n parallel readers, balanced by detected bars, each with a copy-paste brief."""
+    T0 = time.time()
+    src = open_source(source)
+    pages = src["pages"]
+    n = int(n)
+    if n < 1:
+        raise ValueError("split: the number of readers (2-6 is typical)")
+    info, weights, all_known = [], [], True
+    for i, pg in enumerate(pages):
+        e = {"page": i + 1}
+        if time.time() - T0 < SPLIT_BUDGET_S:
+            try:
+                lay = page_layout(pg, decode=False)
+                e["systems"] = len(lay["systems"])
+                e["bars_est"] = sum(s["bars_est"] for s in lay["systems"])
+            except Unsupported as ex:
+                e["note"] = str(ex)[:120]
+        if "bars_est" not in e or not e["bars_est"]:
+            all_known = False
+        info.append(e)
+    known = [e["bars_est"] for e in info if e.get("bars_est")]
+    med = sorted(known)[len(known) // 2] if known else 1
+    weights = [float(e.get("bars_est") or med) for e in info]
+    groups = _partition(weights, n)
+    fb = 1 if first_bar is None else int(first_bar)
+    starts, c = [], fb
+    for e in info:
+        starts.append(c)
+        c += int(e.get("bars_est") or med)
+    base = str(source[0] if isinstance(source, (list, tuple)) else source)
+    od = str(out_dir).strip().strip('"') if out_dir else (os.path.dirname(os.path.abspath(base)) or ".")
+    tpl = _brief_template()
+    plist = ", ".join(str(x) for x in parts) if parts else \
+        "one per staff/instrument, lowercase, the SAME names as the other readers (agree on them first)"
+    readers = []
+    for k, (a, b) in enumerate(groups):
+        pr = f"{a + 1}-{b}" if b - a > 1 else str(a + 1)
+        br = f"~{starts[a]}-{starts[b - 1] + int(info[b - 1].get('bars_est') or med) - 1}"
+        out = os.path.join(od, f"score_p{a + 1}-{b}.json" if b - a > 1 else f"score_p{a + 1}.json")
+        text = (tpl.replace("<<source>>", base).replace("<<pages>>", pr).replace("<<bars>>", br)
+                .replace("<<parts>>", plist).replace("<<output>>", out).replace("<<first_page>>", str(a + 1)))
+        readers.append({"reader": k + 1, "pages": pr, "bars_est": br, "output": out, "brief": text})
+    res = {"source": os.path.basename(base), "pages": len(pages), "readers": readers,
+           "page_info": info if len(info) <= 40 else info[:40],
+           "bars_note": ("bar numbers are estimates from detected bar lines: the brief tells each reader to use "
+                         "the numbers printed on the page") if all_known else
+                        ("some pages couldn't be analysed: split by page count; bar ranges are rough"),
+           "then": [_call_hint("sheet_merge", {"readings": [r["output"] for r in readers],
+                                               "output": os.path.join(od, "score_merged.json")}),
+                    _call_hint("sheet_import", {"score": os.path.join(od, "score_merged.json"), "dry_run": True})],
+           "took_s": round(time.time() - T0, 3)}
+    if len(readers) < n:
+        res["note"] = f"only {len(readers)} reader(s): the source has {len(pages)} page(s)"
+    return res
+
+
 def _parse_rows(rows, n):
     """rows: None | int | [ints] | 'all' | 'page' | '2-4' -> (list of 0-based system indices, mode)."""
     if rows is None:
@@ -1932,9 +2265,13 @@ def _parse_rows(rows, n):
     return [int(x) - 1 for x in rows], "systems"
 
 
-def sheet_pages(source, page=None, rows=None, zoom=2.0, max_width=1400, marks=True):
+def sheet_pages(source, page=None, rows=None, zoom=2.0, max_width=1400, marks=True, crop=None, bars=None,
+                frame=FRAME_W, systems=False, save=None, split=None, parts=None, first_bar=1):
     """See the tool description."""
     T0 = time.time(); steps = {}
+    if split:
+        return split_plan(source, split, parts=parts, first_bar=first_bar, out_dir=save)
+    list_systems = bool(systems)
     src = open_source(source)
     pages = src["pages"]
     npg = len(pages)
@@ -1966,6 +2303,9 @@ def sheet_pages(source, page=None, rows=None, zoom=2.0, max_width=1400, marks=Tr
     res["page_systems"] = plist
     if src["notes"]:
         res["notes"] = src["notes"][:4]
+    if list_systems or crop is not None or bars is not None:
+        return _pages_frame(res, lay, plist, source, p, npg, rows, crop, bars, frame, list_systems, save, max_width,
+                            marks, steps, T0)
     idx, mode = _parse_rows(rows, n)
     T1 = time.time()
     if not n or mode == "page":
@@ -2121,11 +2461,24 @@ def _journal_record(project, entry):
 
 
 def sheet_import(abc=None, musicxml=None, project=None, channel=None, output_mid=None, title=None, strict=False,
-                 reference_audio=None, dry_run=False, force=False, pages=None, place_at_bar=1, set_tempo=None,
-                 clone_from=None, full=False):
+                 reference_audio=None, dry_run=False, force=False, pages=None, place_at_bar=None, set_tempo=None,
+                 clone_from=None, full=False, score=None, parts=None):
     """See the tool description."""
     T0 = time.time(); steps = {}
-    score, src = load_score(abc, musicxml)
+    if isinstance(parts, str):
+        parts = [p.strip() for p in parts.split(",") if p.strip()]
+    score_, src = load_score(abc, musicxml, score, parts=parts)
+    left_out = []
+    sinfo = getattr(score_, "score_info", None)
+    if sinfo and parts is None and isinstance(channel, dict):
+        mapped = [p for p in sinfo["parts"] if p in channel or p.lower() in channel]
+        left_out = [p for p in sinfo["parts"] if p not in mapped]
+        if mapped and left_out:                        # parts without a channel are not read or checked
+            score_, src = load_score(score=score, parts=mapped)
+            sinfo = score_.score_info
+        else:
+            left_out = []
+    score = score_
     steps["parse"] = round(time.time() - T0, 3)
     T1 = time.time()
     issues = _validate(score, strict)
@@ -2136,6 +2489,19 @@ def sheet_import(abc=None, musicxml=None, project=None, channel=None, output_mid
         summ["title"] = title
     res = {"source": src["type"] + (f" {os.path.basename(src['file'])}" if src.get("file") else " (inline text)"),
            "summary": summ}
+    if sinfo:
+        if pages is None and sinfo.get("pages"):
+            pages = sinfo["pages"]
+        if place_at_bar is None:
+            place_at_bar = max(1, sinfo["first_bar"])
+        res["score_data"] = _score_data_report(sinfo, place_at_bar, full)
+        rc = _range_check(score_, sinfo.get("part_info"))
+        if rc:
+            res["score_data"]["outside_instrument_range"] = rc
+        if left_out:
+            res["score_data"]["left_out"] = f"parts without a channel were not read: {left_out}"
+    elif place_at_bar is None:
+        place_at_bar = 1
     flags = None
     if reference_audio:
         T2 = time.time()
@@ -2164,6 +2530,9 @@ def sheet_import(abc=None, musicxml=None, project=None, channel=None, output_mid
                    next="look at those bars again (" + _call_hint("sheet_pages", {"source": "...", "page": 1,
                                                                                   "rows": 1}) +
                         "), fix the ABC/MusicXML and call again; force=true writes it anyway")
+        if sinfo:
+            res["next"] = ("look at those bars again (sheet_pages crop / rows+bars), fix them in the score data "
+                           "(beats 0-based in quarter notes) and call again; force=true writes it anyway")
         res["steps_s"] = {**steps, "total": round(time.time() - T0, 3)}
         return res
     if blocking:
@@ -2174,7 +2543,7 @@ def sheet_import(abc=None, musicxml=None, project=None, channel=None, output_mid
     if dry_run:
         res.update(written=False, dry_run=True)
         res["would_write"] = {k: v for k, v in plan.items() if v} or "nothing (give output_mid and/or project)"
-        if voices:
+        if voices and (full or not sinfo):
             res["inline"] = {v: ns_[:(400 if full else 24)] for v, ns_ in voices.items()}
             res["inline_format"] = "[bar, length_bars, pitch, velocity] in song bars" + \
                 ("" if full else " (first 24 per voice; full=true for all)")
@@ -2274,6 +2643,11 @@ def sheet_import(abc=None, musicxml=None, project=None, channel=None, output_mid
                  "title": ttl, "validation": summ.get("issues") or {}, "forced": bool(blocking),
                  "patterns": [p["pattern"] for p in pats], "bars": summ["bars"],
                  **({"audio_flags": [f["bar"] for f in flags]} if flags is not None else {})}
+        if sinfo:                                      # what a later composer / arranger call can build on
+            entry.update(score_bars=f"{sinfo['first_bar']}-{sinfo['last_bar']}", placed_at_bar=place_at_bar,
+                         sections=sinfo["sections"][:40],
+                         chords=" ".join(f"{b}{'' if not bt else '.' + _fmt_q(bt)}:{c}"
+                                         for b, bt, c in sinfo["chords"][:400]) or None)
         jr = _journal_record(project, entry)
         if jr is not True:
             notes.append(jr)
@@ -2299,7 +2673,9 @@ def sheet_import(abc=None, musicxml=None, project=None, channel=None, output_mid
 
 
 def _as_score(x):
-    """A reading: ABC text / .abc path, MusicXML text / path -> (score, label)."""
+    """A reading: ABC text / .abc path, MusicXML text / path, score data (dict / JSON / .json) -> (score, label)."""
+    if _is_score_data(x):
+        return load_score(score=x)[0], "score data"
     s = str(x).strip().strip('"')
     if _is_path(s, (".musicxml", ".xml", ".mxl")) or s.lstrip().startswith("<"):
         return load_score(musicxml=x)[0], "musicxml"
@@ -2332,6 +2708,12 @@ def sheet_diff(a, b, pattern=None, channel=None, voice=None, full=False):
     if all(isproj):
         raise ValueError("compare a reading (ABC/MusicXML) with a project part, or two readings; for two projects "
                          "use flp_diff")
+    if not any(isproj) and _is_score_data(a) and _is_score_data(b):
+        out = {"a": "score data", "b": "score data",
+               **_plain(_sn().diff_score_data(a, b, parts=[voice] if voice else None, max_bars=200 if full else 40)),
+               "format": "beat = 0-based quarter notes, as in the data; note@beat/length"}
+        out["took_s"] = round(time.time() - T0, 3)
+        return out
     if not any(isproj):
         sa, la = _as_score(a); sb, lb = _as_score(b)
         r = _sn().diff(sa, sb)
@@ -2389,6 +2771,83 @@ def sheet_diff(a, b, pattern=None, channel=None, voice=None, full=False):
             "notes_project": len(got), "same": not diff, "bars_differ": len(diff),
             "bars": diff[:(200 if full else 20)], "format": "note@beat (beat 1 = bar start, in quarter notes)",
             "took_s": round(time.time() - T0, 3)}
+
+
+def _dump_score(d):
+    """Score data as JSON with one bar per line (readable, diff-friendly)."""
+    head = {k: v for k, v in d.items() if k != "bars"}
+    lines = ["{"] + [f"  {json.dumps(k)}: {json.dumps(v, ensure_ascii=False)}," for k, v in head.items()]
+    bars = d.get("bars") or {}
+    lines.append('  "bars": {')
+    items = list(bars.items())
+    for i, (k, v) in enumerate(items):
+        lines.append(f"    {json.dumps(str(k))}: {json.dumps(v, ensure_ascii=False)}" + ("," if i < len(items) - 1
+                                                                                         else ""))
+    lines += ["  }", "}"]
+    return "\n".join(lines) + "\n"
+
+
+def sheet_merge(readings, output=None, prefer=None, check=True, full=False):
+    """See the tool description."""
+    T0 = time.time()
+    SN = _sn()
+    if isinstance(readings, (str, dict)):
+        r0 = readings
+        if isinstance(r0, str) and os.path.isdir(r0.strip().strip('"')):
+            d = r0.strip().strip('"')
+            readings = sorted((os.path.join(d, f) for f in os.listdir(d) if f.lower().endswith(".json")),
+                              key=_natural_key)
+            if output:
+                ob = os.path.basename(str(output))
+                readings = [x for x in readings if os.path.basename(x) != ob]
+        else:
+            readings = [r0]
+    if not readings:
+        raise ValueError("readings: a list of score-data readings (.json paths, JSON text or objects), or a folder "
+                         "of .json files")
+    merged, rep = SN.merge_score_data(readings, prefer=prefer)
+    res = {k: v for k, v in rep.items() if v not in (None, [], {})}
+    if not full and len(res.get("conflicts", [])) > 12:
+        res["conflicts_more"] = len(res["conflicts"]) - 12
+        res["conflicts"] = res["conflicts"][:12]
+    blocked = bool(rep["conflicts"]) and prefer is None
+    if check:
+        T1 = time.time()
+        try:
+            sc = SN.parse_score_data(merged)
+            iss = _validate(sc)
+            blk = [i for i in iss if SEV.get(str(i.get("severity", "med")).lower(), 2) >= 2]
+            res["check"] = {"issues": len(iss), "blocking": len(blk),
+                            "beat_check": sc.score_info["beat_check"]}
+            rr = _reread(iss, None, sc.score_info.get("pages"), 2)
+            if rr:
+                res["check"]["reread"] = rr[:(40 if full else 10)]
+        except ValueError as e:
+            res["check"] = {"error": str(e)}
+        res.setdefault("steps_s", {})["check"] = round(time.time() - T1, 3)
+    if output:
+        out = str(output).strip().strip('"')
+        if not out.lower().endswith(".json"):
+            raise ValueError("output must be a .json path")
+        if blocked:
+            res.update(written=False, why="readings disagree in the bars listed under 'conflicts': re-read those "
+                       "bars and fix one reading, or pass prefer=<index of the reading to trust> (0-based)")
+        else:
+            H["writable"](out)
+            os.makedirs(os.path.dirname(os.path.abspath(out)) or ".", exist_ok=True)
+            with open(out, "w", encoding="utf-8") as f:
+                f.write(_dump_score(merged))
+            res.update(written=True, output=out)
+            res["next"] = _call_hint("sheet_import", {"score": out, "dry_run": True})
+    else:
+        res["written"] = False
+        if full or len(json.dumps(merged)) < 6000:
+            res["merged"] = merged
+        else:
+            res["note"] = ("give output= (a .json path) to save the merged score (it's too big to show; full=true "
+                           "shows it)")
+    res.setdefault("steps_s", {})["total"] = round(time.time() - T0, 3)
+    return res
 
 
 def _plain(o, depth=0):
@@ -2499,9 +2958,9 @@ def explain_score(score, voices, isum):
     return say
 
 
-def sheet_explain(abc=None, musicxml=None):
+def sheet_explain(abc=None, musicxml=None, score=None):
     """See the tool description."""
-    score, _ = load_score(abc, musicxml)
+    score, _ = load_score(abc, musicxml, score)
     voices, isum = _inline(score)
     return {"explanation": explain_score(score, voices, isum), "summary": _score_summary(score, voices, isum),
             "naming": "C4 = middle C"}
@@ -2537,17 +2996,35 @@ def register(ns):
         "zoomed image per call (long systems cut into strips, left part on top) with red bar numbers above the "
         "detected bar lines (estimates), counts per system and the next call - so you read every system, none "
         "skipped. rows: a system number, a list, '2-4', 'all' (sharpness permitting) or 'page' (overview). zoom 2 = "
-        "16 px per staff space. Engraved (vector) PDFs, JBIG2/CCITT/JPEG 2000 scans: says how to get PNG/MusicXML.",
+        "16 px per staff space. Frame tools (coordinates in a page frame `frame` px wide, default 1000): "
+        "systems=true lists every system's box, staff lines and bar-line x (text, no image); rows=S + bars='3-5' "
+        "crops those bars of system S; crop=[x0, y0, x1, y1] crops any region (upscaled, sharp); save=<.png> also "
+        "writes the image. split=N plans N parallel readers (page ranges balanced by bars, a copy-paste brief each; "
+        "parts= the part names they must use). Engraved (vector) PDFs, JBIG2/CCITT/JPEG 2000 scans: says how to get "
+        "PNG/MusicXML (pages rendered to PNG work).",
         S(source=P(["string", "array"], "image/PDF path, folder of page images, or a list of image paths",
                    items={"type": "string"}),
           page=INT("page (default 1)", True),
           rows=P(["integer", "string", "array"], "system(s) to show: 2, [2, 3], '2-4', 'all', 'page'", True,
                  items={"type": "integer"}),
           zoom=NUM("default 2 (= 16 px per staff space)", True), max_width=INT("image width cap (default 1400)", True),
-          marks=BOOL("red bar-line ticks and numbers (default true)", True)))
+          marks=BOOL("red bar-line ticks and numbers (default true)", True),
+          crop=P("array", "[x0, y0, x1, y1] in the page frame", True, items={"type": "number"}),
+          bars=P(["integer", "string", "array"], "with rows=S: bars of that system, 3, '3-5' or [3, 5]", True,
+                 items={"type": "integer"}),
+          frame=NUM("width of the coordinate frame in px (default 1000)", True),
+          systems=BOOL("list systems/staves/bar lines in frame coordinates (no image)", True),
+          save=STR("also write the image to this .png (split: folder for the readers' .json)", True),
+          split=INT("plan this many parallel readers (page ranges + briefs)", True),
+          parts=P("array", "split: part names every reader uses", True, items={"type": "string"}),
+          first_bar=INT("split: number of the first bar on page 1 (default 1)", True)))
     T["sheet_import"] = (
-        _tool(sheet_import), "Sheet music into FL: give the reading as abc (ABC text or .abc) or musicxml (.musicxml/"
-        ".xml/.mxl or the XML text). Parses and validates exactly (bar lengths, ties, tuplets, ranges, voices): "
+        _tool(sheet_import), "Sheet music into FL: give the reading as abc (ABC text or .abc), musicxml (.musicxml/"
+        ".xml/.mxl or the XML text) or score (per-bar score data, flh-score/1: {meter, key, tempo, bars: {\"9\": "
+        "{chord, mel: [[beat, length, 'Bb4'], ...], parts: {name: [...]}}}} - beats 0-based in quarter notes, length "
+        "0 = grace note, 'tie' as a 4th item; docs/sheet_music.md). Score data lands at its own bar numbers "
+        "(place_at_bar default = its first bar); channel={part: index} maps parts (unmapped parts are not read); "
+        "parts= reads only those. Parses and validates exactly (bar lengths, ties, tuplets, ranges, voices): "
         "issues of severity med+ (strict: any) block the write and come back as a re-read list per bar (with page/"
         "system when `pages` [{page, system, first_bar}] is given); force=true writes anyway. Writes output_mid "
         "and/or one named pattern per voice into project (channel: index, list, {voice: index} or 'new'; ONE "
@@ -2564,22 +3041,51 @@ def register(ns):
           dry_run=BOOL("check only, write nothing", True), force=BOOL("write despite blocking issues", True),
           pages=P("array", "[{page, system, first_bar}] so re-read hints name the system", True,
                   items={"type": "object"}),
-          place_at_bar=NUM("playlist bar for the new patterns (default 1; 0 = don't place)", True),
+          place_at_bar=NUM("playlist bar for the new patterns (default 1, score data: its first bar; 0 = don't "
+                           "place)", True),
           set_tempo=BOOL("set the project's tempo/meter from the score (default: only if it has no notes)", True),
           clone_from=INT("channel='new' copies this channel (default the first)", True),
-          full=BOOL("all issues / inline notes", True)))
+          full=BOOL("all issues / inline notes (score data: + the generated ABC)", True),
+          score=P(["object", "string"], "per-bar score data: object, JSON text or a .json file", True),
+          parts=P(["array", "string"], "score data: only these parts", True, items={"type": "string"})))
     T["sheet_diff"] = (
-        _tool(sheet_diff), "Compare two readings of the same music (ABC/MusicXML text or files) - or a reading with a "
-        "project part (a .flp + pattern [+ channel]): the bars that differ, note by note. For re-checks after "
-        "re-reading a system.",
-        S(a=STR("reading (ABC/MusicXML) or .flp"), b=STR("reading (ABC/MusicXML) or .flp"),
+        _tool(sheet_diff), "Compare two readings of the same music (ABC/MusicXML text or files, or per-bar score data: "
+        "bar by bar and part by part, e.g. two readers' versions of the same page) - or a reading with a project part "
+        "(a .flp + pattern [+ channel]): the bars that differ, note by note. For re-checks after re-reading a system.",
+        S(a=P(["string", "object"], "reading (ABC/MusicXML/score data) or .flp"),
+          b=P(["string", "object"], "reading (ABC/MusicXML/score data) or .flp"),
           pattern=P(["integer", "string"], "project pattern (name or id)", True), channel=INT("project channel", True),
-          voice=STR("compare only this voice of the reading", True), full=BOOL("all differing bars", True)))
+          voice=STR("compare only this voice / part of the reading", True), full=BOOL("all differing bars", True)))
+    T["sheet_merge"] = (
+        _tool(sheet_merge), "Join per-bar score-data readings (one per page range from parallel readers, or one per "
+        "instrument group) into one: bars only one reading has are taken, parts only one reading has are joined, a "
+        "part two readings both have must agree (else a conflict with the differing notes; prefer=<0-based index> "
+        "settles it). Reports overlaps, missing bars, header (meter/key/tempo) and part-name mismatches, then checks "
+        "the merged score like sheet_import (blocking issues + re-read list). output=<.json> writes it (one bar per "
+        "line) unless conflicts are unresolved.",
+        S(readings=P(["array", "string"], "list of .json paths / JSON texts / objects, or a folder of .json files",
+                     items={}),
+          output=STR("write the merged score data here (.json, inside FLH_ROOTS)", True),
+          prefer=P(["integer", "string"], "reading to trust on conflicts: index, 'first' or 'last'", True),
+          check=BOOL("validate the merged score (default true)", True),
+          full=BOOL("all conflicts / re-read bars; show the merged data", True)))
     T["sheet_explain"] = (
         _tool(sheet_explain), "A piece of sheet music in plain words, for learners and anyone who can't read notation: "
         "key, meter and what it means, tempo, pickup, repeats and endings, D.C./D.S./Coda, range of each part.",
-        S(abc=STR("ABC text or a .abc file", True), musicxml=STR(".musicxml/.xml/.mxl or MusicXML text", True)))
+        S(abc=STR("ABC text or a .abc file", True), musicxml=STR(".musicxml/.xml/.mxl or MusicXML text", True),
+          score=P(["object", "string"], "per-bar score data (object, JSON or .json)", True)))
     if "TOOL_GROUPS" in ns:
-        for t in ("sheet_pages", "sheet_import", "sheet_diff", "sheet_explain"):
+        for t in ("sheet_pages", "sheet_import", "sheet_diff", "sheet_explain", "sheet_merge"):
             ns["TOOL_GROUPS"][t] = "sheet"
+    # the essential listing of sheet_import names the score-data input too (tables live in the server)
+    ep = ns.get("ESSENTIAL_PARAMS")
+    if isinstance(ep, dict) and isinstance(ep.get("sheet_import"), list) and "score" not in ep["sheet_import"]:
+        ep["sheet_import"] = ep["sheet_import"] + ["score"]
+    sp = ns.get("SHORT_PARAMS")
+    if isinstance(sp, dict) and isinstance(sp.get("sheet_import"), dict):
+        sp["sheet_import"].setdefault("score", "per-bar JSON reading (docs/sheet_music.md)")
+    sd = ns.get("SHORT_DESC")
+    if isinstance(sd, dict) and "sheet_import" in sd:
+        sd["sheet_import"] = ("Sheet music -> FL: read pages with sheet_pages, write ABC/MusicXML or per-bar score "
+                              "data (score=); every bar is checked (re-read list), then MIDI / one pattern per voice.")
     ns["sheet_compare_audio"] = compare_audio
