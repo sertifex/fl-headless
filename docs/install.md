@@ -76,16 +76,71 @@ details, for reference:
 
 FL's live tools need one MIDI input that runs fl-headless's script. Pick one:
 
-- **loopMIDI** ([free download](https://www.tobias-erichsen.de/software/loopmidi.html)): create two ports named
-  exactly `Flapi Request` and `Flapi Response`. In FL, *Options > MIDI
-  settings*: under *Input* select `Flapi Request`, enable it, set *Controller type* to `fl-headless` and give it a
-  port number; under *Output* give `Flapi Response` the same port number.
+- **loopMIDI** (works on Windows 10 and 11). Step by step below.
 - **Windows 11 without extra apps:** create the default loopback in the Windows *MIDI Settings* app, then ask Claude
   to *"run fl_bridge_setup use_loopback"*. It sets FL's MIDI settings for you; with FL open it asks before
   restarting FL once (`restart_fl=true`).
 - **No extra app at all, with a MIDI keyboard:** ask Claude to *"run fl_bridge_setup use_input"* with your
   keyboard's name. FL runs the bridge script on the keyboard's input (its notes still play) and everything goes
   through a file mailbox; `undo_input` puts the keyboard's old setting back.
+
+#### loopMIDI, step by step
+
+loopMIDI makes two virtual MIDI cables. One carries Claude's requests **into** FL, the other carries FL's answers
+**back** to Claude. The names say which way they go:
+
+| Port name | Direction | Where it goes in FL's MIDI settings |
+|---|---|---|
+| `Flapi Request` | Claude -> FL | **Input** list (FL *receives* requests) |
+| `Flapi Response` | FL -> Claude | **Output** list (FL *sends* answers) |
+
+The most common mistake is swapping them. Request goes in Input, Response goes in Output.
+
+**1. Make the two ports in loopMIDI**
+
+1. Download loopMIDI from [tobias-erichsen.de](https://www.tobias-erichsen.de/software/loopmidi.html), install it
+   and open it.
+2. In the *New port-name* box at the bottom, type `Flapi Request` exactly (capital F and R, one space) and click
+   **+**.
+3. Type `Flapi Response` and click **+** again. Both now show in the list.
+4. So the ports exist every time you start your PC: right-click loopMIDI's icon in the taskbar tray and tick
+   **Autostart loopMIDI**. loopMIDI has to be running *before* FL starts.
+
+**2. Install fl-headless's FL script**
+
+Ask Claude *"I'm new to fl-headless - set me up"*. It copies the script into FL's settings, so FL lists
+`fl-headless` as a controller type. Restart FL after this step, or FL won't see the new ports or the script.
+
+**3. Set FL's MIDI settings** (*Options > MIDI settings*, or F10)
+
+Output (top list):
+
+1. Click `Flapi Response`.
+2. Set its **Port** number to a free number, for example `10`. Don't use one your keyboard or controller already
+   uses.
+
+Input (bottom list):
+
+1. Click `Flapi Request`.
+2. Turn on **Enable** (the switch lights up).
+3. Set **Controller type** to `fl-headless`.
+4. Set **Port** to the **same number** as the output (`10` in this example).
+
+Leave `Flapi Response` *disabled* in the Input list, and don't pick a controller type for it.
+
+**4. Check it**
+
+Ask Claude *"check the FL connection"* (`fl_bridge_setup status`). It should say FL answers.
+
+**If it doesn't work**
+
+| What you see | What to do |
+|---|---|
+| The Flapi ports aren't in FL's lists | Start loopMIDI first, then restart FL. |
+| `fl-headless` isn't in *Controller type* | Run "set me up" again, then restart FL. |
+| "no bridge MIDI ports" / FL doesn't answer | Check that Request is the enabled **input** with controller type `fl-headless`, Response is the **output**, and both have the same port number. |
+| It worked, then stopped after a reboot | loopMIDI wasn't running when FL started: tick Autostart (step 1.4) and restart FL. |
+| Two different port names | Spelling matters: `Flapi Request` / `Flapi Response`. To use other names, set `FLH_PORT_OUT` (into FL) and `FLH_PORT_IN` (out of FL); see *Manual config* below. |
 
 ### Manual config (Option B)
 
@@ -99,7 +154,7 @@ FL's live tools need one MIDI input that runs fl-headless's script. Pick one:
 }
 ```
 
-(Without the launcher, point `args` at `fl_headless_mcp.py`.) Optional `env` settings:
+(Without the launcher, point `args` at `src\fl_headless_mcp.py`.) Optional `env` settings:
 
 | Setting | What it does |
 |---|---|

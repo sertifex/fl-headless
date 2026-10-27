@@ -143,7 +143,7 @@ SCRIPT = os.path.join(DOCS, "Settings", "Hardware", "fl-headless", "device_flhea
 def setup_install():
     E.build_fl_install()
     os.makedirs(os.path.dirname(SCRIPT), exist_ok=True)
-    shutil.copy(os.path.join(E.REPO, "fl_script", "device_flheadless.py"), SCRIPT)
+    shutil.copy(os.path.join(E.REPO, "src", "fl_script", "device_flheadless.py"), SCRIPT)
     os.makedirs(os.path.join(DOCS, "Settings", "Piano roll scripts"), exist_ok=True)
 
 

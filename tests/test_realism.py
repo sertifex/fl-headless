@@ -5,7 +5,7 @@ sit under the right notes, named playlist tracks, piano and the user's own autom
 dry run, one batch, re-run idempotent, re-run after edits, undo, channel/section subsets, fallback, conflicts,
 realism_expression_ops, the main file's channel automation targets, and robustness on the corpus."""
 import glob, json, os, re, shutil, struct, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702
 import fl_headless_mcp as m  # noqa: E402

@@ -1,6 +1,6 @@
 """If FL shows no sign of loading after a direct reopen, reload falls back to blank template -> project."""
 import os, sys, tempfile
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 import fl_headless_mcp as m
 tmp = tempfile.mkdtemp(); proj = os.path.join(tmp, "song.flp"); blank = os.path.join(tmp, "blank.flp")
 for f in (proj, blank):

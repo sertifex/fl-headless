@@ -20,7 +20,7 @@ the song's end, pitched parts in the key; plus one regression per bug fixed in t
   - flp_extend_ending on a project with a corrupt far note (tick 2^31) ate GBs (now refused like flp_perform does)
 Deterministic; keep it under ~60 s. Run: python3 tests/test_bughunt_music.py"""
 import collections, json, os, random, re, shutil, struct, sys, tempfile, wave
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); roots = os.path.join(tmp, "roots"); os.makedirs(roots)
 os.environ["FLH_ROOTS"] = roots; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "appdata")
 os.environ["FLH_FL_USERDATA"] = os.path.join(tmp, "docs"); os.environ["FLH_FACTORY_PACKS"] = os.path.join(tmp, "packs")

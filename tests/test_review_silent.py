@@ -2,7 +2,7 @@
 parameter names, any plugin) and abrupt_entrance without false positives on struck chords out of a decaying tail
 (synthetic audio). Run: python3 tests/test_review_silent.py"""
 import json, os, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 lib = os.path.join(tmp, "lib"); os.environ["FLH_SPLICE_LIB"] = lib
 import numpy as np  # noqa: E402

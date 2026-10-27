@@ -1,7 +1,7 @@
 """flh_catalog: sound catalog (build, cache, ranking, trial), fl_ab (copy/open/toggle/back, edited [B] kept),
 fl_watchdog (healthy / broken / heal) and on_tool_error. Run: python3 tests/test_catalog.py (no FL needed)."""
 import os, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 roots = os.path.join(tmp, "roots"); os.makedirs(roots)
 os.environ["FLH_ROOTS"] = roots; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")

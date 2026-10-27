@@ -1,7 +1,7 @@
 """Regression tests for bugs found in the bug hunt of the fast-grown modules (each test names the bug it pins).
 Run: python3 tests/test_bughunt.py (no FL needed)."""
 import json, os, shutil, sys, tempfile, threading
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_bughunt_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 import fl_headless_mcp as m  # noqa: E402

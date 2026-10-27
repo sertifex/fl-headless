@@ -10,7 +10,7 @@ import threading
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 TMP = tempfile.mkdtemp(prefix="flh_a2_")
 R = os.path.join(TMP, "root"); os.makedirs(R)
 os.environ["FLH_ROOTS"] = R

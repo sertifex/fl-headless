@@ -3,7 +3,7 @@ good backup restored, said once in the next tool result); job ids come from a lo
 once never share an id); a hats-only drum part has no measurable fill (None, not 0).
 Run: python3 tests/test_core_state_jobs.py"""
 import json, os, sys, tempfile, threading, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_statejobs_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 import fl_headless_mcp as m  # noqa: E402

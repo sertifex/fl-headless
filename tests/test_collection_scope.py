@@ -5,7 +5,7 @@ active collection unless collection= says otherwise (journal + the profile's son
 real / instrument-led' style never turns a new synthwave song's ear candy organic; organic moves only use instruments the
 song has (no 'Piano Pickup' on a synth chords channel). Run: python3 tests/test_collection_scope.py"""
 import json, os, shutil, struct, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702
 roots = os.path.join(tmp, "roots"); os.makedirs(roots)

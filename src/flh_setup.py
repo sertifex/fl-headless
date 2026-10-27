@@ -198,15 +198,52 @@ def _midi_check():
 
 
 def _fl_midi_script_assigned():
-    """FL MIDI inputs that load the fl-headless script (from FL's settings), newest FL version's key."""
+    """FL MIDI inputs that load the fl-headless script (from FL's settings), newest FL version's key, plus the port
+    numbers FL gave its MIDI outputs (to check the loopMIDI pair: Request = input, Response = output, same number)."""
     fk = H["_fl_key"]()
     d = H["_reg_dump"](fk + "\\Devices")
-    out = []
+    out, outputs = [], {}
     for k, vals in d.items():
         if "\\MIDI input\\" in k and str((vals.get("ScriptFolder") or [None, ""])[1]).lower() == "fl-headless":
             out.append({"port": k.rsplit("\\", 1)[-1], "enabled": str((vals.get("Enabled") or [None, ""])[1]) == "1",
                         "port_number": (vals.get("Port") or [None, None])[1]})
-    return {"fl_settings_key": fk, "inputs": out}
+        elif "\\MIDI output\\" in k:
+            outputs[k.rsplit("\\", 1)[-1]] = (vals.get("Port") or [None, None])[1]
+    return {"fl_settings_key": fk, "inputs": out, "outputs": outputs}
+
+
+LOOPMIDI_FL_STEPS = ("In FL, open Options > MIDI settings (F10). 1) Output list (top): click 'Flapi Response' and set "
+                     "its Port number to a free number, e.g. 10. 2) Input list (bottom): click 'Flapi Request', turn "
+                     "on Enable, set Controller type to 'fl-headless' and set Port to the same number (10). Request is "
+                     "the input, Response is the output. Step by step: docs/install.md, 'loopMIDI, step by step'.")
+
+
+def _loopmidi_fl_problem(assigned):
+    """What's wrong with FL's settings for the loopMIDI pair, as (machine text, user text), or None when they look
+    right (or can't be read). Pure: tests feed it _fl_midi_script_assigned()-shaped dicts."""
+    if not isinstance(assigned, dict) or "error" in assigned:
+        return None
+    ins = assigned.get("inputs") or []
+    req = [i for i in ins if i.get("port") == "Flapi Request"]
+    if any(i.get("port") == "Flapi Response" for i in ins) and not any(i.get("enabled") for i in req):
+        return ("the loopMIDI ports are swapped in FL: the script is on the input 'Flapi Response'; it must be on "
+                "'Flapi Request' (Response is FL's output)",
+                "The two ports are swapped in FL. Request is the input, Response is the output. " + LOOPMIDI_FL_STEPS)
+    if not any(i.get("enabled") for i in req):
+        if not [i for i in ins if i.get("enabled")]:                 # (a script on another enabled input works too)
+            return ("in FL: Options > MIDI settings > Input: select 'Flapi Request', enable it, set Controller type "
+                    "to 'fl-headless' and a port number; give Output 'Flapi Response' the same port number",
+                    LOOPMIDI_FL_STEPS)
+        return None
+    num = next((i.get("port_number") for i in req if i.get("enabled")), None)
+    outs = assigned.get("outputs") or {}
+    out = outs.get("Flapi Response")
+    if num is not None and "Flapi Response" in outs and str(out) != str(num):   # (no entry: FL's not telling - quiet)
+        return (f"in FL the port numbers don't match: input 'Flapi Request' is on port {num}, output 'Flapi Response' "
+                f"is on {out if out not in (None, "") else 'no port'} - give the output the same number",
+                f"Almost there: in FL's MIDI settings give the output 'Flapi Response' the same Port number as the "
+                f"input 'Flapi Request' ({num}).")
+    return None
 
 
 def _ext():
@@ -257,6 +294,27 @@ def _script_stale():
                 out.append(path)
         except (OSError, KeyError, TypeError):
             continue
+    return out
+
+
+def _old_layout_leftovers(code_dir=None):
+    """Files an update by unzipping over an older install (before 2.2.1, the code sat at the top of the folder) left
+    behind next to src/: [names]. They're never loaded (the launcher starts src/), so they're safe to delete."""
+    code = code_dir or os.path.dirname(os.path.abspath(__file__))
+    if os.path.basename(os.path.normpath(code)).lower() != "src":
+        return []
+    top = os.path.dirname(os.path.normpath(code))
+    out = []
+    try:
+        for n in sorted(os.listdir(top)):
+            p = os.path.join(top, n)
+            if os.path.isfile(p) and n.endswith(".py") and n != "fl_headless_launch.py" and n != "install.py" and \
+                    os.path.isfile(os.path.join(code, n)):
+                out.append(n)
+            elif os.path.isdir(p) and n in ("data", "fl_script") and os.path.isdir(os.path.join(code, n)):
+                out.append(n + "/")
+    except OSError:
+        return []
     return out
 
 
@@ -315,8 +373,10 @@ def _connect(restart_fl=None):
                       " - or plug in a MIDI keyboard") + ". Then say 'set me up' again. Song files work without it."}
 
 
-LOOPMIDI_CLICK = ("In FL: Options > MIDI settings > Input: pick 'Flapi Request', enable it, set Controller type to "
-                  "'fl-headless' and a port number; give Output 'Flapi Response' the same number")
+LOOPMIDI_CLICK = ("In FL, open Options > MIDI settings (F10). 1) Output list (top): click 'Flapi Response' and set "
+                  "its Port number to a free number, e.g. 10. 2) Input list (bottom): click 'Flapi Request', turn on "
+                  "Enable, set Controller type to 'fl-headless' and set Port to the same number (10). Request is the "
+                  "input, Response is the output.")
 
 
 def _user_data_report():
@@ -436,6 +496,12 @@ def check():
     win = _win(); nxt = []; ext = _ext()
     rep = {"fl_headless": H["SERVER"]["version"], "platform": sys.platform, "python": sys.version.split()[0],
            "installed_as": "claude_extension" if ext else "manual"}
+    left = _try(_old_layout_leftovers, [])
+    if left:                                                 # an unzip over a pre-2.2.1 folder: tidy, not a problem
+        rep["old_files"] = {"in": os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "names": left,
+                            "say": "Your fl-headless folder still has the old copies of its files from before 2.2.1 "
+                                   f"({len(left)} items next to the 'src' folder). They aren't used any more and are "
+                                   "safe to delete: " + ", ".join(left[:6]) + (" ..." if len(left) > 6 else "")}
     S = {i + 1: {"n": i + 1, "step": name, "status": "done", "say": ""} for i, name in enumerate(STEP_NAMES)}
 
     def need(i, machine, user=None, do=None, auto=False):
@@ -586,9 +652,11 @@ def check():
                         "fl_bridge_setup(action='use_loopback') - it sets FL's MIDI settings and restarts FL once",
                      "Say OK and I'll connect to FL (FL restarts once)", do="fl_bridge_setup(action='use_loopback')")
             elif midi.get("loopmidi_installed"):
-                need(3, "loopMIDI is installed but its ports are missing: open loopMIDI and add two ports named exactly "
-                        "'Flapi Request' and 'Flapi Response' (it remembers them)",
-                     "Open loopMIDI and add two ports named exactly 'Flapi Request' and 'Flapi Response'")
+                need(3, "loopMIDI is installed but its ports are missing (or it isn't running): open loopMIDI and add two "
+                        "ports named exactly 'Flapi Request' and 'Flapi Response' (type each name, click +); tick "
+                        "Autostart in its tray menu; then restart FL so it sees them",
+                     "Open loopMIDI and add two ports: type 'Flapi Request' and click +, then 'Flapi Response' and "
+                     "click +. Right-click loopMIDI's tray icon and tick Autostart. Then restart FL and tell me.")
             elif midi.get("windows_midi_services"):
                 need(3, "Windows MIDI Services is installed: open its MIDI Settings app, create the default loopback "
                         "endpoints, then run fl_bridge_setup(action='use_loopback')",
@@ -610,6 +678,10 @@ def check():
                                  "installer)", SAY_GO, "fl_bridge_setup(action='update_script')", True))
         assigned = _try(_fl_midi_script_assigned)
         rep["fl_script"]["midi_inputs"] = assigned
+        if isinstance(midi, dict) and midi.get("loopmidi_ports") and not on_input:
+            prob = _loopmidi_fl_problem(assigned)
+            if prob:
+                bridge_steps.append((prob[0], prob[1], None, False))
         if isinstance(assigned, dict) and "error" not in assigned and not [i for i in assigned["inputs"] if i["enabled"]]:
             loop_ = midi.get("windows_loopback_ports") if isinstance(midi, dict) else None
             if loop_ and not midi.get("loopmidi_ports") and not on_input:
@@ -623,13 +695,6 @@ def check():
                     bridge_steps.append((f"FL's MIDI settings don't load the script on '{loop_[0]}' yet: "
                                          "flh_setup(action='apply') sets them (FL is closed)", SAY_GO,
                                          "flh_setup(action='apply')", True))
-            if isinstance(midi, dict) and midi.get("loopmidi_ports"):
-                bridge_steps.append(("in FL: Options > MIDI settings > Input: select 'Flapi Request', enable it, set "
-                                     "Controller type to 'fl-headless' and a port number; give Output 'Flapi Response' "
-                                     "the same port number",
-                                     "In FL: Options > MIDI settings > Input: pick 'Flapi Request', enable it, set "
-                                     "Controller type to 'fl-headless' and a port number; give Output 'Flapi "
-                                     "Response' the same number", None, False))
         answers = False
         if rep["fl"].get("running"):
             st = _try(lambda: H["fl_bridge_setup"]("status"))

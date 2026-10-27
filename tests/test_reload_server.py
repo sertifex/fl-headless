@@ -1,7 +1,7 @@
 """flh_reload swaps in code from disk, keeps BRIDGE/JOBS, and the dispatcher serves the new code."""
 import os, sys, shutil, tempfile, json, io
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
-tmp = tempfile.mkdtemp(); src = os.path.join(os.path.dirname(HERE), "fl_headless_mcp.py")
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
+tmp = tempfile.mkdtemp(); src = os.path.join(os.path.dirname(HERE), "src", "fl_headless_mcp.py")
 copy = os.path.join(tmp, "fl_headless_mcp.py"); shutil.copy(src, copy)
 import importlib.util
 spec = importlib.util.spec_from_file_location("flh_main", copy); m = importlib.util.module_from_spec(spec)

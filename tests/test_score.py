@@ -2,7 +2,7 @@
 chord, bass vs chord, mud, ranges, crossing, jazz tolerance), entrances; on note lists, a MIDI file and .flp files
 written with the server's own writers."""
 import json, os, re, shutil, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702  (leave no temp files behind)
 import fl_headless_mcp as m  # noqa: E402

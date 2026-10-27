@@ -8,7 +8,7 @@ flp_adjust in 3/4 (transitions a beat of the meter, 3-beat fills and generated d
 map (4/4 then 3/4: material mismatch said, the time-signature marker moves with an extend); a faint pad layer joins a
 lofi beat block and the arrangement; _fresh on a stale project says why FL wasn't asked to save."""
 import hashlib, json, os, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "appdata")
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702  (leave no temp files behind)
 import fl_headless_mcp as m  # noqa: E402

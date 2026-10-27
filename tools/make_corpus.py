@@ -922,7 +922,7 @@ def corpus_files(m, tmp, heavy=False):
 def _import_server(roots):
     os.environ.setdefault("FLH_ROOTS", roots)
     os.environ.setdefault("LOCALAPPDATA", tempfile.mkdtemp())
-    sys.path.insert(0, REPO)
+    sys.path.insert(0, os.path.join(REPO, "src"))
     import fl_headless_mcp as m                                    # noqa: E402
     return m
 

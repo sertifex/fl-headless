@@ -5,7 +5,7 @@ files only in the song folder, project writing through the server's writers (sam
 journal) on tests/corpus/base.flp, a new song through flh_new_song (mocked to a base.flp copy), the open-project
 guard registration. Run: python3 tests/test_flip.py (no FL needed)."""
 import json, os, re, shutil, struct, sys, tempfile, wave
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 roots = os.path.join(tmp, "roots"); os.makedirs(roots)
 os.environ["FLH_ROOTS"] = roots; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")

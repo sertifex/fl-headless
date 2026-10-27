@@ -1,6 +1,6 @@
 """1.15 core: instant jobs + progress, preemptible verify, previous-edit check, step timings, extension loader."""
 import os, sys, tempfile, threading, time
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp
 import fl_headless_mcp as m  # noqa: E402
 

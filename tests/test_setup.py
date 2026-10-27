@@ -1,7 +1,7 @@
 """flh_setup (check / apply, neutral profile, edition storage) and flh_run (order, $prev, stop_on_error,
 no recursion, compaction) and the Windows-only guard. Run: python3 tests/test_setup.py (no FL needed)."""
 import json, os, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 for k in ("FLH_FL_EDITION", "FLH_FL_EXE", "FL_EXE"):
@@ -9,7 +9,7 @@ for k in ("FLH_FL_EDITION", "FLH_FL_EXE", "FL_EXE"):
 import fl_headless_mcp as m  # noqa: E402
 T = m.TOOLS
 assert "flh_setup" in T and "flh_run" in T, sorted(T)[:5]
-assert m.SERVER["version"] == "2.2.0"
+assert m.SERVER["version"] == "2.2.1"
 
 # ---- check: a fresh PC
 r = T["flh_setup"][0]()

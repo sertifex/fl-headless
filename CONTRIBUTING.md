@@ -16,19 +16,19 @@ Much of fl-headless's knowledge is data, not code, so you can extend it without 
 
 | Folder | What it holds |
 |---|---|
-| `data/genres/` | Genre grammars: tempo, keys, progressions, form, drum patterns, sound roles, mix hints |
-| `data/templates/` | What `flh_new_song` builds per genre (tempo, key, kit, channels and their sounds) |
-| `data/kits/` | Drum kit styles |
-| `data/mixeng/`, `data/vocal/` | Mix-engineer genre targets and intents; vocal chains per style, comp and balance rules |
-| `data/plugin_maps/` | Stock plugin controls with real units (send maps you learned with `fl_plugin_map_learn`) |
-| `data/recipes/` | One-call workflows |
-| `data/access/` | Plain-language glossary, description wording, hearing rules, FL keyboard shortcuts |
-| `data/handbook/cards/` | Knowledge cards: shortcuts, menus, plugins, workflows (mark unconfirmed facts `verify`) |
-| `data/handbook/quirks.json` | FL quirks and the versions they were seen on |
-| `data/adjectives.json`, `data/instrument_ranges.json`, `data/platforms.json` | Plain-English adjustments, instrument ranges, streaming loudness |
+| `src/data/genres/` | Genre grammars: tempo, keys, progressions, form, drum patterns, sound roles, mix hints |
+| `src/data/templates/` | What `flh_new_song` builds per genre (tempo, key, kit, channels and their sounds) |
+| `src/data/kits/` | Drum kit styles |
+| `src/data/mixeng/`, `src/data/vocal/` | Mix-engineer genre targets and intents; vocal chains per style, comp and balance rules |
+| `src/data/plugin_maps/` | Stock plugin controls with real units (send maps you learned with `fl_plugin_map_learn`) |
+| `src/data/recipes/` | One-call workflows |
+| `src/data/access/` | Plain-language glossary, description wording, hearing rules, FL keyboard shortcuts |
+| `src/data/handbook/cards/` | Knowledge cards: shortcuts, menus, plugins, workflows (mark unconfirmed facts `verify`) |
+| `src/data/handbook/quirks.json` | FL quirks and the versions they were seen on |
+| `src/data/adjectives.json`, `src/data/instrument_ranges.json`, `src/data/platforms.json` | Plain-English adjustments, instrument ranges, streaming loudness |
 
 Your own genres, templates, kits and recipes can also live in `%LOCALAPPDATA%\fl-headless\` (`genres\`,
 `templates\`, `kits\`, `recipes\`); a file there with the same name as a shipped one wins. If you make something
-others would enjoy, send it as a pull request into `data/`.
+others would enjoy, send it as a pull request into `src/data/`.
 
 Keep everything universal: no personal names, paths, songs or taste in code, defaults or examples.

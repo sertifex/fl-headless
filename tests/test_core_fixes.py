@@ -3,7 +3,7 @@ load, per-project backups, flp_edit output safety, name validation, one FL / no 
 dispatcher hygiene (NaN, numpy, hooks, compact JSON, bad JSON lines), snapshot alt text, sample name clashes,
 render names, reply parsing, schemas. Linux, no FL. Run: python3 tests/test_core_fixes.py"""
 import io, json, math, os, shutil, struct, subprocess, sys, tempfile, threading, time
-HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE); sys.path.insert(0, ROOT)
+HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE); sys.path.insert(0, os.path.join(ROOT, "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = os.path.join(tmp, "root") + " ; " + '"' + os.path.join(tmp, "root2") + '"'
 os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
@@ -79,7 +79,7 @@ def bump(k):
 ths = [threading.Thread(target=bump, args=(f"t{k}",)) for k in range(4)]
 code = ("import os,sys; sys.path.insert(0, %r); os.environ['FLH_ROOTS']=%r; os.environ['LOCALAPPDATA']=%r\n"
         "import fl_headless_mcp as m\nfor i in range(60): m._state({'proc_%%d' %% (i %% 3): i})\n") % (
-    ROOT, R, os.environ["LOCALAPPDATA"])
+    os.path.join(ROOT, "src"), R, os.environ["LOCALAPPDATA"])
 procs = [subprocess.Popen([sys.executable, "-c", code]) for _ in range(2)]
 [t.start() for t in ths]; [t.join() for t in ths]; [pr.wait() for pr in procs]
 st = m._state()
@@ -167,7 +167,7 @@ def _shell(path):
 m._recycle_shell = _shell
 assert m.files_recycle([deep])["recycled"] == [deep] and not os.path.exists(deep)
 m.IS_WINDOWS = False
-assert "powershell" not in open(os.path.join(ROOT, "fl_headless_mcp.py"), encoding="utf-8").read().split(
+assert "powershell" not in open(os.path.join(ROOT, "src", "fl_headless_mcp.py"), encoding="utf-8").read().split(
     "def files_recycle")[1].split("\ndef ")[0].lower()
 print("recycle ok")
 

@@ -1,7 +1,7 @@
 """The INSTRUMENT donor for flp_instrument_sound is a Splice INSTRUMENT state, never a Spitfire BBC SO / LABS one
 (their states hold a META too). PC 2026-10-24 newsong.instrument_convert: a saved 'BBC Celli' was copied, silent."""
 import os, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_donor_"); os.environ["FLH_ROOTS"] = tmp
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702
 import fl_headless_mcp as m  # noqa: E402

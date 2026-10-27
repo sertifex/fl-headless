@@ -2,7 +2,7 @@
 After Ctrl+O only FL's Open dialog is used: a never-saved project's Save As (or any other box) gets Esc and a refusal,
 so a path is never typed into Save As."""
 import os, sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 import fl_headless_mcp as m
 
 pressed, dialogs = [], [{"hwnd": 7, "title": "Confirm", "class": "TMsgForm", "kind": "save_changes", "texts": ["Confirm"]}]

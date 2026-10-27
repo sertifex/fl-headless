@@ -1,6 +1,6 @@
 """Writers aimed at the project open in FL go through _with_open_project; others run directly."""
 import os, sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 import fl_headless_mcp as m
 seen = []
 m._with_open_project = lambda project, output, fn: (seen.append(output), fn())[1]

@@ -6,7 +6,7 @@ without paths / song / user names (fake identities) and without pictures unless 
 nothing, stop between steps, status / report, and a run off Windows (FL steps skipped with a note).
 Run: python3 tests/test_sweep.py"""
 import atexit, json, os, shutil, sys, tempfile, threading, zipfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 ROOT = os.path.join(tmp, "music"); os.makedirs(ROOT)
 os.environ["FLH_ROOTS"] = ROOT; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "appdata")

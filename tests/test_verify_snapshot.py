@@ -1,6 +1,6 @@
 """Reload verification restores an edit FL didn't pick up; snapshot PNG/crop helpers are correct."""
 import os, sys, zlib, struct
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 import fl_headless_mcp as m
 
 # PNG encoder round trip

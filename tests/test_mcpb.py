@@ -6,7 +6,7 @@ on a simulated Windows PC: the bridge script into FL's Hardware folder, FL's MID
 Run: python3 tests/test_mcpb.py (no FL, no network)."""
 import json, os, re, subprocess, sys, tempfile, time, zipfile
 HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE)
-sys.path.insert(0, REPO); sys.path.insert(0, os.path.join(REPO, "tools")); sys.path.insert(0, os.path.join(REPO, "mcpb"))
+sys.path.insert(0, os.path.join(REPO, "src")); sys.path.insert(0, os.path.join(REPO, "tools")); sys.path.insert(0, os.path.join(REPO, "mcpb"))
 tmp = tempfile.mkdtemp(prefix="flh_mcpb_t_")
 HOME = os.path.join(tmp, "home", "user")
 os.environ.update(LOCALAPPDATA=os.path.join(tmp, "local"), APPDATA=os.path.join(tmp, "roaming"), HOME=HOME,
@@ -34,10 +34,10 @@ assert "understand what's happening" in man["description"] and "stay in charge" 
 with open(os.path.join(REPO, "mcpb", "pyproject.toml"), encoding="utf-8") as f:
     pp = f.read()
 assert re.search(r'"numpy>=1\.\d+,<3"', pp) and 'requires-python = ">=3.10"' in pp and not re.search(r"(?m)^\[build-system\]", pp), pp
-assert MB.check_manifest(dict(man, version="2.1.0"), {"mcpb/launch.py", "data/theme/logo.png", "pyproject.toml"}) == []
+assert MB.check_manifest(dict(man, version="2.1.0"), {"mcpb/launch.py", "src/data/theme/logo.png", "pyproject.toml"}) == []
 bad = json.loads(json.dumps(man)); bad["server"]["mcp_config"]["env"]["FLH_ROOTS"] = "${user_config.song_folders}"
 bad["user_config"]["song_folders"]["enum"] = ["x"]; bad["nope"] = 1
-errs = " | ".join(MB.check_manifest(bad, {"mcpb/launch.py", "data/theme/logo.png", "pyproject.toml"}))
+errs = " | ".join(MB.check_manifest(bad, {"mcpb/launch.py", "src/data/theme/logo.png", "pyproject.toml"}))
 assert "only args expand lists" in errs and "enum" in errs and "nope" in errs, errs
 print("manifest ok")
 
@@ -85,8 +85,8 @@ if in_git:
         bm = json.loads(z.read("manifest.json")); bp = z.read("pyproject.toml").decode()
         assert z.testzip() is None
     assert bm["version"] == m.SERVER["version"] and f'version = "{m.SERVER["version"]}"' in bp, (bm["version"], bp)
-    for need in ("manifest.json", "pyproject.toml", "mcpb/launch.py", "fl_headless_mcp.py", "flh_setup.py",
-                 "fl_script/device_flheadless.py", "data/theme/logo.png", "LICENSE", "NOTICE.md", bm["icon"]):
+    for need in ("manifest.json", "pyproject.toml", "mcpb/launch.py", "src/fl_headless_mcp.py", "src/flh_setup.py",
+                 "src/fl_script/device_flheadless.py", "src/data/theme/logo.png", "LICENSE", "NOTICE.md", bm["icon"]):
         assert need in names, need
     assert MB.check_manifest(bm, set(names)) == [], MB.check_manifest(bm, set(names))
     assert bm["tools"] and {t["name"] for t in bm["tools"]} <= set(m.TOOLS) and "flh_setup" in {t["name"] for t in bm["tools"]}

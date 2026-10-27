@@ -2,7 +2,7 @@
 script > FL's own activity), a stale OneDrive copy next to the real one, fl-headless's own files never counting as
 activity, flh_setup check/apply. Run: python3 tests/test_core_userdata.py (no FL needed)."""
 import os, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 for k in ("FLH_FL_USERDATA", "OneDrive", "OneDriveConsumer", "OneDriveCommercial"):

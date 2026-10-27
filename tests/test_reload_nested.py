@@ -5,7 +5,7 @@ check, the merged-edit flush, fl_open's save, the next edit's save) until FL loa
 merged reload runs doesn't wait for that reload, and the merged reload doesn't wait for the previous reload's
 check. Run: python3 tests/test_reload_nested.py (no FL needed: FL is simulated)."""
 import os, shutil, sys, tempfile, threading, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_nested_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 import fl_headless_mcp as m  # noqa: E402

@@ -3,7 +3,7 @@ sit at their targets against the drums, the drums come down when a quiet part ru
 limiter's gain brings the beat up; the background runner holds FL and reports as news. FL is simulated.
 Run: python3 tests/test_balance.py"""
 import os, shutil, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local"); os.environ["FLH_NO_WARM"] = "1"
 import fl_headless_mcp as m  # noqa: E402

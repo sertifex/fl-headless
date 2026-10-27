@@ -7,7 +7,7 @@ import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE)
-sys.path.insert(0, REPO); sys.path.insert(0, os.path.join(REPO, "tools"))
+sys.path.insert(0, os.path.join(REPO, "src")); sys.path.insert(0, os.path.join(REPO, "tools"))
 TMP = tempfile.mkdtemp(prefix="flh_fmt_")
 os.environ["FLH_ROOTS"] = TMP
 os.environ["LOCALAPPDATA"] = tempfile.mkdtemp(prefix="flh_fmt_state_")

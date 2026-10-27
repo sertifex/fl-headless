@@ -1,6 +1,6 @@
 """Common other names for arguments are accepted (path -> project, from_bar -> start_bar ...); ambiguous ones aren't."""
 import os, sys
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 import fl_headless_mcp as m  # noqa: E402
 T = m.TOOLS
 a = m._check_args("fl_open", {"path": "C:/x.flp"}, T["fl_open"])

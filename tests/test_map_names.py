@@ -3,7 +3,7 @@
 untouched unless the dev script is asked to write.
 Run: python3 tests/test_map_names.py"""
 import hashlib, io, json, os, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE); sys.path.insert(0, REPO)
+HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE); sys.path.insert(0, os.path.join(REPO, "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import fl_headless_mcp as m  # noqa: E402
 import flh_mixeng as X  # noqa: E402

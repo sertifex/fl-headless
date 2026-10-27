@@ -4,7 +4,7 @@ from the same notes (struck notes decay, sustained layers hold). Reproduces the 
 final chord: the old note-length prediction said pass, the final failed ending_length) and a level jump (a part
 entering loud), and shows agreement after the fix. Run: python3 tests/test_ending_sim.py (no FL needed)."""
 import os, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_end_sim_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 tempfile.tempdir = os.path.join(tmp, "systemp"); os.makedirs(tempfile.tempdir)

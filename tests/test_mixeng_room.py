@@ -4,7 +4,7 @@ and apply with a fake FL: buses on free inserts (named, reverb added in one proj
 high shelves, pans, journal record, before/after verification, revert (sends unrouted, pans/names back).
 Run: python3 tests/test_mixeng_room.py"""
 import math, os, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import fl_headless_mcp as m  # noqa: E402
 import flh_store, flh_mixeng as X  # noqa: E402

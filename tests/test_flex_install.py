@@ -5,7 +5,7 @@ a pack with a preset that made no sound here goes last, with two it's left out. 
 catalog and flp_flex_preset agree (a 'Core Synths' preset with store tags 'Bass;Synth' is a synth, not a bass).
 Synthetic packs; no FL needed. Run: python3 tests/test_flex_install.py"""
 import json, os, shutil, struct, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702
 flex = os.path.join(tmp, "FLEX"); os.makedirs(os.path.join(flex, "Packs"))

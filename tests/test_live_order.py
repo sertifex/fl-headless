@@ -2,7 +2,7 @@
 burst of edits shares ONE reload), and live tools apply what's queued for FL first and never run while FL is still
 loading. No FL needed. Run: python3 tests/test_live_order.py"""
 import os, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 os.environ.pop("FLH_COALESCE_S", None)

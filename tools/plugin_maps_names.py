@@ -2,14 +2,14 @@
 shipped plugin maps.
 
 The check writes user maps to <state folder>/plugin_maps/<plugin>.json with `names_verified` on every control
-whose live FL name + index it confirmed. This script compares them with data/plugin_maps/*.json and prints a
+whose live FL name + index it confirmed. This script compares them with src/data/plugin_maps/*.json and prints a
 unified diff; --write applies it (only fl_name, index and names_verified change: curves, units, ranges and
 `verified` stay as shipped).
 
 Usage (in a repo checkout):
   python3 tools/plugin_maps_names.py                     diff against the user maps in the default state folder
   python3 tools/plugin_maps_names.py --from DIR          user maps from DIR (e.g. a copy sent from a PC)
-  python3 tools/plugin_maps_names.py --write             write the corrected files into data/plugin_maps
+  python3 tools/plugin_maps_names.py --write             write the corrected files into src/data/plugin_maps
 """
 import argparse
 import glob
@@ -19,7 +19,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
-sys.path.insert(0, REPO)
+sys.path.insert(0, os.path.join(REPO, "src"))
 
 
 def default_state_maps():
@@ -68,7 +68,7 @@ def run(user_dir, ship_dir, write=False, out=sys.stdout):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--from", dest="src", default=default_state_maps(), help="folder with the checked user maps")
-    ap.add_argument("--ship", default=os.path.join(REPO, "data", "plugin_maps"), help="shipped maps folder")
+    ap.add_argument("--ship", default=os.path.join(REPO, "src", "data", "plugin_maps"), help="shipped maps folder")
     ap.add_argument("--write", action="store_true", help="write the corrected shipped maps")
     a = ap.parse_args(argv)
     if not os.path.isdir(a.src):

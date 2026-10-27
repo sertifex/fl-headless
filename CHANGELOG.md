@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.2.1 - 2026-10-27
+- **Tidier repo page.** All the code and its data moved into one `src/` folder, so the GitHub page shows a handful
+  of folders and the docs instead of 60 files. Nothing changes in how fl-headless works.
+  - **Extension users:** install the new `fl-headless.mcpb` as usual.
+  - **install.bat / ZIP users:** unzip over your folder as usual. `fl_headless_launch.py` now ships with the
+    release and starts the code in `src/`. The old copies at the top of your folder aren't used any more; "set me
+    up" lists them as safe to delete. If your Claude config starts `fl_headless_mcp.py` directly (rare), run
+    install.bat once.
+- **Clear loopMIDI steps.** `docs/install.md` has a step-by-step section: which port is FL's input (`Flapi Request`)
+  and which is its output (`Flapi Response`), the same port number on both, and Autostart so the ports exist before
+  FL starts. "Set me up" now names the exact mistake: ports swapped, port numbers that don't match, or ports missing
+  because loopMIDI isn't running.
+
 ## 2.2.0 - 2026-10-27
 Fixes from building two full piano/orchestral songs end to end, and sheet music to FL in a fraction of the time.
 

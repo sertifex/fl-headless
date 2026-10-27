@@ -7,7 +7,7 @@ newsong.playlist_names failed). FL's own save showed:
 every writer now puts markers where FL keeps them; the readers read FL's own groups; group-aware rewrites leave no
 orphan events. Run: python3 tests/test_markers_fl26.py (no FL needed)."""
 import os, struct, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 roots = os.path.join(tmp, "roots"); os.makedirs(roots)
 os.environ["FLH_ROOTS"] = roots; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")

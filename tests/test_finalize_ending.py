@@ -3,7 +3,7 @@ its attack as a long diminuendo (fade auto or the profile's default number), so 
 on the first render; explicit fade_s numbers stay exact; the FINAL is checked against the rules and every failed rule
 comes with a concrete fix (e.g. flp_extend_ending(..., hold_s=...)). Run: python3 tests/test_finalize_ending.py"""
 import os, re, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_fin_end_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 tempfile.tempdir = os.path.join(tmp, "systemp"); os.makedirs(tempfile.tempdir)

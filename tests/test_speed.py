@@ -4,7 +4,7 @@ name/color edits go into FL live (no file edit, no reload) and FL saves them int
 that fails falls back to the file; queued edits keep live routes off; immediate mode keeps the old behaviour; a
 flush that fails keeps the edits queued and says so. Run: python3 tests/test_speed.py"""
 import json, os, shutil, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_speed_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 os.environ["FLH_COALESCE_S"] = "0.6"

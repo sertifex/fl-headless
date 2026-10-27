@@ -7,7 +7,7 @@ JSON result saved, sandbox recycled, the user's song restored), failure isolatio
 others; the ending job then makes its own final), compare='last' and compare=[a, b], a balance that never starts,
 FL gone mid-run, an interrupted earlier run recovered. Run: python3 tests/test_bench.py"""
 import atexit, io, json, os, shutil, sys, tempfile, threading, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 ROOT = os.path.join(tmp, "music"); os.makedirs(ROOT)
 os.environ["FLH_ROOTS"] = ROOT; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "appdata")

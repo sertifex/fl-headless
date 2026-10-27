@@ -1,7 +1,7 @@
 """flh_access: fl_describe (notes + synthetic render), fl_visualize (PNG validity + alt text), hearing-aware notes,
 fl_second_opinion, glossary / plain-language text, step pacing, opt-in preferences, fl_where (mocked FL)."""
 import base64, json, math, os, struct, sys, tempfile, time, wave, zlib
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import numpy as np  # noqa: E402
 import fl_headless_mcp as m  # noqa: E402

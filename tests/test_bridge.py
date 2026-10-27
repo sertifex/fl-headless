@@ -78,7 +78,7 @@ def run(relay):
         sys.modules.pop(m, None)
     sent = []
     install_fake_fl(sent, relay)
-    sys.path[:0] = [os.path.join(ROOT, "fl_script"), ROOT]
+    sys.path[:0] = [os.path.join(ROOT, "src", "fl_script"), os.path.join(ROOT, "src")]
     import device_flheadless as script
     import fl_headless_mcp as server
 

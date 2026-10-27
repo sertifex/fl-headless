@@ -4,14 +4,14 @@ data/ear_candy.json list is one flh_fx can make (FX_KINDS) or one of the non-aud
 (drum transitions, snare build, gap, delay throw). A typo or a made-up name ('edm') silently never matches.
 Run: python3 tests/test_data_consistency.py"""
 import glob, json, os, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE); sys.path.insert(0, REPO)
+HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE); sys.path.insert(0, os.path.join(REPO, "src"))
 tmp = tempfile.mkdtemp(prefix="flh_datacons_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 import fl_headless_mcp as m  # noqa: E402,F401
 import flh_compose as CO  # noqa: E402
 import flh_fx as FX  # noqa: E402
 
-DATA = os.path.join(REPO, "data")
+DATA = os.path.join(REPO, "src", "data")
 
 
 def load(p):

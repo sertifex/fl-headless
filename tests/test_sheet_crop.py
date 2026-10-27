@@ -5,7 +5,7 @@ frame=, and split=N (page ranges balanced by bars + a filled reader brief each).
 Run: python3 tests/test_sheet_crop.py   (prints 'ok')"""
 import base64, json, os, shutil, sys, tempfile
 import numpy as np
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702
 import fl_headless_mcp as m  # noqa: E402
@@ -165,5 +165,5 @@ with open(os.path.join(ud, "reader_brief.md"), "w") as f:
 r, _ = call("sheet_pages", source=pdir, split=1)
 assert r["readers"][0]["brief"].startswith("MY BRIEF 1-3 -> "), r["readers"][0]["brief"]
 os.remove(os.path.join(ud, "reader_brief.md"))
-assert os.path.isfile(os.path.join(os.path.dirname(HERE), "data", "sheet", "reader_brief.md"))
+assert os.path.isfile(os.path.join(os.path.dirname(HERE), "src", "data", "sheet", "reader_brief.md"))
 print("ok")

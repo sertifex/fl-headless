@@ -1,7 +1,7 @@
 """flp_remove_channels: delete channels from a .flp and renumber every reference (notes, clips, links, layers,
 controller records); refusals; verification; unused / unplaced_automation; flp_edit batching."""
 import glob, json, os, shutil, struct, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 FIX = os.path.join(os.environ.get("FLH_TEST_DATA") or os.path.join(HERE, "data"), "audio_clip_fl2026.flp")
 if not os.path.isfile(FIX):                                       # a public clone: the scrubbed committed copy
     FIX = os.path.join(HERE, "corpus", "base.flp")

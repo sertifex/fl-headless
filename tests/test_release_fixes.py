@@ -4,7 +4,7 @@ Windows says so; flh_run step shapes ({name, arguments}, args as a JSON string);
 the save wait follows a slow save (up to a cap) and a twin file proves the open project only when it alone changed;
 the roots scan skips FL's backup copies and stops at its limit. Run: python3 tests/test_release_fixes.py"""
 import json, os, shutil, sys, tempfile, threading, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 TMP = tempfile.mkdtemp(prefix="flh_relfix_")
 ROOT = os.path.join(TMP, "root"); os.makedirs(ROOT)
 os.environ["FLH_ROOTS"] = f"{ROOT}; Music ;./rel"

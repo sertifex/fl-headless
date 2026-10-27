@@ -4,7 +4,7 @@ audio_* tools, audio_mix_report folders of FLAC stems, fl_audio_edit, the sample
 Run: python3 tests/test_flac_read.py (no FL, no ffmpeg needed)."""
 import hashlib, os, shutil, sys, tempfile
 import numpy as np
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_flac_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 import fl_headless_mcp as m  # noqa: E402

@@ -11,7 +11,7 @@ each step; FLH_E2E_DUMP=<file.jsonl> keeps every full result. `python3 tests/tes
 journeys. Run: python3 tests/test_e2e.py (no FL needed, about 2 min, most of it waiting)."""
 import json, os, shutil, struct, sys, tempfile, time, traceback, types, wave, zipfile
 ENV0 = dict(os.environ)                                           # as started (journey shards start from it)
-HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE); sys.path.insert(0, REPO)
+HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE); sys.path.insert(0, os.path.join(REPO, "src"))
 T_START = time.time()
 TMP = tempfile.mkdtemp(prefix="flh_e2e_")
 ROOTS = os.path.join(TMP, "roots"); OUTSIDE = os.path.join(TMP, "outside"); LOCAL = os.path.join(TMP, "local")
@@ -939,7 +939,7 @@ def _hangs_extend(song, section, wait_s=12):
     code = ("import sys, json; sys.path.insert(0, %r); import fl_headless_mcp as m; "
             "r = m.handle({'method': 'tools/call', 'params': {'name': 'flp_arrange_song', 'arguments': "
             "{'project': %r, 'mode': 'extend', 'extend': {'section': %r, 'bars': 4}, 'dry_run': True}}}); "
-            "print('RETURNED')") % (REPO, cp, section)
+            "print('RETURNED')") % (os.path.join(REPO, "src"), cp, section)
     try:
         out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=wait_s,
                              env=dict(os.environ))

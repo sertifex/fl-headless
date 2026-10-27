@@ -22,7 +22,7 @@ import time
 import traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE)
-sys.path.insert(0, REPO); sys.path.insert(0, os.path.join(REPO, "tools"))
+sys.path.insert(0, os.path.join(REPO, "src")); sys.path.insert(0, os.path.join(REPO, "tools"))
 TMP = tempfile.mkdtemp(prefix="flh_corpus_")
 import atexit, shutil as _sh
 atexit.register(_sh.rmtree, TMP, True)   # 380 MB per run: never leave it behind

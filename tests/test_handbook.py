@@ -2,7 +2,7 @@
 delay, ETag/304, resume, host lock), BM25F ranking, synonyms, misspellings, version filtering, fl_help using the
 index, explain helper, output size. Run: python3 tests/test_handbook.py (offline, no FL)."""
 import json, os, shutil, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_hb_")
 os.environ["FLH_ROOTS"] = os.path.join(tmp, "roots"); os.makedirs(os.environ["FLH_ROOTS"])
 os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")

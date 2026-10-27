@@ -2,7 +2,7 @@
 matching, intent verification, engineer proposals + apply/revert with a fake bridge, platform math.
 Run: python3 tests/test_mixeng.py"""
 import json, math, os, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import numpy as np  # noqa: E402
 import fl_headless_mcp as m  # noqa: E402

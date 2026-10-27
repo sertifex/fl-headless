@@ -3,7 +3,7 @@ connection to FL, FL edition, fl-headless look, free extras, ready), each done /
 next action (no jargon), apply() doing everything safe in one call (profile, FL's script, theme), and the walkthrough
 reaching 'ready'. Also flh_welcome's one-line-per-step view. Run: python3 tests/test_setup_walkthrough.py (no FL)."""
 import os, re, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = os.path.join(tmp, "music"); os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 HOME = os.path.join(tmp, "home", "user")

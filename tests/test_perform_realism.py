@@ -4,7 +4,7 @@ parts render exactly as before; the clash guard gives back the written timing wh
 another part; expression curves go into the batch through the realism writer, else 'run flp_realism after'.
 Run: python3 tests/test_perform_realism.py"""
 import copy, os, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 FIX = os.path.join(os.environ.get("FLH_TEST_DATA") or os.path.join(HERE, "data"), "audio_clip_fl2026.flp")
 if not os.path.isfile(FIX):
     FIX = os.path.join(HERE, "corpus", "base.flp")

@@ -7,7 +7,7 @@ import threading
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
-sys.path.insert(0, ROOT); sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(ROOT, "src")); sys.path.insert(0, HERE)
 tmp = tempfile.mkdtemp(); os.environ["LOCALAPPDATA"] = tmp
 
 import test_bridge as TB                                         # noqa: E402  (fake FL API, reused)

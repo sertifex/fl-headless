@@ -1,7 +1,7 @@
 """fl_pc_check's _save_read: a refused save says why; a big project's save that lands late still counts.
 PC 2026-10-24 lazy.big_project: 'FL didn't save ... within 15 s' hid the guard's reason."""
 import os, shutil, sys, tempfile, threading, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_sr_"); import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702
 import flh_pccheck as pc  # noqa: E402
 p = os.path.join(tmp, "Big.flp"); open(p, "wb").write(b"a")

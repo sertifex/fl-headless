@@ -3,7 +3,7 @@ region over a dark part of FL is no 'blank window' (blank is judged on the whole
 still fails clearly; bad regions are refused. The Windows capture is replaced by a fake. Run:
 python3 tests/test_snapshot_retry.py"""
 import base64, os, struct, sys, tempfile, zlib
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ.setdefault("FLH_ROOTS", tmp); os.environ.setdefault("LOCALAPPDATA", os.path.join(tmp, "local"))
 import fl_headless_mcp as m  # noqa: E402

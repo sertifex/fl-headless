@@ -4,7 +4,7 @@ saving the user's theme as the visible preset 'My theme before fl-headless' + sw
 overwritten), FL running (files + preset now, the switch waits: one click or the next FL start), restore, the user's
 later theme choice respected, the dev builds' hidden backup migrated. Run: python3 tests/test_theme.py (no FL needed)."""
 import os, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = os.path.join(tmp, "music"); os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 HOME = os.path.join(tmp, "home", "user")

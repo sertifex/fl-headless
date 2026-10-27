@@ -4,7 +4,7 @@ arranged songs (clear_song), MIDI time signatures and whole tempo maps, one play
 flp_new_from, flp_patterns_set, compose_drop unplace, and batching through flp_edit.
 Run: python3 tests/test_note_writers.py (no FL needed)."""
 import hashlib, os, shutil, struct, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_nw_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702

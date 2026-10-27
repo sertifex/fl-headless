@@ -11,7 +11,7 @@ import types
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "src"))
 TMP = tempfile.mkdtemp(prefix="flh_sampler_")
 os.environ["FLH_ROOTS"] = TMP
 os.environ["LOCALAPPDATA"] = os.path.join(TMP, "appdata")
@@ -188,7 +188,7 @@ PITCH = {}
 mod("channels", channelCount=lambda g=False: 2, getRecEventId=lambda i, g=False: 1000 * (i + 1),
     setChannelPitch=lambda i, v, mode=0, g=False: PITCH.__setitem__(i, v),
     getChannelPitch=lambda i, mode=0, g=False: PITCH.get(i, 0.0) if mode == 1 else 2)
-sys.path.insert(0, os.path.join(ROOT, "fl_script"))
+sys.path.insert(0, os.path.join(ROOT, "src", "fl_script"))
 import device_flheadless as BR  # noqa: E402
 
 assert "sampler_live" in BR.COMMANDS
@@ -200,7 +200,7 @@ seen = {}
 ns["BRIDGE"] = types.SimpleNamespace(call=lambda cmd, **kw: seen.update(cmd=cmd, **kw) or {"ok": 1})
 SM.sampler_live(3, cutoff=0.4)
 assert seen == {"cmd": "sampler_live", "index": 3, "pitch_cents": None, "cutoff": 0.4, "resonance": None}, seen
-assert all(ord(c) < 128 for c in open(os.path.join(ROOT, "fl_script", "device_flheadless.py"), encoding="utf-8").read())
+assert all(ord(c) < 128 for c in open(os.path.join(ROOT, "src", "fl_script", "device_flheadless.py"), encoding="utf-8").read())
 
 shutil.rmtree(TMP, ignore_errors=True)
 print("ok")

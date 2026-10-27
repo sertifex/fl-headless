@@ -7,7 +7,7 @@ isn't, an octave slip in a one-voice line is), sheet_diff and sheet_explain.
 Run: python3 tests/test_sheet.py   (prints 'ok')"""
 import io, json, math, os, shutil, struct, sys, tempfile, wave, zlib
 import numpy as np
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import fl_headless_mcp as m  # noqa: E402
 import flh_sheet as SH  # noqa: E402

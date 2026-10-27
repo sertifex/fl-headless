@@ -2,7 +2,7 @@
 on sync, reads say so / read the queued state, edits made in FL meanwhile kept, auto-sync before FL needs the edits,
 immediate writes take the queue first), flh_sync / modes / discard. Run: python3 tests/test_core_lazy.py"""
 import json, os, shutil, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 FIX = os.path.join(os.environ.get("FLH_TEST_DATA") or os.path.join(HERE, "data"), "audio_clip_fl2026.flp")
 if not os.path.isfile(FIX):                                       # a public clone: the scrubbed committed copy
     FIX = os.path.join(HERE, "corpus", "base.flp")

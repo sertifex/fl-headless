@@ -3,7 +3,7 @@ pings, late replies), FL-speed waits scaled by it (factor 1.0 = today's numbers)
 instead of failing, and a really dead FL still fails with the factor in the message.
 Run: python3 tests/test_slow_pc.py"""
 import json, os, sys, tempfile, threading, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 import fl_headless_mcp as m  # noqa: E402

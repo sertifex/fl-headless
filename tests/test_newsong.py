@@ -3,7 +3,7 @@ temp folder with a mocked FL (file valid, channels/names/colors/routing/patterns
 owned-only substitutions (Fruity vs Producer edition), save_template round trip, welcome, icon probe, recipes data.
 Run: python3 tests/test_newsong.py (no FL needed)."""
 import json, math, os, re, shutil, struct, sys, tempfile, time, wave
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 roots = os.path.join(tmp, "roots"); os.makedirs(roots)
 os.environ["FLH_ROOTS"] = roots; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")

@@ -12,7 +12,7 @@ import types
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "src"))
 TMP = tempfile.mkdtemp(prefix="flh_w2_")
 os.environ["FLH_ROOTS"] = TMP
 os.environ["LOCALAPPDATA"] = os.path.join(TMP, "appdata")
@@ -333,7 +333,7 @@ def fake_fl():
 
 
 S = fake_fl()
-sys.path.insert(0, os.path.join(ROOT, "fl_script"))
+sys.path.insert(0, os.path.join(ROOT, "src", "fl_script"))
 import device_flheadless as B  # noqa: E402
 
 assert B.SCRIPT_VERSION == m._script_version_shipped() and B.cmd_ping()["version"] == B.SCRIPT_VERSION
@@ -368,7 +368,7 @@ assert st_["pattern_count"] == 2 and not st_["patterns_capped"]
 assert B._run("mixer_peaks;tracks=s:" + __import__("base64").b64encode(b"0").decode()).startswith("OK")
 for c in ("plugin_probe", "mixer_info", "mixer_arm", "mixer_peaks", "rec_setup", "pattern_new"):
     assert c in B.COMMANDS
-assert all(ord(ch) < 128 for ch in open(os.path.join(ROOT, "fl_script", "device_flheadless.py"), encoding="utf-8").read())
+assert all(ord(ch) < 128 for ch in open(os.path.join(ROOT, "src", "fl_script", "device_flheadless.py"), encoding="utf-8").read())
 note = m._script_note({"bridge": "fl-headless", "version": 2})
 assert "script_outdated" in note and "script_outdated" not in m._script_note({"version": B.SCRIPT_VERSION})
 print("bridge script ok")

@@ -11,7 +11,7 @@ import sys
 import tempfile
 import time
 
-HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE); sys.path.insert(0, ROOT)
+HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE); sys.path.insert(0, os.path.join(ROOT, "src"))
 TMP = tempfile.mkdtemp(prefix="flh_speed_core_")
 os.environ["FLH_ROOTS"] = TMP; os.environ["LOCALAPPDATA"] = os.path.join(TMP, "local")
 import fl_headless_mcp as m  # noqa: E402

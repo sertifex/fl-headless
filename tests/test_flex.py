@@ -3,7 +3,7 @@ the store list, ranked search (kind, words, genre), a FLEX .fst made for any pre
 same length, knob values kept), and flp_flex_preset putting it on a new or an existing channel of a song.
 Synthetic packs; no FL needed. Run: python3 tests/test_flex.py"""
 import json, os, shutil, struct, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 flex = os.path.join(tmp, "FLEX"); os.makedirs(os.path.join(flex, "Packs"))
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
@@ -64,7 +64,7 @@ fst, hit = F.flex_fst("BRS Horns Sustain")
 b = open(fst, "rb").read()
 st = m._payload(b, F._state_span(b))
 assert st[16:26] == b"Core Brass" and st[16 + 1025:16 + 1025 + 17] == b"BRS Horns Sustain", st[:40]
-tpl = open(os.path.join(os.path.dirname(HERE), "data", "flex", "flex_template.fst"), "rb").read()
+tpl = open(os.path.join(os.path.dirname(HERE), "src", "data", "flex", "flex_template.fst"), "rb").read()
 st0 = m._payload(tpl, F._state_span(tpl))
 assert len(st) == len(st0) and st[F.NAMES_END:] == st0[F.NAMES_END:]       # knob values untouched
 assert "FLEX" in (m._fst_label(fst) or "")

@@ -3,7 +3,7 @@ song that builds from one texture; melodies are motif-built (a repeated rhythm c
 tones with space after them), deterministic per seed, in any meter; beats and arrangements carry their score;
 flp_musicality scores a project; a whole beat composes well under a second."""
 import os, random, shutil, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "appdata")
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702
 import fl_headless_mcp as m  # noqa: E402

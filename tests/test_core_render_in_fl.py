@@ -2,7 +2,7 @@
 probes (nothing rendered), clean fallback to the command line, auto only after it worked here, fl_render /
 _render_any wiring. FL's windows are simulated. Run: python3 tests/test_core_render_in_fl.py"""
 import os, shutil, sys, tempfile, threading, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 FIX = os.path.join(os.environ.get("FLH_TEST_DATA") or os.path.join(HERE, "data"), "audio_clip_fl2026.flp")
 if not os.path.isfile(FIX):                                       # a public clone: the scrubbed committed copy
     FIX = os.path.join(HERE, "corpus", "base.flp")

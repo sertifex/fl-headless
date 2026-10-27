@@ -10,7 +10,7 @@ import tempfile
 from ctypes import wintypes
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 TMP = tempfile.mkdtemp(prefix="flh_focus_")
 os.environ["FLH_ROOTS"] = os.path.join(TMP, "root"); os.makedirs(os.environ["FLH_ROOTS"])
 os.environ["LOCALAPPDATA"] = os.path.join(TMP, "appdata")

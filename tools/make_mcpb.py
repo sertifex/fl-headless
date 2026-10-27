@@ -19,7 +19,7 @@ What goes in: what the public release ships (the release tool's EXCLUDE list and
 present; in the public repo every tracked file already is the release) minus the folders an extension doesn't need
 (tests/, tools/, review/) and the manual installer (install.py / install.bat: Claude installs the extension).
 mcpb/manifest.json and mcpb/pyproject.toml go to the bundle's root with the version from SERVER in
-fl_headless_mcp.py; mcpb/launch.py stays where it is (the entry point). The server type is "uv": Claude Desktop's uv
+src/fl_headless_mcp.py; mcpb/launch.py stays where it is (the entry point). The server type is "uv": Claude Desktop's uv
 installs Python and numpy from pyproject.toml, so the bundle carries no Python packages (no lib/, venv/, .venv/).
 The spec used: github.com/modelcontextprotocol/mcpb MANIFEST.md (manifest_version 0.4, uv runtime; schema
 mcpb-manifest-v0.4, CLI @anthropic-ai/mcpb 2.1.2)."""
@@ -227,10 +227,10 @@ def skip_why(path):
 
 
 def server_version(files):
-    src = dict((p, b) for p, b, _ in files).get("fl_headless_mcp.py", b"").decode("utf-8", "replace")
+    src = dict((p, b) for p, b, _ in files).get("src/fl_headless_mcp.py", b"").decode("utf-8", "replace")
     m = re.search(r'SERVER\s*=\s*\{[^}]*"version"\s*:\s*"([^"]+)"', src)
     if not m:
-        raise SystemExit("no SERVER version in fl_headless_mcp.py")
+        raise SystemExit("no SERVER version in src/fl_headless_mcp.py")
     return m.group(1)
 
 
@@ -245,7 +245,7 @@ def stamp_pyproject(text, version):
 def plan(files):
     """(bundle {path: (bytes, mode)}, manifest dict, skipped [(path, why)], version)."""
     by = {p: (b, mode) for p, b, mode in files}
-    for need in (MANIFEST_SRC, PYPROJECT_SRC, ENTRY, "fl_headless_mcp.py"):
+    for need in (MANIFEST_SRC, PYPROJECT_SRC, ENTRY, "src/fl_headless_mcp.py"):
         if need not in by:
             raise SystemExit(f"{need} isn't in the tree (commit it, or use --worktree)")
     version = server_version(files)

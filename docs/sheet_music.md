@@ -38,7 +38,7 @@ Bar lines and counts are estimates from the picture: trust the music and the pri
 pages into 3 ranges with about the same number of bars, and returns one **brief** per reader (pages, estimated
 bars, output file, the part names, the format, how to check). Paste each brief into a helper agent; read one range
 yourself. Agree on the part names before you start - `sheet_merge` reports a part only one reader used (e.g.
-`melody` vs `mel`). The brief text lives in `data/sheet/reader_brief.md`; a copy in fl-headless's state folder
+`melody` vs `mel`). The brief text lives in `src/data/sheet/reader_brief.md`; a copy in fl-headless's state folder
 under `sheet/reader_brief.md` replaces it.
 
 ## 4. The score data format (`flh-score/1`)

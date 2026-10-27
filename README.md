@@ -69,7 +69,8 @@ FL plays, and renders with FL's own export.</sub>
 - FL Studio 20.8 or later
 - Claude Desktop
 - A MIDI loopback for live control: Windows 11 has one built in, or use the free
-  [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html). Setup tells you which.
+  [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) ([step-by-step: ports, input and
+  output](docs/install.md#loopmidi-step-by-step)). Setup tells you which.
 
 ## Install
 
@@ -100,7 +101,7 @@ version, it has to stay free and open with its source.
 
 The **name "fl-headless" and its logo** are not covered by the GPL: they're only for use with fl-headless itself
 (a fork needs its own name and logo; see [NOTICE.md](NOTICE.md) and
-[data/theme/LICENSE.md](data/theme/LICENSE.md)). The theme's colors are GPL like the code.
+[src/data/theme/LICENSE.md](src/data/theme/LICENSE.md)). The theme's colors are GPL like the code.
 
 Like it? Donations keep it going: [Ko-fi](https://ko-fi.com/F3B5292D61).
 Made by [sertifex](https://github.com/sertifex). Not affiliated with Image-Line; FL Studio is a trademark of Image-Line.

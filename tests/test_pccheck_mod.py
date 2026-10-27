@@ -7,7 +7,7 @@ Run: python3 tests/test_pccheck_mod.py (no FL, no network; the listening and sav
 virtual clock, so they cost no wall time; FLH_REAL_WAITS=1 waits for real, about 3 min)."""
 import contextlib, json, os, shutil, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE)
-sys.path.insert(0, HERE); sys.path.insert(0, REPO)
+sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(REPO, "src"))
 import test_e2e as E  # noqa: E402  (sets FLH_ROOTS / LOCALAPPDATA / fake FL install paths to a temp tree)
 import numpy as np  # noqa: E402
 
@@ -96,7 +96,7 @@ class SynthFL(E.FakeFL):
         X = sys.modules["flh_mixeng"]
         mp = X.plugin_map(name) if name else None
         if not mp or mp.get("source") == "learned":               # emulate from the shipped map, always
-            path = os.path.join(REPO, "data", "plugin_maps", X._slug(name or "") + ".json")
+            path = os.path.join(REPO, "src", "data", "plugin_maps", X._slug(name or "") + ".json")
             mp = json.load(open(path)) if os.path.isfile(path) else None
         ctl = {int(e["index"]): (k, e) for k, e in ((mp or {}).get("controls") or {}).items() if e.get("index") is not None}
         for k, e in ((mp or {}).get("controls") or {}).items():   # controls the map has no index for: after the rest

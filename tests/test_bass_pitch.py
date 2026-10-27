@@ -5,7 +5,7 @@ PC check 2026-10-23: a held C#2 808 measured 'C3' from 7 voiced frames, a slide 
 silence gate kept only the attack of a quiet capture. Run: python3 tests/test_bass_pitch.py"""
 import os, sys, tempfile
 import numpy as np
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import flh_transcribe as T  # noqa: E402
 import flh_pccheck_mod as PM  # noqa: E402

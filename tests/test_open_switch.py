@@ -3,7 +3,7 @@ switch is checked by FL's title (PC 2026-10-23: the Open dialog took the path, F
 FL ignored is sent once more, then a clear error. A slow load with no sign in the title is not 'ignored' (the wait
 follows the load cost; a silent bridge counts as loading), and a retry leaves no 'save changes?' / Open dialog behind."""
 import os, sys, tempfile
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp
 import fl_headless_mcp as m
 a = os.path.join(tmp, "A.flp"); b = os.path.join(tmp, "B.flp")

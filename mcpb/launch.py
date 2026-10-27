@@ -116,8 +116,9 @@ def main(argv=None):
     if bad:
         print(f"fl-headless: ignored song folder setting(s) {bad}: not a full folder path", file=sys.stderr)
     sys.argv = sys.argv[:1]                                           # the server takes no arguments
-    if HERE not in sys.path:
-        sys.path.insert(0, HERE)
+    code = os.path.join(HERE, "src")                                  # the server's code and data (2.2.1+)
+    if code not in sys.path:
+        sys.path.insert(0, code)
     import fl_headless_mcp                                            # as a module: one copy of its globals, also
     fl_headless_mcp.main()                                            # after flh_reload (like install.py's launcher)
 

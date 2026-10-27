@@ -1,7 +1,7 @@
 """Stem groups for any project (no journal roles): drums / bass / music / vocals from channel names in any style and
 from drum plugins; 'instrumental' = everything but vocals + the vocals. Run: python3 tests/test_stem_groups.py"""
 import os, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 os.environ["FLH_ROOTS"] = tempfile.mkdtemp(); os.environ["LOCALAPPDATA"] = tempfile.mkdtemp()
 import fl_headless_mcp as m  # noqa: E402
 

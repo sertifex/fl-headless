@@ -29,6 +29,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
+SRC = os.path.join(REPO, "src")                       # the server's code and data
 MAIN = "fl_headless_mcp"
 SMOKE = ("test_help.py", "test_core_wave2.py")       # manual search + tool tiers / discovery / registry sets
 # Tests that must not run beside others (they change files outside their own temp folder). Everything else is
@@ -83,9 +84,9 @@ def _sig(p):
 
 
 def py_files():
-    """{module name: path} of the repo's Python: top-level modules, tests/*.py, tools/*.py, fl_script/*.py."""
+    """{module name: path} of the repo's Python: src/*.py, tests/*.py, tools/*.py, src/fl_script/*.py."""
     out = {}
-    for sub in ("", "tests", "tools", "fl_script"):
+    for sub in ("src", "tests", "tools", os.path.join("src", "fl_script")):
         d = os.path.join(REPO, sub)
         for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
             if f.endswith(".py") and f not in ("fl_headless_launch.py", "run_all.py"):
@@ -213,7 +214,7 @@ def _tool_modules():
             "print(json.dumps({'tools': {t: m._TOOL_MODULE.get(t, 'fl_headless_mcp') for t in m.TOOLS},"
             " 'errors': m._EXT_STATUS.get('errors')}))")
     try:
-        r = subprocess.run([sys.executable, "-c", code], cwd=REPO, env=env, capture_output=True, text=True,
+        r = subprocess.run([sys.executable, "-c", code], cwd=SRC, env=env, capture_output=True, text=True,
                            timeout=120, stdin=subprocess.DEVNULL)
         return json.loads(r.stdout.strip().splitlines()[-1])["tools"]
     except Exception:                                             # noqa: BLE001 - selection still works by name
@@ -338,12 +339,13 @@ def select(paths, mp, rev="HEAD", deep=False):
 
     for rel in paths:
         rel = rel.replace("\\", "/")
-        base = os.path.basename(rel); stem, ext = os.path.splitext(base); top = rel.split("/")[0]
+        crel = rel[4:] if rel.startswith("src/") else rel      # the code's own layout (src/ is just its folder)
+        base = os.path.basename(rel); stem, ext = os.path.splitext(base); top = crel.split("/")[0]
         if top == "review" or top == ".claude" or "__pycache__" in rel or ext in (".pyc", ".tmp", ".log"):
             continue
         if rel.startswith("tests/") and base.startswith("test_") and ext == ".py" and rel.count("/") == 1:
             reasons.setdefault(base, f"{rel} changed"); continue
-        if ext == ".py" and stem == MAIN and "/" not in rel:
+        if ext == ".py" and stem == MAIN and "/" not in crel:
             if syms is None:
                 full.append(f"{rel} doesn't parse ({main.get('syntax', '')[:80]})"); continue
             h = _hunks(rel, rev)
@@ -371,15 +373,15 @@ def select(paths, mp, rev="HEAD", deep=False):
         if ext == ".py" and stem in F and stem != MAIN:
             module_hit(stem, f"{rel} changed"); continue
         if top == "data":
-            parts = rel.split("/")
+            parts = crel.split("/")
             key = re.escape(parts[1] if len(parts) > 2 else base)
             # data/x named as a data path: "data", "x" / DATA, "x" / _data_dirs("x") / data/x
             rx = re.compile(r"""(?:["']data["']|(?:DATA|[dD]ata)\w*)\s*[,(]\s*["']%s["']|data/%s\b""" % (key, key))
             named_by(rx, f"{rel} changed", need=parts[1] if len(parts) > 2 else base)
             continue
         # docs, checklists, fixtures, launch scripts ...: what names the file (tests always, code when it's code)
-        rx = re.compile(re.escape(base) + (r"|\b" + re.escape(top) + "/" if "/" in rel and top != "tests" else ""))
-        named_by(rx, f"{rel} changed", modules=ext not in (".md", ".txt"), need=None if "/" in rel else base)
+        rx = re.compile(re.escape(base) + (r"|\b" + re.escape(top) + "/" if "/" in crel and top != "tests" else ""))
+        named_by(rx, f"{rel} changed", modules=ext not in (".md", ".txt"), need=None if "/" in crel else base)
         if top == "tests" and "/" in rel:                         # tests/corpus/x.flp, tests/fixtures/...
             sub = rel.split("/")[1]
             named_by(re.compile(r"""["']%s["']|tests/%s\b""" % (re.escape(sub), re.escape(sub))),
@@ -499,7 +501,7 @@ def registry_check():
             "print(json.dumps({'errors': m._EXT_STATUS.get('errors'), 'bad': bad, 'tools': len(m.TOOLS)}))")
     t = time.time()
     try:
-        r = subprocess.run([sys.executable, "-c", code], cwd=REPO, env=env, capture_output=True, text=True,
+        r = subprocess.run([sys.executable, "-c", code], cwd=SRC, env=env, capture_output=True, text=True,
                            timeout=120, stdin=subprocess.DEVNULL)
         try:
             res = json.loads(r.stdout.strip().splitlines()[-1])

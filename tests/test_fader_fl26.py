@@ -113,7 +113,7 @@ mod("general", getRecPPQ=lambda: 96)
 for name in ("arrangement", "patterns", "playlist", "ui"):
     sys.modules.pop(name, None)
 
-sys.path[:0] = [os.path.join(ROOT, "fl_script"), ROOT]
+sys.path[:0] = [os.path.join(ROOT, "src", "fl_script"), os.path.join(ROOT, "src")]
 import device_flheadless as B  # noqa: E402
 import fl_headless_mcp as m  # noqa: E402
 ns = vars(m)

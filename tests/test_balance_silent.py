@@ -4,7 +4,7 @@ the swap is said in notes, and the silent preset is remembered per PC (state.jso
 later picks; still silent after 2 swaps -> a clear note; a part with no notes is never swapped. FL is simulated.
 Run: python3 tests/test_balance_silent.py"""
 import os, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local"); os.environ["FLH_NO_WARM"] = "1"
 os.environ["FLH_FLEX_DIR"] = os.path.join(tmp, "FLEX")

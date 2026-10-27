@@ -7,6 +7,8 @@ fl-headless is a free, public MCP server that lets Claude drive FL Studio on Win
 with different PCs, FL versions/editions, languages, genres and skill levels. It must be correct, fast, safe and honest.
 
 ## Architecture
+- Layout: all code and shipped data are in `src/` (the files below, `src/data/`, `src/fl_script/`); docs,
+  installer and launcher stay at the repo root. Tests put `src/` on `sys.path`.
 - `fl_headless_mcp.py` - the server: MCP loop, FL bridge (MIDI/loopMIDI), .flp parser/writers, FL window/popups,
   render, audio helpers. Tools live in `TOOLS` as name -> (fn, description, input_schema).
 - Extensions `flh_*.py` - each has `register(ns)`; `ns` is the live server namespace (dict). Look server functions

@@ -3,7 +3,7 @@ auto), MIDI round trip, writing into a project, and the FL capture paths with a 
 Run: python3 tests/test_transcribe.py   (prints the accuracy numbers, then 'ok')"""
 import json, os, shutil, sys, tempfile, time
 import numpy as np
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import fl_headless_mcp as m  # noqa: E402
 import flh_transcribe as T  # noqa: E402

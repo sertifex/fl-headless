@@ -4,7 +4,7 @@ mid-build gets the partial index with a 'building the sample index (n%)' note (o
 the cached index is reused afterwards. Slow disk simulated with gates; no FL needed. Run:
 python3 tests/test_index_progress.py"""
 import json, os, shutil, struct, sys, tempfile, threading, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = os.path.join(tmp, "roots"); os.makedirs(os.environ["FLH_ROOTS"])
 os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local"); os.environ["FLH_NO_WARM"] = "1"

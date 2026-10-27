@@ -13,7 +13,7 @@ import tempfile
 import wave
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 TMP = tempfile.mkdtemp(prefix="flh_rchk_")
 ROOT = os.path.join(TMP, "root"); os.makedirs(ROOT)
 os.environ["FLH_ROOTS"] = ROOT

@@ -6,7 +6,7 @@ trial plugins are said out loud, guessed preset names fall back to the plugin's 
 template data rules (stock every-edition tail on every melodic chain) and flh_setup's first-run edition flow.
 Run: python3 tests/test_editions.py (no FL needed)."""
 import json, os, struct, sys, tempfile, time, wave
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 roots = os.path.join(tmp, "roots"); os.makedirs(roots)
 os.environ["FLH_ROOTS"] = roots; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")

@@ -2,7 +2,7 @@
 2026-10-26: 'the playlist has no pattern clip to set the song length with'): the pattern is placed at bar 1 and the
 notes play. No FL needed. Run: python3 tests/test_write_notes_place.py"""
 import os, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 import fl_headless_mcp as m  # noqa: E402
 

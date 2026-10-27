@@ -1,6 +1,6 @@
 """Mix proposals from measured tracks. Run: python tests/test_mix.py"""
 import os, sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 import fl_mix as M
 
 def tr(name, lufs, **b):

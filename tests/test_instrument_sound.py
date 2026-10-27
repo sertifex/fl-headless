@@ -1,7 +1,7 @@
 """flp_instrument_sound rewrites a Splice INSTRUMENT state to another pack and keeps every length field consistent."""
 import os, re, shutil, struct, sys, tempfile
 import xml.etree.ElementTree as ET
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 FIX = os.environ.get("FLH_TEST_INSTRUMENT_FLP") or os.path.join(HERE, "corpus", "base.flp")   # has INSTRUMENT on ch 4
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 lib = os.path.join(tmp, "lib"); os.environ["FLH_SPLICE_LIB"] = lib

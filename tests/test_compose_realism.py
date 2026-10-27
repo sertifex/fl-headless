@@ -4,7 +4,7 @@ with realism=True (flh_new_song passes it for orchestral / cinematic genres), th
 from adding rubs, the song-level clash check still runs, expression goes into the batch through the realism writer.
 Run: python3 tests/test_compose_realism.py"""
 import os, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 FIX = os.path.join(os.environ.get("FLH_TEST_DATA") or os.path.join(HERE, "data"), "audio_clip_fl2026.flp")
 if not os.path.isfile(FIX):
     FIX = os.path.join(HERE, "corpus", "base.flp")
@@ -19,7 +19,7 @@ ns.pop("realism_apply", None); ns.pop("realism_expression_ops", None)
 assert C.realism_for_genre("cinematic") is True and C.realism_for_genre("epic orchestral") is True
 assert C.realism_for_genre("trap") is None and C.realism_for_genre("pop") is None
 assert C.realism_for_genre({"name": "x", "realism": True}) is True and C.realism_for_genre("no such genre") is None
-src_ns = open(os.path.join(os.path.dirname(HERE), "flh_newsong.py"), encoding="utf-8").read()
+src_ns = open(os.path.join(os.path.dirname(HERE), "src", "flh_newsong.py"), encoding="utf-8").read()
 assert "realism=cm.realism_for_genre(gname)" in src_ns, "flh_new_song passes realism for its genre's starter"
 
 if not os.path.isfile(FIX):

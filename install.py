@@ -22,7 +22,8 @@ for _s in (sys.stdout, sys.stderr):                          # a console that ca
     except (AttributeError, ValueError):
         pass
 here = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, here)
+code = os.path.join(here, "src")                              # the server's code and data (2.2.1+: src/ keeps the page tidy)
+sys.path.insert(0, code)
 home = os.path.expanduser("~")
 local, roaming = os.environ.get("LOCALAPPDATA", ""), os.environ.get("APPDATA", "")
 windows = sys.platform == "win32"
@@ -316,8 +317,9 @@ missing = [r for r in flh_roots.split(";") if r and not os.path.isdir(r)]
 done("folders", (flh_roots or "none (file edits and renders will be refused)") + (f"  (not found: {';'.join(missing)})" if missing else ""))
 
 LAUNCHER = os.path.join(here, "fl_headless_launch.py")         # the server runs as the module fl_headless_mcp
-LAUNCH_SRC = ('"""Starts the fl-headless MCP server (written by install.py)."""\n'
-              "import os\nimport sys\n\nsys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))\n"
+LAUNCH_SRC = ('"""Starts the fl-headless MCP server (written by install.py; also ships in the release)."""\n'
+              "import os\nimport sys\n\n"
+              "sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), \"src\"))  # the code\n"
               "import fl_headless_mcp  # noqa: E402\n\nfl_headless_mcp.main()\n")
 try:                                                            # (one copy of its globals, also after flh_reload)
     try:
@@ -332,7 +334,7 @@ try:                                                            # (one copy of i
     server = LAUNCHER
 except OSError as e:
     print(f"couldn't write the launcher ({e}); the config starts fl_headless_mcp.py directly")
-    server = os.path.join(here, "fl_headless_mcp.py")
+    server = os.path.join(code, "fl_headless_mcp.py")
 entry = {"command": sys.executable, "args": [server], "env": {"FLH_ROOTS": flh_roots}}
 
 

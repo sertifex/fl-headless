@@ -7,7 +7,7 @@ import tempfile
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE)
-sys.path.insert(0, REPO)
+sys.path.insert(0, os.path.join(REPO, "src"))
 import ogg_vorbis_lite as OV                                    # noqa: E402
 
 FIX = os.path.join(HERE, "fixtures", "fl_ogg_tone.wav")              # 0.6 s, 220 Hz sine (lavfi 1/8 amplitude, -6 dB), stereo, faded out

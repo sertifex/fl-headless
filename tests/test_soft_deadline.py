@@ -2,7 +2,7 @@
 {"job": ...} at once, fl_job returns the result (or the error) when it's done, progress shows meanwhile, and calls
 that can't safely run beside it are refused until it's done. Run: python3 tests/test_soft_deadline.py"""
 import json, os, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_soft_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 os.environ["FLH_CALL_SOFT_S"] = "0.4"

@@ -4,7 +4,7 @@ the level matched on the fader, undo puts knobs and faders back and removes the 
 Master gets no effects. FL is simulated. Run: python3 tests/test_sound_shape.py"""
 import os, sys, tempfile, wave
 import numpy as np
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local"); os.environ["FLH_NO_WARM"] = "1"
 os.environ["FLH_AUTO_RENDERS"] = "1"                 # these parts test the automatic renders

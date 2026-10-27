@@ -3,7 +3,7 @@ flh_call's inner tool), errors (raised or an 'error' result), seconds, last day;
 merged with what's on disk, bounded; never arguments / paths; FLH_NO_USAGE=1 opt-out; flh_usage output; bug report.
 Run: python3 tests/test_usage.py"""
 import json, os, sys, tempfile, time, zipfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 os.environ.pop("FLH_NO_USAGE", None)

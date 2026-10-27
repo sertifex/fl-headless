@@ -5,7 +5,7 @@ cleared is caught (the fingerprint doesn't hash note flags) and the edit goes in
 PC check's save puts queued edits into FL before reading. FL is simulated as in test_core_live_notes.
 Run: python3 tests/test_live_slide.py"""
 import json, os, shutil, struct, sys, tempfile, time, types
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 FIX = os.path.join(HERE, "corpus", "base.flp")
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")

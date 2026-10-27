@@ -2,7 +2,7 @@
 while FL showed another file / a same-title copy, the batch didn't reload FL (save_reload 0.01 s), and the final
 rendered by FL's own export missed the ending). Run: python3 tests/test_finish_reload.py (no FL needed)."""
 import os, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(prefix="flh_finrl_")
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local"); os.environ["FLH_NO_WARM"] = "1"
 import fl_headless_mcp as m  # noqa: E402

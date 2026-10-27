@@ -1,6 +1,6 @@
 """fl_finalize + audio_limit: render -> limit -> finish -> file, FL closed/reopened once, journal updated (no FL)."""
 import json, os, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 os.environ["FLH_RENDER_CACHE_GB"] = "0"                 # every render here really runs (the cache: test_render_cache)
 tempfile.tempdir = os.path.join(tmp, "systemp"); os.makedirs(tempfile.tempdir)   # private: parallel runs make flh_* dirs too

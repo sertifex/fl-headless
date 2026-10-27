@@ -4,7 +4,7 @@ while a plugin is still loading; fl_plugin_set_value with units ('30 ms', '2.00s
 stepped knobs (nearest step, reported); flp_info fields; flh_journal add as a plain note; flp_add_channel
 insert='new'. Simulated knobs, no FL. Run: python3 tests/test_args_live.py"""
 import math, os, re, shutil, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 import fl_headless_mcp as m  # noqa: E402
 import flh_store  # noqa: E402

@@ -4,7 +4,7 @@ import shutil
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 import fl_help as H  # noqa: E402
 import flh_handbook as HB  # noqa: E402
 _REAL_FETCH = H._fetch

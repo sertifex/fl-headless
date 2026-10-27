@@ -23,6 +23,13 @@ file then.
 - PC-only behaviour: `# PC-VERIFY: <what>` in code + `checklists/<module>.md`.
 - Only edit the files your task owns; never git stash / checkout / reset / commit unless the owner asks.
 
+## Layout (2.2.1+)
+All code and shipped data live in `src/`: `src/fl_headless_mcp.py`, the `src/flh_*.py` extensions and helpers,
+`src/data/` and `src/fl_script/`. Paths in this file are relative to `src/` unless they start with `tests/`,
+`tools/`, `docs/`, `checklists/` or `mcpb/`. The repo root keeps the docs, `install.py` / `install.bat` and
+`fl_headless_launch.py` (puts `src/` on the path and starts the server). Tests and tools put `src/` on `sys.path`;
+`tests/run_all.py` maps `src/x` to its module the same as before.
+
 ## The server: fl_headless_mcp.py (~17k lines, sections marked `# =====`)
 | section | what | entry points |
 |---|---|---|

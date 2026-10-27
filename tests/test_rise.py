@@ -10,7 +10,7 @@ the downbeat, a low-strings channel is made (a copy of the strings when no instr
 Eb major song rolls on its toms channel (the drum fallback) into the downbeat; a piano-only song says clearly what
 it skipped and keeps its top voice (the melody) as written."""
 import json, os, random, shutil, statistics, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "appdata")
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702  (leave no temp files behind)
 import fl_headless_mcp as m  # noqa: E402

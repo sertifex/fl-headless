@@ -3,7 +3,7 @@ through the plugin map's file_state layout - added on the master, bands written 
 replace / merge / take-over semantics, journal entry, backup + restore, presets, flp_edit batching, the layout proof
 (refuses when FL's default preset doesn't read right) and the live fallback routing. Run: python3 tests/test_master_tone.py"""
 import math, os, shutil, struct, sys, tempfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 os.environ.setdefault("FLH_NO_WARM", "1")
 import fl_headless_mcp as m  # noqa: E402

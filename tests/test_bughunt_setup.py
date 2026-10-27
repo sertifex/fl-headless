@@ -6,7 +6,7 @@
   - a damaged / Notepad-saved (BOM) journal or profile never breaks tools and is never silently overwritten
 Run: python3 tests/test_bughunt_setup.py (no FL needed)."""
 import json, os, subprocess, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE); sys.path.insert(0, ROOT)
+HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE); sys.path.insert(0, os.path.join(ROOT, "src"))
 tmp = tempfile.mkdtemp(prefix="flh_bh_setup_")
 roots = os.path.join(tmp, "music"); os.makedirs(roots)
 for k in [k for k in os.environ if k.startswith("FLH_")]:

@@ -1,7 +1,7 @@
 """sheet_notation: ABC + MusicXML parsing to exact notes, repeats/endings/D.C./D.S. playback, validation of reading
 mistakes, MIDI round trip through the server's own reader, inline export and diff."""
 import io, os, shutil, sys, tempfile, zipfile
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp(); os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = tmp
 import atexit; atexit.register(shutil.rmtree, tmp, True)  # noqa: E702
 import sheet_notation as S  # noqa: E402

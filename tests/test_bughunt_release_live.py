@@ -3,7 +3,7 @@ project, the proven reload route for a stale edit, guarded saves in extensions, 
 retries, reload tags left in names, same-title twins, silent instruments. Each block is one confirmed bug's regression
 test. Run: python3 tests/test_bughunt_release_live.py"""
 import os, shutil, sys, tempfile, wave
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 tmp = tempfile.mkdtemp()
 os.environ["FLH_ROOTS"] = tmp; os.environ["LOCALAPPDATA"] = os.path.join(tmp, "local")
 import numpy as np  # noqa: E402

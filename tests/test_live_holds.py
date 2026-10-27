@@ -161,7 +161,7 @@ X._state_for, X.plugin_get_named, X.plugin_set_named = X_state_for, X_get, X_set
 # ---- 1d. the bridge script's curves (the full FL 2026 round trip is in tests/test_fader_fl26.py)
 for name in ("channels", "device", "general", "midi", "mixer", "transport"):
     sys.modules.setdefault(name, types.ModuleType(name))
-spec = importlib.util.spec_from_file_location("flh_bridge_script", os.path.join(E.REPO, "fl_script",
+spec = importlib.util.spec_from_file_location("flh_bridge_script", os.path.join(E.REPO, "src", "fl_script",
                                                                                  "device_flheadless.py"))
 B = importlib.util.module_from_spec(spec); spec.loader.exec_module(B)
 check(B.SCRIPT_VERSION >= 7 and m._script_version_shipped() == B.SCRIPT_VERSION, "bridge script bumped")

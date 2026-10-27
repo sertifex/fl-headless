@@ -3,7 +3,7 @@ deterministic; flp_perform writes one batch of only what changed; dry_run writes
 Auto setup (any song): style none is an exact identity; deterministic; drums keep their timing under expressive;
 3/4, 6/8 and 7/8 meters; audio-clip tempo guard; quantize + undo to the original; edit guard."""
 import contextlib, copy, io, json, os, shutil, struct, sys, tempfile, time
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 DATA = os.path.join(os.environ.get("FLH_TEST_DATA") or os.path.join(HERE, "data"), "perform")
 FIX = os.path.join(os.environ.get("FLH_TEST_DATA") or os.path.join(HERE, "data"), "audio_clip_fl2026.flp")
 if not os.path.isfile(FIX):                                       # a public clone: the scrubbed committed copy

@@ -1,7 +1,7 @@
 """Sound description + wish scoring. Run: python tests/test_sound.py"""
 import os, sys
 import numpy as np
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 import fl_sound as S
 sr = 48000; t = np.arange(int(3 * sr)) / sr
 def tone(freqs, attack, decay):

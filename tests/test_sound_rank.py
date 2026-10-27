@@ -6,7 +6,7 @@ folder (last run only; never in a song / collection folder) and skips presets th
 Run: python3 tests/test_sound_rank.py"""
 import os, shutil, sys, tempfile
 import numpy as np
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
 import fl_sound as S  # noqa: E402
 
 T = S.targets
