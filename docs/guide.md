@@ -64,6 +64,7 @@ You don't need tool names; they're shown in brackets so you can look them up wit
 
 **Ideas**
 - *"Here's me humming the melody (voice memo)"* (`audio_to_midi`)
+- *"Write down this piano recording as MIDI"* (`audio_to_midi` mode piano: every note, both hands, the pedal)
 - *"Record what I play on my keyboard and build chords and drums around it"* (`fl_capture_idea`,
   `capture_and_build`)
 

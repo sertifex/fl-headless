@@ -1267,10 +1267,18 @@ def _melody_part(y, fs, mode, key=None):
 
 
 def audio_to_midi(input, output_mid=None, mode="auto", key=None, tempo=None, project=None, channel=None,
-                  pattern=None, quantize=None, beats_per_bar=4, align="auto", place_at_bar=1, limit=120, full=False):
+                  pattern=None, quantize=None, beats_per_bar=4, align="auto", place_at_bar=1, limit=120, full=False,
+                  meter=None, hands=True, song_settings=False, compare_with=None, cross_mode="flag", ab_wav=None,
+                  model="auto", self_check=True, install_model=None):
     """Transcribe audio (WAV/FLAC path, or (x, fs)) to notes. mode melody|chords|bass|drums|auto. Writes a .mid
     (output_mid), returns notes inline as [bar, length_bars, pitch, vel] (flp_replace_part's format) and, with
     project + channel, writes them into a new pattern of that project in ONE flp_edit."""
+    if (mode or "").lower() == "piano":
+        return piano_to_midi(input, output_mid=output_mid, key=key, tempo=tempo, meter=meter, project=project,
+                             channel=channel, pattern=pattern, quantize=quantize, place_at_bar=place_at_bar,
+                             limit=limit, full=full, hands=hands, song_settings=song_settings,
+                             compare_with=compare_with, cross_mode=cross_mode, ab_wav=ab_wav, model=model,
+                             self_check=self_check, install_model=install_model)
     T0 = time.time(); steps = {}
     t = time.time()
     x, fs0 = load_audio(input)
@@ -1281,7 +1289,7 @@ def audio_to_midi(input, output_mid=None, mode="auto", key=None, tempo=None, pro
     steps["load"] = round(time.time() - t, 2); t = time.time()
     mode = (mode or "auto").lower()
     if mode not in ("auto", "melody", "chords", "bass", "drums"):
-        raise ValueError("mode: melody, chords, bass, drums or auto")
+        raise ValueError("mode: melody, chords, bass, drums, piano or auto")
     detected = None
     if mode == "auto":
         detected = classify(y, fs)
@@ -1460,6 +1468,369 @@ def audio_to_midi(input, output_mid=None, mode="auto", key=None, tempo=None, pro
     steps["total"] = round(time.time() - T0, 2)
     res["steps_s"] = steps
     return res
+
+
+# ============================================================================= piano: full polyphonic transcription
+KEY_SIG = {"C major": 0, "G major": 1, "D major": 2, "A major": 3, "E major": 4, "B major": 5, "F# major": 6,
+           "C# major": 7, "F major": -1, "Bb major": -2, "Eb major": -3, "Ab major": -4, "Db major": -5,
+           "A minor": 0, "E minor": 1, "B minor": 2, "F# minor": 3, "C# minor": 4, "G# minor": 5, "Eb minor": -6,
+           "D minor": -1, "G minor": -2, "C minor": -3, "F minor": -4, "Bb minor": -5}
+
+
+def write_piano_midi(path, parts, tempo_map, num, den, key_name=None, div=480, offset_q=0.0, pedal_q=None):
+    """Type-1 MIDI: a conductor track (tempo per beat, time signature, key signature) + one track per hand.
+    Times in quarter notes; offset_q shifts everything (e.g. to a later bar)."""
+    if not str(path).lower().endswith((".mid", ".midi")):
+        raise ValueError("output_mid must end in .mid")
+    w = _ns("writable")
+    if w:
+        w(path)
+    dpow = {2: 1, 4: 2, 8: 3, 16: 4}.get(int(den), 2)
+    cond = [(0, b"\xff\x58\x04" + bytes([int(num), dpow, 24 if den == 4 else 12, 8]))]
+    if key_name in KEY_SIG:
+        cond.append((0, b"\xff\x59\x02" + bytes([KEY_SIG[key_name] & 0xFF, 1 if "minor" in key_name else 0])))
+    last = None
+    for q, bpm in tempo_map:
+        if last is not None and abs(bpm - last) < 0.05:
+            continue
+        tick = max(0, int(round((q + offset_q) * div)))
+        cond.append((tick, b"\xff\x51\x03" + int(round(60_000_000 / max(bpm, 1.0))).to_bytes(3, "big")))
+        last = bpm
+    tracks = [("conductor", cond)]
+    if pedal_q:                                                  # sustain CC64 / soft CC67 on/off
+        pev = []
+        for cc, spans in ((64, pedal_q.get("sustain", [])),
+                          (67, pedal_q.get("soft", []))):
+            for a, b in spans:
+                pev.append((max(0, int(round((a + offset_q) * div))), bytes([0xB0, cc, 127])))
+                pev.append((max(0, int(round((b + offset_q) * div))), bytes([0xB0, cc, 0])))
+        if pev:
+            tracks.append(("pedal", sorted(pev, key=lambda e: (e[0], e[1][2] != 0))))
+    total = 0
+    for i, (part, ev) in enumerate(parts.items()):
+        evs = []
+        for b, ln, k, v in ev:
+            st = int(round(max(0.0, b + offset_q) * div)); en = max(st + 1, int(round(max(0.0, b + ln + offset_q) * div)))
+            evs.append((st, bytes([0x90, int(k) & 127, max(1, min(127, int(v)))])))
+            evs.append((en, bytes([0x80, int(k) & 127, 0])))
+        tracks.append((part, evs)); total += len(ev)
+    mw = _ns("midi_write")
+    if mw is None:
+        raise RuntimeError("the server's MIDI writer isn't available")
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    mw(path, div, tracks)
+    return {"path": path, "tracks": list(parts), "notes": total, "tempo_events": len(cond) - 1 - (key_name in KEY_SIG)}
+
+
+def piano_raw(x, fs, model="auto", progress=None, backend=None, install_model=None):
+    """Run a piano model -> uniform raw result: notes (seconds), pedal (or None), audio at 22.05 kHz (for the
+    clean-up's ring / check measurements), frame count, which model. model: auto (Transkun when its add-on is
+    installed, else basic-pitch) | transkun | basic-pitch."""
+    import fl_piano_tx as PT
+    import fl_piano_tk as TK
+    m = (model or "auto").lower().replace("_", "-")
+    if m not in ("auto", "transkun", "basic-pitch", "basicpitch"):
+        raise ValueError("model: auto, transkun or basic-pitch")
+    note = None
+    if m in ("auto", "transkun") and not TK.available() and install_model:
+        TK.install(progress=(lambda f: progress(0.3 * f)) if progress else None)
+        TK.remember_choice(False)
+        _TK.clear()
+    if m in ("auto", "transkun"):
+        if TK.available():
+            tk = _transkun()
+            r = tk.transcribe(x, fs, progress=progress, backend=backend)
+            y = PT.resample(x, fs)
+            return {"notes": r["notes"], "pedal": r["pedal"], "info": r["info"], "audio": y, "sr": PT.SR,
+                    "n_frames": int(len(y) / PT.HOP) + 10, "onset_grid": None, "ring": False,
+                    "model_name": "Transkun V2 (Yan, Cwitkowitz, Duan; MIT)"}
+        if m == "transkun":
+            TK.model_dir()                                       # raises with the install hint
+        note = ("the lighter basic-pitch model was used (no pedal data, less accurate): the better piano model "
+                f"isn't installed. audio_to_midi with install_model=true adds it ({TK.TOTAL_MB} MB, free, MIT)")
+    r = PT.transcribe(x, fs, progress=progress, backend=backend)
+    r.update(n_frames=len(r["grids"]["note"]), onset_grid=r["grids"]["onset"], ring=True, pedal=None,
+             model_name="basic-pitch (Spotify, Apache-2.0)", model_note=note)
+    return r
+
+
+_TK = {}
+_RAW = {}
+
+
+def _raw_key(input, model):
+    if not isinstance(input, str) or not os.path.isfile(input):
+        return None
+    import fl_piano_tk as TK
+    m = (model or "auto").lower().replace("_", "-")
+    if m == "auto":
+        m = "transkun" if TK.available() else "basic-pitch"
+    if m == "transkun" and not TK.available():
+        return None                                              # being installed now: nothing to reuse
+    return (os.path.abspath(input), os.path.getmtime(input), os.path.getsize(input), m)
+
+
+def _transkun():
+    import fl_piano_tk as TK
+    d = TK.model_dir()
+    key = (d, os.path.getmtime(os.path.join(d, "transkun.onnx")))
+    if key not in _TK:
+        _TK.clear()
+        _TK[key] = TK.Transkun(d)
+    return _TK[key]
+
+
+def piano_to_midi(input, output_mid=None, key=None, tempo=None, meter=None, project=None, channel=None, pattern=None,
+                  quantize=None, place_at_bar=1, limit=120, full=False, hands=True, song_settings=False, raw=None,
+                  compare_with=None, cross_mode="flag", ab_wav=None, model="auto", self_check=True,
+                  install_model=None):
+    """Solo piano recording -> every note, split into hands, on a tempo map that follows the playing.
+    raw: a fl_piano_tx.transcribe() result to reuse (the cross-check passes it)."""
+    import fl_piano_tx as PT
+    import fl_piano_clean as PC
+    T0 = time.time(); steps = {}
+    prog = _ns("_job_progress")
+    import fl_piano_check as PK
+    import fl_piano_tk as TK
+    x = None
+    m_ = (model or "auto").lower()
+    if raw is None and m_ in ("auto", "transkun") and not TK.available():
+        if install_model is False:
+            TK.remember_choice(True)
+        elif install_model is None and (m_ == "transkun" or not TK.declined()):
+            # ask once, before any listening: nothing is downloaded without a yes
+            return {"mode": "piano", "needs_choice": True,
+                    "ask_the_user": f"Install the better piano model? Transkun: whole chords, real velocities and the "
+                                    f"sustain pedal; {TK.TOTAL_MB} MB, free (MIT licence), downloaded once from "
+                                    "Hugging Face and checked file by file. Without it the smaller built-in model is "
+                                    "used.",
+                    "then": "call audio_to_midi again with the same arguments plus install_model=true (download, "
+                            "then transcribe) or install_model=false (use the built-in model; won't ask again)"}
+    if raw is None:
+        x, fs0 = load_audio(input)
+        dur = len(x) / fs0
+        if dur < 0.5:
+            raise ValueError("the audio is shorter than 0.5 s")
+        steps["load"] = round(time.time() - T0, 2)
+        ck = _raw_key(input, "transkun" if install_model else model)
+        try:
+            raw = _RAW.get(ck) if ck else None                  # same file, same model: don't listen again
+            if raw is None:
+                raw = piano_raw(x, fs0, model=model, progress=(lambda f: prog(step="listening",
+                                                                              pct=int(5 + 80 * f))) if prog else None,
+                                install_model=install_model)
+                if ck:
+                    for k_ in [k_ for k_ in _RAW if k_[:3] != ck[:3]]:
+                        _RAW.pop(k_)                             # other files: forget
+                    _RAW[ck] = raw
+            else:
+                steps["reused_listening"] = True
+        except (PT.ModelMissing, ValueError) as e:
+            raise ValueError(str(e))
+    else:
+        dur = raw["info"].get("seconds") or (max((n["end"] for n in raw["notes"]), default=0.0))
+    steps["model"] = raw["info"].get("model_s"); steps["notes_raw"] = raw["info"].get("notes_s")
+    t = time.time()
+    if prog:
+        prog(step="tempo, meter, key, hands", pct=88)
+    q_on = quantize is not False and quantize != 0
+    c = PC.clean([dict(n) for n in raw["notes"]], raw["n_frames"], raw.get("onset_grid"), tempo=tempo,
+                 meter=meter, quantize=q_on, hands=hands, key=key, audio=raw.get("audio"), sr=raw.get("sr", 22050),
+                 ring=raw["ring"], pedal=raw.get("pedal"))
+    steps["clean"] = round(time.time() - t, 2); t = time.time()
+    screp = None
+    if self_check and raw.get("audio") is not None and c.get("bands") is not None:
+        # render the transcription, compare it with the recording bar by bar, re-check bars that don't match
+        if prog:
+            prog(step="checking against the recording", pct=90)
+        cands = {}
+        xa, fa = (x, fs0) if x is not None else (raw.get("x"), raw.get("fs"))
+        if raw.get("model_name", "").startswith("Transkun") and xa is not None:
+            ck2 = _raw_key(input, "basic-pitch")
+            alt = _RAW.get(ck2) if ck2 else None
+            if alt is None:
+                alt = piano_raw(xa, fa, model="basic-pitch")
+                if ck2:
+                    _RAW[ck2] = alt
+            cands["basic-pitch"] = alt["notes"]
+        bq0 = c["beats_per_bar_q"]
+        end_q = max((b + ln for ev in c["parts"].values() for b, ln, _, _ in ev), default=bq0)
+        nb0 = max(1, int(math.ceil(end_q / bq0 - 1e-9)))
+        bounds = PK._bar_bounds_s(c["beat_q"], c["beats_s"], bq0, nb0)
+        n_aud = len(raw["audio"])
+        new_notes, screp = PK.self_check(c["bands"], raw["notes"], raw.get("pedal"), bounds, n_aud, cands)
+        if screp["repaired"]:
+            c = PC.clean([dict(q) for q in new_notes], raw["n_frames"], raw.get("onset_grid"), tempo=tempo,
+                         meter=meter or c["meter"]["sig"], quantize=q_on, hands=hands, key=key,
+                         audio=raw.get("audio"), sr=raw.get("sr", 22050), ring=raw["ring"], pedal=raw.get("pedal"))
+        steps["self_check"] = round(time.time() - t, 2); t = time.time()
+    rep = c["report"]
+    mtr = c["meter"]
+    bar_q = c["beats_per_bar_q"]
+    xrep, agree, dropped = None, None, 0
+    if compare_with:                                             # second recording of the same piece
+        if prog:
+            prog(step="listening to the second recording", pct=90)
+        x2, fs2 = load_audio(compare_with)
+        raw2 = piano_raw(x2, fs2, model=model)
+        c2 = PC.clean([dict(n) for n in raw2["notes"]], raw2["n_frames"], raw2.get("onset_grid"),
+                      meter=meter or mtr["sig"], quantize=q_on, hands=hands, key=key, audio=raw2["audio"],
+                      ring=raw2["ring"], pedal=raw2.get("pedal"))
+        agree, xrep, doubtful = PK.cross_check(c, c2, bar_q, c2["beats_per_bar_q"])
+        xrep["other"] = {"input": compare_with if isinstance(compare_with, str) else "(array)",
+                         "meter": c2["report"]["meter"]["sig"], "key": (c2["report"].get("key") or {}).get("estimated"),
+                         "tempo_bpm": c2["report"]["tempo"]["median_bpm"], "notes": c2["report"]["notes"]["kept"]}
+        if cross_mode == "drop_doubtful":
+            c["parts"], dropped = PK.drop_doubtful(c["parts"], doubtful, bar_q, c["note_meta"])
+            xrep["dropped_doubtful_notes"] = dropped
+        elif cross_mode != "flag":
+            raise ValueError("cross_mode: flag (default) or drop_doubtful")
+        steps["cross_check"] = round(time.time() - t, 2); t = time.time()
+    render = None
+    if self_check and c.get("bands") is not None and raw.get("audio") is not None:
+        end_q = max((b + ln for ev in c["parts"].values() for b, ln, _, _ in ev), default=bar_q)
+        nbf = max(1, int(math.ceil(end_q / bar_q - 1e-9)))
+        render = PK.render_scores(c["bands"], c["notes_s"], raw.get("pedal"),
+                                  PK._bar_bounds_s(c["beat_q"], c["beats_s"], bar_q, nbf), len(raw["audio"]))
+    bars = PK.bar_report(c, bar_q, cross=agree, render=render)
+    pedal_q = None
+    if raw.get("pedal"):                                         # seconds -> quarter notes through the tempo map
+        bs, bq = np.asarray(c["beats_s"]), np.asarray(c["beat_q"])
+        pedal_q = {k: [(round(float(PK._s_to_q(a, bs, bq)), 4), round(float(PK._s_to_q(b, bs, bq)), 4))
+                       for a, b in v] for k, v in raw["pedal"].items()}
+    steps["bar_report"] = round(time.time() - t, 2); t = time.time()
+    parts = c["parts"]
+    inline = {p: [[round(1 + b / bar_q, 4), round(ln / bar_q, 4), int(k), int(v)] for b, ln, k, v in ev]
+              for p, ev in parts.items()}
+    key_name = (key and PC._key_from_name(key)["name"]) or (rep.get("key") or {}).get("estimated")
+    res = {"input": input if isinstance(input, str) else "(array)", "mode": "piano", "seconds": round(float(dur), 2),
+           "model": {"name": raw["model_name"], "backend": raw["info"].get("backend"),
+                     **({"installed_now": True} if install_model and raw["model_name"].startswith("Transkun") else {}),
+                     **({"note": raw["model_note"]} if raw.get("model_note") else {})},
+           "tempo": rep["tempo"], "meter": rep["meter"], "key": rep["key"], "grid": rep["grid"],
+           "notes_summary": rep["notes"], "hands": rep["hands"],
+           "pedal": ({"sustain_presses": len(raw["pedal"]["sustain"]), "soft_presses": len(raw["pedal"]["soft"]),
+                      "in_midi": "CC64 (sustain) / CC67 (soft) on a 'pedal' track"} if raw.get("pedal") else None),
+           "self_check": None if screp is None else {
+               "how": "the transcription was rendered and compared with the recording bar by bar; bars under "
+                      f"{screp['recheck_below']} were re-checked with the second model, a change kept only when "
+                      "that bar and the next two all match better",
+               "match_median_before_after": screp["match_median"],
+               "uncertain_bars_before_after": screp["uncertain"],
+               "repaired": screp["repaired"] if full else screp["repaired"][:20],
+               "still_uncertain": None},
+           "confidence": {"per_bar": bars["summary"], "low_bars": bars["low"] if full else bars["low"][:20],
+                          "how": "per bar: audio vs notes (chroma), on the beat grid, model certainty"
+                                 + (", agreement with the other recording" if agree else "")},
+           "notes": {p: (r if full else r[:int(limit)]) for p, r in inline.items()}}
+    if not full and any(len(r) > int(limit) for r in inline.values()):
+        res["notes_truncated"] = {p: len(r) for p, r in inline.items()}
+    if res.get("self_check"):
+        unc = [{"bar": r["bar"], "match": r["render"]} for r in bars["bars"]
+               if r.get("render") is not None and r["render"] < PK.FLAG_BELOW]
+        res["self_check"]["still_uncertain"] = unc if full else unc[:30]
+    else:
+        res.pop("self_check", None)
+    if full:
+        res["confidence"]["bars"] = bars["bars"]
+    if xrep:
+        res["cross_check"] = xrep if full or "disagree" not in xrep else dict(xrep, disagree=xrep["disagree"][:20])
+    if ab_wav:
+        w = _ns("writable")
+        if w:
+            w(ab_wav)
+        if x is None:
+            raise ValueError("ab_wav needs the audio file as input")
+        import fl_audio_edit as AE
+        n = len(x)
+        syn = PK.synth(parts, c["beat_q"], c["beats_s"], fs0, n)
+        orig = np.asarray(x, np.float32) / max(float(np.abs(x).max()), 1e-9) * 0.8
+        syn = syn / max(float(np.abs(syn).max()), 1e-9) * 0.8
+        st = np.stack([orig, syn], axis=1)
+        if str(ab_wav).lower().endswith(".flac"):                 # half the size of a WAV, lossless
+            import flac_lite
+            flac_lite.encode(ab_wav, np.round(np.clip(st, -1, 1) * 32767).astype(np.int32), int(fs0), 16)
+        else:
+            AE.save(ab_wav, st, fs0, bits=16)
+        res["ab_wav"] = {"path": ab_wav, "left": "the recording", "right": "the transcription (plain piano tone, "
+                         "same timing)"}
+        steps["ab_wav"] = round(time.time() - t, 2); t = time.time()
+    if output_mid:
+        res["output_mid"] = write_piano_midi(output_mid, parts, c["tempo_map"], mtr["num"], mtr["den"], key_name,
+                                             pedal_q=pedal_q)
+        steps["write_mid"] = round(time.time() - t, 2); t = time.time()
+    if project:
+        if isinstance(channel, dict) and "bass" in parts and "bass" not in channel and "left" in channel:
+            channel = dict(channel, bass=channel["left"])          # bass rides with the left hand unless given
+        res["project"] = _write_to_project(project, parts, channel, pattern, place_at_bar, bar_q)
+        if song_settings:
+            res["project"]["song_settings"] = _piano_song_settings(project, c, mtr, key_name, place_at_bar)
+        else:
+            res["project"]["song_settings"] = ("not changed: the notes are in beat time at the song's tempo. "
+                                               "song_settings=true also sets the song's tempo map (follows the "
+                                               "recording) and time signature - it replaces both for the whole song")
+        steps["project"] = round(time.time() - t, 2)
+    warn = []
+    if rep["meter"].get("confidence", 1) < 0.25:
+        warn.append(f"meter {rep['meter']['sig']} is a weak guess (confidence {rep['meter']['confidence']}): give "
+                    "meter='3/4' (or the right one) if you know it")
+    if (rep.get("key") or {}).get("margin", 1) < 0.05:
+        warn.append(f"key is unclear ({rep['key']['estimated']} vs {rep['key']['runner_up']})")
+    if rep["grid"]["chance_corrected"].get(f"1/{c['subdivision']}", 1) < 0.4:
+        warn.append("the beat grid fits loosely (free rubato or a different metrical level): check the bars by ear")
+    if bars["summary"]["low"]:
+        warn.append(f"{bars['summary']['low']} of {bars['n_bars']} bars are low confidence: see confidence.low_bars")
+    if xrep and not xrep.get("lines_up"):
+        warn.append("cross-check: " + xrep["verdict"])
+    if xrep and xrep.get("lines_up") and xrep["summary"]["disagree"]:
+        warn.append(f"the other recording disagrees on {xrep['summary']['disagree']} bars (harmony/bass): "
+                    "see cross_check.disagree")
+    if rep["notes"]["unclear"]:
+        warn.append(f"{rep['notes']['unclear']} semitone pairs were too close to call: both notes kept")
+    if warn:
+        res["warnings"] = warn
+    res["listen"] = ("a transcription is a draft: play it against the recording. Timing follows the recording "
+                     "through the tempo map; notes sit on the beat grid")
+    steps["total"] = round(time.time() - T0, 2)
+    res["steps_s"] = steps
+    return res
+
+
+def _piano_song_settings(project, c, mtr, key_name, place_at_bar):
+    """Tempo map (via a temporary MIDI) + time signature into the project. Replaces both for the whole song."""
+    import tempfile
+    out = {}
+    st = _ns("STATE")
+    d = os.path.dirname(st) if st else tempfile.gettempdir()
+    os.makedirs(d, exist_ok=True)
+    tmp = os.path.join(d, "piano_tempo_map.mid")
+    off = (float(place_at_bar or 1) - 1) * c["beats_per_bar_q"]
+    mw = _ns("midi_write")
+    cond = []
+    last = None
+    for q, bpm in c["tempo_map"]:
+        if last is not None and abs(bpm - last) < 0.05:
+            continue
+        cond.append((int(round((q + off) * 480)), b"\xff\x51\x03" + int(round(60_000_000 / bpm)).to_bytes(3, "big")))
+        last = bpm
+    if cond and cond[0][0] > 0:
+        cond.insert(0, (0, cond[0][1]))
+    mw(tmp, 480, [("conductor", cond)])
+    try:
+        info = _ns("flp_project_info")
+        if info:
+            info(project, project, time_sig_num=int(mtr["num"]), time_sig_beat=int(mtr["den"]))
+            out["time_signature"] = mtr["sig"]
+        tw = _ns("flp_tempo_write")
+        if tw:
+            r = tw(project, project, midi=tmp)
+            out["tempo_map"] = {"events": len(cond), "result": {k: v for k, v in (r or {}).items() if k in ("points", "tempo", "ok")}}
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+    return out
 
 
 def _time_sig_meta(beats_per_bar):
@@ -2126,13 +2497,15 @@ def register(ns):
     T = ns["TOOLS"]
     T["audio_to_midi"] = (
         _tool(audio_to_midi), "Listen to audio and write it down as MIDI: mode melody (one note at a time: voice, lead; "
-        "vibrato/slides handled), bass, chords (chord chart per beat/bar + a voiced chord track), drums (kick/snare/"
+        "vibrato/slides handled), bass, chords (chord chart per beat/bar + a voiced chord track), piano (every note of "
+        "a solo piano recording, split into hands, on a tempo map that follows the playing; meter + key detected), drums (kick/snare/"
         "hat/perc -> GM notes, tempo + beat tracking), or auto (decides and says how sure it is). Writes output_mid; "
         "returns notes inline [bar, length_bars, pitch, vel]; with project + channel writes them into a new pattern "
         "(one edit). quantize '1/16' (or {grid, strength}) snaps to the detected grid; default keeps the playing's "
         "timing. Confidence is reported honestly - polyphonic audio is hard; listen before relying on it.",
         S(input=STR("WAV or FLAC file"), output_mid=STR(".mid to write (inside FLH_ROOTS)", True),
-          mode=STR("auto (default) | melody | chords | bass | drums", True),
+          mode=STR("auto (default) | melody | chords | bass | drums | piano (every note of a solo piano: hands, "
+                   "tempo map, meter, key)", True),
           key=STR("known key, e.g. 'A minor' (borderline pitches snap into it)", True),
           tempo=NUM("known bpm (default: detected)", True), project=P("string", "write into this .flp", True),
           channel=P(["integer", "object"], "channel index, or {part/drum class: index} e.g. {kick: 0, snare: 1, hat: 2}", True),
@@ -2141,7 +2514,24 @@ def register(ns):
           beats_per_bar=INT("default 4", True), align=STR("audio (bar 1 = audio start) | grid (bars on the music's "
                                                          "downbeats) | auto", True),
           place_at_bar=NUM("where the new pattern goes in the playlist (default 1; 0 = don't place)", True),
-          limit=INT("max inline notes per part (default 120)", True), full=BOOL("all notes and per-beat chords", True)))
+          limit=INT("max inline notes per part (default 120)", True), full=BOOL("all notes and per-beat chords", True),
+          meter=STR("piano: known time signature e.g. '3/4' (default: detected)", True),
+          hands=BOOL("piano: split into right/left parts (default true)", True),
+          song_settings=BOOL("piano + project: also set the song's tempo map and time signature from the recording "
+                             "(replaces both; default false)", True),
+          compare_with=STR("piano: a second recording of the same piece; bars are aligned and checked for the "
+                           "same harmony and bass (arrangements may differ)", True),
+          cross_mode=STR("piano + compare_with: flag (default) | drop_doubtful (remove notes the other recording "
+                         "lacks AND the model was unsure of)", True),
+          ab_wav=STR("piano: write a stereo .wav or .flac to listen: left = recording, right = the transcription",
+                     True),
+          model=STR("piano: auto (default: Transkun when its add-on is installed - best, with pedal - else "
+                    "basic-pitch) | transkun | basic-pitch", True),
+          self_check=BOOL("piano: render the result, compare it with the recording bar by bar, re-check bars that "
+                          "don't match with the second model, flag what's still uncertain (default true)", True),
+          install_model=BOOL("piano: the user's answer to the 'install the better piano model?' question - true "
+                             "downloads it (once, checked) then transcribes; false uses the built-in model and "
+                             "stops asking. Only set it after asking the user", True)))
     T["fl_capture_idea"] = (
         _tool(fl_capture_idea), "Play me your idea: records what you play on your MIDI keyboard in the open FL into a new "
         "pattern (count-in and metronome on by default) for bars/seconds, then returns the notes and a quick read "

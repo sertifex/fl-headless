@@ -34,6 +34,9 @@ with different PCs, FL versions/editions, languages, genres and skill levels. It
   HKCU\Software\Image-Line; deletes only to the Recycle Bin (`ns["files_recycle"]`); no eval/exec of data; never
   start a second FL; never close FL except the render path; never answer "Save anyway" on a trial warning; no
   network calls except where a tool is explicitly about fetching (and then only to image-line.com), plus the
+  one-click piano-model install (`fl_piano_tk.install`: only after the user said yes via audio_to_midi
+  install_model=true; only huggingface.co / *.hf.co, a pinned revision, every file checked against its size and
+  SHA-256 in `MANIFEST` before it is moved into fl-headless's own folder), plus the
   weekly update look (`_release_update`: one GET to this project's GitHub releases API, nothing about the user,
   off with FLH_UPDATE_CHECK=0 / `flh_updates(enable=false)`; the test runner turns it off).
 - Never redistribute copyrighted content (FL's manual text, FL's samples, third-party presets). Ship code and our

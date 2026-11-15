@@ -71,7 +71,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fl_music  # noqa: E402
 from fl_music import note_name, parse_note  # noqa: E402
 
-SERVER = {"name": "fl-headless", "version": "2.2.1"}
+SERVER = {"name": "fl-headless", "version": "2.3.1"}
 
 # Sent to the AI client on connect, so every session starts knowing how FL behaves and how the user wants it run.
 INSTRUCTIONS = """fl-headless drives FL Studio (Windows) and reads/writes .flp projects.
@@ -21851,8 +21851,8 @@ SHORT_DESC = {                               # hand-written listing text (<= 250
                       "advice; says where to pick the mic input.",
     "fl_vocal_record": "Record vocal takes in the open FL: pre-roll, start_bar..end_bar, takes back to back (punch "
                        "in/out when possible); named + journaled. Then fl_vocal_comp.",
-    "audio_to_midi": "Transcribe WAV/FLAC to MIDI: mode melody|bass|chords|drums|auto, honest confidence; notes "
-                     "inline, or project + channel = a new pattern.",
+    "audio_to_midi": "Transcribe audio to MIDI: mode melody|bass|chords|drums|piano (every note, tempo map, "
+                     "hands)|auto, honest confidence; notes inline, or project + channel = a new pattern.",
     "fl_capture_idea": "Record what the user plays on their MIDI keyboard in the open FL into a new pattern "
                        "(count-in), then the notes with key/chords/feel. action=record|stop|read|cancel.",
     "flp_realism": "Make strings/choir/brass/winds/pads sound played (expression, human timing, breaths, legato, "
@@ -22518,7 +22518,7 @@ def _live():
     return getattr(sys, "_flh_live", None) or globals()
 
 
-HELPER_MODULES = ("flh_common", "flac_lite", "fl_music", "fl_mix", "fl_sound", "fl_capture", "fl_audio_edit", "fl_help", "fl_blocks", "ogg_vorbis_lite", "mf_audio",
+HELPER_MODULES = ("flh_common", "flac_lite", "fl_music", "fl_mix", "fl_sound", "fl_capture", "fl_audio_edit", "fl_help", "fl_blocks", "ogg_vorbis_lite", "mf_audio", "onnx_lite", "fl_piano_tx", "fl_piano_clean", "fl_piano_check",
                   "flh_pccheck_mod", "fl_render_cache", "fl_musicality")   # flh_pccheck_mod: loaded by flh_pccheck via sys.modules
 
 

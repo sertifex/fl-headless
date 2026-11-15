@@ -62,6 +62,39 @@ with FL Studio, a saved project open in FL and the fl-headless bridge running. C
   run ONE save/reload in FL, add a "Transcribed drums" pattern at bar 1 with the hits on those channels, and keep
   the open FL window (no second FL).
 
+## 5b. Piano mode (polyphonic, `mode="piano"`)
+- An MP3 of a solo piano (Windows decodes it): `audio_to_midi(input=<mp3>, mode="piano", output_mid=<.mid>)`.
+  Expect `model.backend` numpy (or onnxruntime if installed) and about 15-30 s for a 3-minute song on numpy.
+- Drag the .mid into FL (it has a conductor track): the tempo follows the recording, the time signature and key
+  match the report, right/left hands are separate tracks. Play it next to the MP3: notes should line up all the
+  way through (no drift). Write down bars where the downbeat sounds wrong.
+- `meter="3/4"` when you know it: the report says `given` and bars follow it.
+- Into a project: `project=<flp>, channel={"right": 0, "left": 1}` -> one save/reload, a "Transcribed right+left"
+  pattern; the song tempo and time signature are NOT changed. With `song_settings=true`: the Tempo lane follows the
+  recording and the project shows the detected time signature (PC-VERIFY that FL reads both).
+- Without onnxruntime (a clean PC) and with it: same notes.
+- One-click install on a PC without the model: the first `mode="piano"` call returns `needs_choice` and the question
+  (nothing downloaded yet). Answer yes -> `install_model=true`: about 59 MB arrive in
+  %LOCALAPPDATA%\fl-headless\models\transkun and the result says `installed_now`. Answer no on another PC ->
+  basic-pitch, and the next call doesn't ask. Unplug the network and say yes: a clear error, no half files left.
+  Update the extension afterwards: the model is still there.
+- Transkun add-on in `src/data/transcribe/transkun/` (7 files, see the README there): `model` in the result says
+  Transkun; the MIDI has a `pedal` track (CC64). Time a 3-minute song on numpy and with onnxruntime
+  (`pip install onnxruntime` in the extension's Python) and write both down. Remove the folder: `model` falls back
+  to basic-pitch with a note saying how to install it; `model="transkun"` then gives the install hint as an error.
+- Self-check: `self_check.repaired` lists bars changed and which model the notes came from; listen to two of
+  them against the recording. `self_check.still_uncertain` bars should be the ones that really sound off.
+- Delete `data/transcribe/nmp.onnx` on purpose: the error says the model is missing and to reinstall.
+- Confidence: `confidence.low_bars` names the bars to check and why. Listen to 3 of them and 3 "high" bars: the
+  low ones should really be the shakier ones.
+- `ab_wav=<x.flac>`: left = recording, right = transcription in a plain tone at the same timing. Pan left/right in
+  any player: the two should move together; where they part, the bar should be in low_bars.
+- `compare_with=<second recording>` of the SAME arrangement (e.g. two covers of one sheet): `lines_up: true`, a
+  transposition if one is in another key, mostly agree/partial. With two different arrangements of a piece (or two
+  pieces) it must say they don't line up and give no verdicts (not a wall of "disagree").
+- `cross_mode="drop_doubtful"`: only notes the other recording lacks AND the model was unsure of are removed; the
+  count is in `cross_check.dropped_doubtful_notes`.
+
 ## 6. Build around it
 - `capture_and_build()` after a capture. Without flh_compose it returns suggestions (chords per bar, bass roots, a
   drum style). With flh_compose installed, it calls `compose_around(idea=..., what=..., genre=..., project=...)`.

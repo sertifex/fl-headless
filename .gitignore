@@ -10,3 +10,7 @@ tests/data
 review/
 .claude/
 dist/
+_setup/
+_update/
+src/data/transcribe/transkun/*
+!src/data/transcribe/transkun/README.md

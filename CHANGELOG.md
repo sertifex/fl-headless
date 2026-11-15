@@ -1,5 +1,43 @@
 # Changelog
 
+## 2.3.1 - 2026-11-15
+- **Piano transcription (`audio_to_midi mode="piano"`).** Writes down every note of a solo piano recording, not
+  just a melody or chords: Spotify's basic-pitch model (Apache-2.0, ships with fl-headless, runs on numpy; faster
+  when onnxruntime happens to be installed, same notes), then a piano clean-up: held notes the pedal cut into
+  pieces are joined, overtone ghosts dropped, hands split. Timing follows the playing with a tempo map (one tempo
+  per beat, rubato included) and the notes sit on the beat grid. The time signature (2/4, 3/4, 4/4, 6/8, 9/8,
+  12/8) and key are detected and reported; the key only settles a near tie between two neighbouring notes and
+  never moves a note. The MIDI carries the tempo map, time signature and key; into a project the song's tempo and
+  time signature change only with `song_settings=true`.
+  - Note ends follow how long each note really rings in the recording; weak low "notes" under a stronger octave
+    are dropped; a key held in one hand stays in that hand.
+  - **How sure is it?** Every bar gets a confidence (high / medium / low) from four checks: does the recording sound
+    like the notes there (A/B pitch-class match), was it played near the beat grid, how sure was the model, and
+    (optional) does a second recording agree. Low bars come with the reason, so you know which bars to check.
+  - **Two recordings, one answer.** `compare_with=` a second recording of the same piece: they are aligned in time
+    on their harmony (any tempo, transposition, extra intro), then each bar is checked for the same harmony and
+    bass. Notes the other recording lacks are flagged (removed only with `cross_mode="drop_doubtful"`, and only when
+    the model was unsure too). If the two don't line up (different arrangements or pieces), it says so instead of
+    guessing.
+  - `ab_wav=` writes a stereo file to listen: the recording on the left, the transcription on the right.
+  - **Transkun piano model (optional add-on, 59 MB, one-click).** The first piano transcription asks whether to
+    install it; a yes downloads it once from Hugging Face (every file checked against its fingerprint) into
+    fl-headless's own folder, kept across updates; a no is remembered. When installed, piano mode uses Transkun V2 (MIT; the
+    most accurate open piano transcriber: whole chords, real velocities, sustain + soft pedal written to the MIDI as
+    CC64 / CC67). Runs on numpy like basic-pitch, faster with onnxruntime; `model="basic-pitch"` still available.
+    Re-running on the same file with other settings reuses the listening (seconds instead of minutes). On Windows
+    the extension now brings onnxruntime along (installed once by Claude Desktop, ~13 MB) so piano transcription runs
+    about 3x faster; elsewhere it runs on numpy with the same notes.
+  - **Piano clean-up that knows the pedal.** A key let go under the sustain pedal is written as long as it sounds;
+    the same key struck again ends the earlier note (either hand); low notes stop at the next bass note instead of
+    ringing through the chord change; quiet ghost notes an octave / 12th / two octaves above a louder note are
+    dropped. The result comes in three parts: **bass, left hand, right hand** (bass rides on the left hand's
+    channel in a project unless it gets its own).
+  - **It checks its own work.** The transcription is rendered and compared with the recording bar by bar. Bars that
+    don't match are re-checked with the second model (basic-pitch when Transkun is the main one): its notes replace
+    or fill in that bar only when that bar and the two after it all match the recording better. What still doesn't
+    match is listed as uncertain, so you know which bars to check by ear (`self_check=false` skips it).
+
 ## 2.2.1 - 2026-10-27
 - **Tidier repo page.** All the code and its data moved into one `src/` folder, so the GitHub page shows a handful
   of folders and the docs instead of 60 files. Nothing changes in how fl-headless works.

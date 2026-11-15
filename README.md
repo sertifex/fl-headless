@@ -25,7 +25,7 @@
 </p>
 
 > [!NOTE]
-> **Beta.** Version 2.1 is the first public release, tested on one setup so far (Windows 11, FL Studio 2026).
+> **Beta.** Tested on one setup so far (Windows 11, FL Studio 2026).
 > Expect some rough edges, and please [report what breaks](https://github.com/sertifex/fl-headless/issues).
 
 fl-headless is not built to make your music for you. It's built to help you make it: it explains what's going on in
@@ -56,6 +56,33 @@ in charge, and it says honestly when only your ears can decide.
 > *"I'm hard of hearing - tell me in words what changed since the last version."*
 
 > *"What did you just change, and why? I want to learn how to do it myself."*
+
+> *"Write down this piano recording as MIDI so I can learn it."*
+
+## New in 2.3: piano transcription
+
+Give it a recording of solo piano (WAV or FLAC) and `audio_to_midi` with `mode="piano"` writes down **every
+note**, not just the melody or the chords:
+
+- **Both hands and the bass.** The notes are split into bass, left hand and right hand, as three parts you can
+  mute, edit or practise one at a time. A held note stays in one hand.
+- **The pedal.** The sustain and soft pedal come out as their own MIDI track, and notes last as long as they
+  really ring in the recording.
+- **Follows the playing.** Rubato and tempo changes become a tempo map, so the notes sit on the bar lines. The time
+  signature (2/4, 3/4, 4/4, 6/8, 9/8, 12/8) and the key are detected and reported. The key only settles a near tie
+  between two neighbouring notes; it never moves a note to fit.
+- **Cleans up what transcription gets wrong.** Overtones that look like extra notes, low notes ringing through a
+  chord change, and a key struck again while it is still sounding are all fixed.
+- **Checks itself.** It plays the result back, compares it with the recording bar by bar, re-checks the bars that
+  don't match and tells you which bars are still uncertain.
+- **Two recordings of the same piece?** Pass both (`compare_with`) and it compares harmony and bass per bar and
+  marks where they disagree.
+
+It works out of the box with Spotify's [basic-pitch](https://github.com/spotify/basic-pitch) model, which ships with
+fl-headless. For much better results it offers a one-time, optional download of a piano-specific model,
+[Transkun](https://github.com/Yujia-Yan/Transkun) (about 59 MB, MIT license). It asks first and remembers a no.
+The download comes only from a pinned version on Hugging Face, and every file is checked against its exact
+size and checksum before it is used. Everything runs on your own PC, with no GPU needed.
 
 <sub>Under the hood: a free [MCP](https://modelcontextprotocol.io) server for FL Studio on Windows. It reads and
 writes `.flp` project files directly, drives the open FL through a small script that runs inside FL, listens to what
